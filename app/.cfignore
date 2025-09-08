@@ -1,0 +1,8 @@
+.next/cache/**
+.next/**/*.pack
+.next/**/*.map
+node_modules/**
+out/**
+*.log
+
+
