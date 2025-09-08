@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-server';
+
 import { verifyAdminAccess } from '@/lib/admin-auth-secure';
+import { validateProductData, validateRequest } from '@/lib/input-validator';
 import { checkRateLimit } from '@/lib/rate-limiter';
-import { validateRequest, validateProductData } from '@/lib/input-validator';
+import { supabaseServer } from '@/lib/supabase-server';
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,10 +11,10 @@ export async function GET(req: NextRequest) {
     const rateLimitResult = checkRateLimit(req, true);
     if (!rateLimitResult.success) {
       return NextResponse.json(
-        { error: rateLimitResult.error }, 
-        { 
-          status: rateLimitResult.status, 
-          headers: rateLimitResult.headers as Record<string, string>
+        { error: rateLimitResult.error },
+        {
+          status: rateLimitResult.status,
+          headers: rateLimitResult.headers as Record<string, string>,
         }
       );
     }
@@ -40,26 +41,36 @@ export async function GET(req: NextRequest) {
 
     // Get all products from all categories (using current schema)
     const categories = [
-      'accessories', 'bindings', 'boots', 'goggles', 'helmet', 'ski',
-      'snowboards_boards', 'snowboards_bindings', 'snowboards_boots', 'snowboards_accessories'
+      'accessories',
+      'bindings',
+      'boots',
+      'goggles',
+      'helmet',
+      'ski',
+      'snowboards_boards',
+      'snowboards_bindings',
+      'snowboards_boots',
+      'snowboards_accessories',
     ];
     let allProducts: any[] = [];
 
     for (const cat of categories) {
       let query = supabase.from(cat).select('*');
-      
+
       if (category && category !== cat) continue;
       if (search) {
         query = query.or(`name.ilike.%${search}%,article.ilike.%${search}%`);
       }
-      
+
       const { data, error } = await query;
       if (!error && data) {
-        allProducts = allProducts.concat(data.map((item: any) => ({
-          ...item,
-          table_name: cat,
-          category: cat
-        })));
+        allProducts = allProducts.concat(
+          data.map((item: any) => ({
+            ...item,
+            table_name: cat,
+            category: cat,
+          }))
+        );
       }
     }
 
@@ -74,10 +85,9 @@ export async function GET(req: NextRequest) {
         page,
         limit,
         total: allProducts.length,
-        totalPages: Math.ceil(allProducts.length / limit)
-      }
+        totalPages: Math.ceil(allProducts.length / limit),
+      },
     });
-
   } catch (error) {
     console.error('Error fetching products:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -90,10 +100,10 @@ export async function POST(req: NextRequest) {
     const rateLimitResult = checkRateLimit(req, true);
     if (!rateLimitResult.success) {
       return NextResponse.json(
-        { error: rateLimitResult.error }, 
-        { 
-          status: rateLimitResult.status, 
-          headers: rateLimitResult.headers as Record<string, string>
+        { error: rateLimitResult.error },
+        {
+          status: rateLimitResult.status,
+          headers: rateLimitResult.headers as Record<string, string>,
         }
       );
     }
@@ -120,8 +130,16 @@ export async function POST(req: NextRequest) {
     }
 
     const validCategories = [
-      'accessories', 'bindings', 'boots', 'goggles', 'helmet', 'ski',
-      'snowboards_boards', 'snowboards_bindings', 'snowboards_boots', 'snowboards_accessories'
+      'accessories',
+      'bindings',
+      'boots',
+      'goggles',
+      'helmet',
+      'ski',
+      'snowboards_boards',
+      'snowboards_bindings',
+      'snowboards_boots',
+      'snowboards_accessories',
     ];
     if (!validCategories.includes(category)) {
       return NextResponse.json({ error: 'Invalid category' }, { status: 400 });
@@ -133,14 +151,10 @@ export async function POST(req: NextRequest) {
       category,
       is_active: productData.is_active !== undefined ? productData.is_active : true,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
-    const { data, error } = await supabase
-      .from(category)
-      .insert(productToInsert)
-      .select()
-      .single();
+    const { data, error } = await supabase.from(category).insert(productToInsert).select().single();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -158,7 +172,6 @@ export async function POST(req: NextRequest) {
     // );
 
     return NextResponse.json({ product: data });
-
   } catch (error) {
     console.error('Error creating product:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -179,12 +192,23 @@ export async function PUT(req: NextRequest) {
     const { category, productId, productData } = body;
 
     if (!category || !productId || !productData) {
-      return NextResponse.json({ error: 'Category, product ID and product data required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Category, product ID and product data required' },
+        { status: 400 }
+      );
     }
 
     const validCategories = [
-      'accessories', 'bindings', 'boots', 'goggles', 'helmet', 'ski',
-      'snowboards_boards', 'snowboards_bindings', 'snowboards_boots', 'snowboards_accessories'
+      'accessories',
+      'bindings',
+      'boots',
+      'goggles',
+      'helmet',
+      'ski',
+      'snowboards_boards',
+      'snowboards_bindings',
+      'snowboards_boots',
+      'snowboards_accessories',
     ];
     if (!validCategories.includes(category)) {
       return NextResponse.json({ error: 'Invalid category' }, { status: 400 });
@@ -200,7 +224,7 @@ export async function PUT(req: NextRequest) {
     // Update product
     const productToUpdate = {
       ...productData,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     const { data, error } = await supabase
@@ -220,9 +244,9 @@ export async function PUT(req: NextRequest) {
     //   'product_updated',
     //   'product',
     //   productId,
-    //   { 
-    //     category, 
-    //     product_name: data.name, 
+    //   {
+    //     category,
+    //     product_name: data.name,
     //     article: data.article,
     //     changes: Object.keys(productData)
     //   },
@@ -231,7 +255,6 @@ export async function PUT(req: NextRequest) {
     // );
 
     return NextResponse.json({ product: data });
-
   } catch (error) {
     console.error('Error updating product:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -241,9 +264,12 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const supabase = await supabaseServer();
-    
+
     // Check if user is admin
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -266,7 +292,15 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Category and product ID required' }, { status: 400 });
     }
 
-    const validCategories = ['accessories', 'bindings', 'boots', 'goggles', 'helmet', 'ski', 'snowboard'];
+    const validCategories = [
+      'accessories',
+      'bindings',
+      'boots',
+      'goggles',
+      'helmet',
+      'ski',
+      'snowboard',
+    ];
     if (!validCategories.includes(category)) {
       return NextResponse.json({ error: 'Invalid category' }, { status: 400 });
     }
@@ -283,10 +317,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Delete product
-    const { error } = await supabase
-      .from(category)
-      .delete()
-      .eq('id', productId);
+    const { error } = await supabase.from(category).delete().eq('id', productId);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -298,17 +329,16 @@ export async function DELETE(req: NextRequest) {
     //   'product_deleted',
     //   'product',
     //   productId,
-    //   { 
-    //     category, 
-    //     product_name: productToDelete.name, 
-    //     article: productToDelete.article 
+    //   {
+    //     category,
+    //     product_name: productToDelete.name,
+    //     article: productToDelete.article
     //   },
     //   user.id,
     //   user.email
     // );
 
     return NextResponse.json({ success: true });
-
   } catch (error) {
     console.error('Error deleting product:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

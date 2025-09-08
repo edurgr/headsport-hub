@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-server';
-import { supabaseAdmin as supabaseAdminClient } from '@/lib/supabase-admin';
+
 import { createClient } from '@supabase/supabase-js';
+
+import { supabaseAdmin as supabaseAdminClient } from '@/lib/supabase-admin';
+import { supabaseServer } from '@/lib/supabase-server';
 
 export async function GET(req: Request) {
   try {
@@ -17,7 +19,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Configuration error' }, { status: 500 });
     }
 
-    const supabaseAdmin = supabaseAdminClient ?? (serviceRoleKey ? createClient(supabaseUrl, serviceRoleKey) : null);
+    const supabaseAdmin =
+      supabaseAdminClient ?? (serviceRoleKey ? createClient(supabaseUrl, serviceRoleKey) : null);
     let sb = await supabaseServer();
 
     // Resolve current user id and role
@@ -34,7 +37,9 @@ export async function GET(req: Request) {
         .single();
       role = (prof?.role as any) || 'athlete';
     } else {
-      const authHeader = (req as any).headers?.get?.('authorization') || (req as any).headers?.get?.('Authorization');
+      const authHeader =
+        (req as any).headers?.get?.('authorization') ||
+        (req as any).headers?.get?.('Authorization');
       if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
         try {
@@ -98,15 +103,26 @@ export async function GET(req: Request) {
               athlete_email: athlete.email,
               total_content: 0,
               photos: 0,
-              videos: 0
+              videos: 0,
             };
           }
 
           // Get file counts by type
           const [totalResult, photosResult, videosResult] = await Promise.all([
-            source.from('upload_files').select('*', { count: 'exact', head: true }).in('session_id', sessionIds),
-            source.from('upload_files').select('*', { count: 'exact', head: true }).in('session_id', sessionIds).eq('file_type', 'image'),
-            source.from('upload_files').select('*', { count: 'exact', head: true }).in('session_id', sessionIds).eq('file_type', 'video')
+            source
+              .from('upload_files')
+              .select('*', { count: 'exact', head: true })
+              .in('session_id', sessionIds),
+            source
+              .from('upload_files')
+              .select('*', { count: 'exact', head: true })
+              .in('session_id', sessionIds)
+              .eq('file_type', 'image'),
+            source
+              .from('upload_files')
+              .select('*', { count: 'exact', head: true })
+              .in('session_id', sessionIds)
+              .eq('file_type', 'video'),
           ]);
 
           return {
@@ -115,7 +131,7 @@ export async function GET(req: Request) {
             athlete_email: athlete.email,
             total_content: totalResult.count || 0,
             photos: photosResult.count || 0,
-            videos: videosResult.count || 0
+            videos: videosResult.count || 0,
           };
         })
       );
@@ -123,14 +139,20 @@ export async function GET(req: Request) {
       return NextResponse.json({
         success: true,
         data: athleteStats,
-        type: 'athlete_breakdown'
+        type: 'athlete_breakdown',
       });
     } else {
       // Get global content stats
       const [totalResult, photosResult, videosResult] = await Promise.all([
         source.from('upload_files').select('*', { count: 'exact', head: true }),
-        source.from('upload_files').select('*', { count: 'exact', head: true }).eq('file_type', 'image'),
-        source.from('upload_files').select('*', { count: 'exact', head: true }).eq('file_type', 'video')
+        source
+          .from('upload_files')
+          .select('*', { count: 'exact', head: true })
+          .eq('file_type', 'image'),
+        source
+          .from('upload_files')
+          .select('*', { count: 'exact', head: true })
+          .eq('file_type', 'video'),
       ]);
 
       return NextResponse.json({
@@ -138,16 +160,19 @@ export async function GET(req: Request) {
         data: {
           total_content: totalResult.count || 0,
           photos: photosResult.count || 0,
-          videos: videosResult.count || 0
+          videos: videosResult.count || 0,
         },
-        type: 'global'
+        type: 'global',
       });
     }
   } catch (error) {
     console.error('Analytics content error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
 }

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+
 import { createClient } from '@supabase/supabase-js';
+
 import { logger } from '@/lib/logger';
 
 interface HealthCheck {
@@ -20,23 +22,23 @@ interface HealthResponse {
 export async function GET() {
   const startTime = Date.now();
   const checks: HealthCheck[] = [];
-  
+
   try {
     // Environment variables check
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
+
     if (!supabaseUrl || !supabaseAnonKey) {
       checks.push({
         service: 'environment',
         status: 'unhealthy',
-        error: 'Missing required environment variables'
+        error: 'Missing required environment variables',
       });
     } else {
       checks.push({
         service: 'environment',
-        status: 'healthy'
+        status: 'healthy',
       });
     }
 
@@ -45,24 +47,20 @@ export async function GET() {
       const dbCheckStart = Date.now();
       try {
         const supabase = createClient(supabaseUrl, serviceRoleKey);
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('count')
-          .limit(1)
-          .single();
-        
+        const { data, error } = await supabase.from('profiles').select('count').limit(1).single();
+
         if (error) {
           checks.push({
             service: 'database',
             status: 'unhealthy',
             responseTime: Date.now() - dbCheckStart,
-            error: error.message
+            error: error.message,
           });
         } else {
           checks.push({
             service: 'database',
             status: 'healthy',
-            responseTime: Date.now() - dbCheckStart
+            responseTime: Date.now() - dbCheckStart,
           });
         }
       } catch (error) {
@@ -70,14 +68,14 @@ export async function GET() {
           service: 'database',
           status: 'unhealthy',
           responseTime: Date.now() - dbCheckStart,
-          error: error instanceof Error ? error.message : 'Database connection failed'
+          error: error instanceof Error ? error.message : 'Database connection failed',
         });
       }
     } else {
       checks.push({
         service: 'database',
         status: 'unhealthy',
-        error: 'Missing database configuration'
+        error: 'Missing database configuration',
       });
     }
 
@@ -87,24 +85,24 @@ export async function GET() {
       try {
         const supabase = createClient(supabaseUrl, serviceRoleKey);
         const bucket = process.env.NEXT_PUBLIC_UPLOADS_BUCKET || 'user-uploads';
-        
+
         // Try to create a signed URL as a connectivity test
         const { data, error } = await supabase.storage
           .from(bucket)
           .createSignedUrl('health-check-dummy', 60);
-        
+
         if (error && !error.message.includes('not found')) {
           checks.push({
             service: 'storage',
             status: 'unhealthy',
             responseTime: Date.now() - storageCheckStart,
-            error: error.message
+            error: error.message,
           });
         } else {
           checks.push({
             service: 'storage',
             status: 'healthy',
-            responseTime: Date.now() - storageCheckStart
+            responseTime: Date.now() - storageCheckStart,
           });
         }
       } catch (error) {
@@ -112,61 +110,67 @@ export async function GET() {
           service: 'storage',
           status: 'unhealthy',
           responseTime: Date.now() - storageCheckStart,
-          error: error instanceof Error ? error.message : 'Storage connection failed'
+          error: error instanceof Error ? error.message : 'Storage connection failed',
         });
       }
     } else {
       checks.push({
         service: 'storage',
         status: 'unhealthy',
-        error: 'Missing storage configuration'
+        error: 'Missing storage configuration',
       });
     }
 
     // Overall health status
-    const overallStatus = checks.every(check => check.status === 'healthy') ? 'healthy' : 'unhealthy';
-    
+    const overallStatus = checks.every(check => check.status === 'healthy')
+      ? 'healthy'
+      : 'unhealthy';
+
     const response: HealthResponse = {
       status: overallStatus,
       timestamp: new Date().toISOString(),
       version: process.env.npm_package_version || '0.1.0',
       uptime: process.uptime(),
-      checks
+      checks,
     };
 
     logger.info('Health check completed', {
       status: overallStatus,
       responseTime: Date.now() - startTime,
-      checks: checks.length
+      checks: checks.length,
     });
 
-    return NextResponse.json(response, { 
+    return NextResponse.json(response, {
       status: overallStatus === 'healthy' ? 200 : 503,
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     });
-
   } catch (error) {
     logger.error('Health check failed', error);
-    
-    return NextResponse.json({
-      status: 'unhealthy',
-      timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version || '0.1.0',
-      uptime: process.uptime(),
-      checks: [{
-        service: 'system',
+
+    return NextResponse.json(
+      {
         status: 'unhealthy',
-        error: error instanceof Error ? error.message : 'System error'
-      }]
-    }, { 
-      status: 503,
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Content-Type': 'application/json'
+        timestamp: new Date().toISOString(),
+        version: process.env.npm_package_version || '0.1.0',
+        uptime: process.uptime(),
+        checks: [
+          {
+            service: 'system',
+            status: 'unhealthy',
+            error: error instanceof Error ? error.message : 'System error',
+          },
+        ],
+      },
+      {
+        status: 503,
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Content-Type': 'application/json',
+        },
       }
-    });
+    );
   }
 }

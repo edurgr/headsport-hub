@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
+
 import { supabaseServer } from '@/lib/supabase-server';
 
-export async function PUT(
-  req: Request, 
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = await req.json();
   const sb = await supabaseServer();

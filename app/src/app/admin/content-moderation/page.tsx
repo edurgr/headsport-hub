@@ -1,20 +1,22 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
+import {
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  FileImage,
+  Filter,
+  Flag,
+  History,
+  Settings,
+  XCircle,
+} from 'lucide-react';
+
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import { 
-  CheckCircle, 
-  XCircle, 
-  Flag, 
-  Clock,
-  AlertTriangle,
-  Settings,
-  History,
-  FileImage,
-  Filter
-} from 'lucide-react';
 
 interface ModerationQueueItem {
   id: string;
@@ -60,18 +62,20 @@ export default function ContentModerationPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [showModerationModal, setShowModerationModal] = useState(false);
-  const [moderationAction, setModerationAction] = useState<'approve' | 'reject' | 'flag'>('approve');
+  const [moderationAction, setModerationAction] = useState<'approve' | 'reject' | 'flag'>(
+    'approve'
+  );
   const [moderationReason, setModerationReason] = useState('');
   const [moderationNotes, setModerationNotes] = useState('');
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       if (activeTab === 'queue') {
         const response = await authenticatedFetch('/api/admin/content-moderation?action=queue');
         const data = await response.json();
-        
+
         if (response.ok) {
           setQueueItems(data.items || []);
         } else {
@@ -80,7 +84,7 @@ export default function ContentModerationPage() {
       } else if (activeTab === 'stats') {
         const response = await authenticatedFetch('/api/admin/content-moderation?action=stats');
         const data = await response.json();
-        
+
         if (response.ok) {
           setStats(data);
         } else {
@@ -100,7 +104,12 @@ export default function ContentModerationPage() {
     }
   }, [profile, activeTab, fetchData]);
 
-  const handleModerateContent = async (fileId: string, action: 'approve' | 'reject' | 'flag', reason?: string, notes?: string) => {
+  const handleModerateContent = async (
+    fileId: string,
+    action: 'approve' | 'reject' | 'flag',
+    reason?: string,
+    notes?: string
+  ) => {
     try {
       const response = await authenticatedFetch('/api/admin/content-moderation', {
         method: 'POST',
@@ -109,8 +118,8 @@ export default function ContentModerationPage() {
           file_id: fileId,
           moderation_action: action,
           reason,
-          notes
-        })
+          notes,
+        }),
       });
 
       if (response.ok) {
@@ -139,8 +148,8 @@ export default function ContentModerationPage() {
           file_ids: selectedItems,
           moderation_action: moderationAction,
           reason: moderationReason,
-          notes: moderationNotes
-        })
+          notes: moderationNotes,
+        }),
       });
 
       if (response.ok) {
@@ -161,10 +170,14 @@ export default function ContentModerationPage() {
 
   const getPriorityLabel = (priority: number) => {
     switch (priority) {
-      case 4: return 'Critical';
-      case 3: return 'High';
-      case 2: return 'Medium';
-      default: return 'Low';
+      case 4:
+        return 'Critical';
+      case 3:
+        return 'High';
+      case 2:
+        return 'Medium';
+      default:
+        return 'Low';
     }
   };
 
@@ -191,7 +204,9 @@ export default function ContentModerationPage() {
     <ProtectedRoute requiredRole={['admin']}>
       <div className="p-6 max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[hsl(var(--foreground))] mb-2">Content Moderation</h1>
+          <h1 className="text-3xl font-bold text-[hsl(var(--foreground))] mb-2">
+            Content Moderation
+          </h1>
           <p className="text-[hsl(var(--muted))]">Review and moderate uploaded content</p>
         </div>
 
@@ -203,8 +218,8 @@ export default function ContentModerationPage() {
                 { id: 'queue', label: 'Moderation Queue', icon: Clock },
                 { id: 'stats', label: 'Statistics', icon: FileImage },
                 { id: 'rules', label: 'Rules', icon: Settings },
-                { id: 'history', label: 'History', icon: History }
-              ].map((tab) => {
+                { id: 'history', label: 'History', icon: History },
+              ].map(tab => {
                 const Icon = tab.icon;
                 return (
                   <button
@@ -215,7 +230,9 @@ export default function ContentModerationPage() {
                         ? 'text-[hsl(var(--info))]'
                         : 'text-[hsl(var(--muted))] hover:opacity-80'
                     }`}
-                    style={{ borderColor: activeTab === tab.id ? 'hsl(var(--info))' : 'transparent' }}
+                    style={{
+                      borderColor: activeTab === tab.id ? 'hsl(var(--info))' : 'transparent',
+                    }}
                   >
                     <Icon className="w-4 h-4" />
                     <span>{tab.label}</span>
@@ -235,7 +252,7 @@ export default function ContentModerationPage() {
             </div>
           </div>
         )}
-        
+
         {success && (
           <div className="mb-6 alert alert-success">
             <div className="flex items-center">
@@ -274,10 +291,7 @@ export default function ContentModerationPage() {
                     >
                       Reject All
                     </button>
-                    <button
-                      onClick={() => setSelectedItems([])}
-                      className="btn px-3 py-1 text-sm"
-                    >
+                    <button onClick={() => setSelectedItems([])} className="btn px-3 py-1 text-sm">
                       Clear Selection
                     </button>
                   </div>
@@ -295,25 +309,31 @@ export default function ContentModerationPage() {
 
               {loading ? (
                 <div className="p-6 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style={{ borderColor: 'hsl(var(--info))' }}></div>
+                  <div
+                    className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto"
+                    style={{ borderColor: 'hsl(var(--info))' }}
+                  ></div>
                   <p className="text-[hsl(var(--muted))] mt-2">Loading moderation queue...</p>
                 </div>
               ) : queueItems.length === 0 ? (
                 <div className="p-6 text-center text-[hsl(var(--muted))]">
-                  <Clock className="w-12 h-12 mx-auto mb-4" style={{ color: 'hsl(var(--muted))' }} />
+                  <Clock
+                    className="w-12 h-12 mx-auto mb-4"
+                    style={{ color: 'hsl(var(--muted))' }}
+                  />
                   <p className="text-lg font-medium">No items in moderation queue</p>
                   <p className="text-sm">All content has been reviewed</p>
                 </div>
               ) : (
                 <div className="divide-y" style={{ borderColor: 'hsl(var(--border))' }}>
-                  {queueItems.map((item) => (
+                  {queueItems.map(item => (
                     <div key={item.id} className="p-6 hover:opacity-95">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start space-x-4">
                           <input
                             type="checkbox"
                             checked={selectedItems.includes(item.file_id)}
-                            onChange={(e) => {
+                            onChange={e => {
                               if (e.target.checked) {
                                 setSelectedItems([...selectedItems, item.file_id]);
                               } else {
@@ -328,28 +348,46 @@ export default function ContentModerationPage() {
                               <h3 className="text-lg font-medium text-[hsl(var(--foreground))]">
                                 {item.file?.filename || 'Unknown File'}
                               </h3>
-                              <span className={`badge ${item.priority >= 4 ? 'badge-error' : item.priority === 3 ? 'badge-warning' : item.priority === 2 ? 'badge-warning' : 'badge-neutral'}`}>
+                              <span
+                                className={`badge ${item.priority >= 4 ? 'badge-error' : item.priority === 3 ? 'badge-warning' : item.priority === 2 ? 'badge-warning' : 'badge-neutral'}`}
+                              >
                                 {getPriorityLabel(item.priority)}
                               </span>
                               {item.auto_flagged && (
-                                <span className="badge badge-warning">
-                                  Auto-flagged
-                                </span>
+                                <span className="badge badge-warning">Auto-flagged</span>
                               )}
                             </div>
-                            
+
                             <div className="text-sm text-[hsl(var(--muted))] space-y-1">
-                              <p><strong>Type:</strong> {item.file?.file_type || 'Unknown'}</p>
-                              <p><strong>Size:</strong> {item.file?.file_size ? formatFileSize(item.file.file_size) : 'Unknown'}</p>
-                              <p><strong>Uploaded by:</strong> {item.file?.upload_sessions?.profiles?.name || 'Unknown User'}</p>
-                              <p><strong>Uploaded:</strong> {item.file?.created_at ? new Date(item.file.created_at).toLocaleString() : 'Unknown'}</p>
+                              <p>
+                                <strong>Type:</strong> {item.file?.file_type || 'Unknown'}
+                              </p>
+                              <p>
+                                <strong>Size:</strong>{' '}
+                                {item.file?.file_size
+                                  ? formatFileSize(item.file.file_size)
+                                  : 'Unknown'}
+                              </p>
+                              <p>
+                                <strong>Uploaded by:</strong>{' '}
+                                {item.file?.upload_sessions?.profiles?.name || 'Unknown User'}
+                              </p>
+                              <p>
+                                <strong>Uploaded:</strong>{' '}
+                                {item.file?.created_at
+                                  ? new Date(item.file.created_at).toLocaleString()
+                                  : 'Unknown'}
+                              </p>
                               {item.flagged_reasons.length > 0 && (
-                                <p><strong>Flagged reasons:</strong> {item.flagged_reasons.join(', ')}</p>
+                                <p>
+                                  <strong>Flagged reasons:</strong>{' '}
+                                  {item.flagged_reasons.join(', ')}
+                                </p>
                               )}
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="flex space-x-2">
                           <button
                             onClick={() => handleModerateContent(item.file_id, 'approve')}
@@ -389,60 +427,85 @@ export default function ContentModerationPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="card p-6">
               <div className="flex items-center">
-                <div className="p-3 rounded-full" style={{ backgroundColor: 'hsl(var(--border))', color: 'hsl(var(--info))' }}>
+                <div
+                  className="p-3 rounded-full"
+                  style={{ backgroundColor: 'hsl(var(--border))', color: 'hsl(var(--info))' }}
+                >
                   <FileImage className="w-6 h-6" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-[hsl(var(--muted))]">Total Files</p>
-                  <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{stats.total_files}</p>
+                  <p className="text-2xl font-bold text-[hsl(var(--foreground))]">
+                    {stats.total_files}
+                  </p>
                 </div>
               </div>
             </div>
 
             <div className="card p-6">
               <div className="flex items-center">
-                <div className="p-3 rounded-full" style={{ backgroundColor: 'hsl(var(--border))', color: 'hsl(var(--warning))' }}>
+                <div
+                  className="p-3 rounded-full"
+                  style={{ backgroundColor: 'hsl(var(--border))', color: 'hsl(var(--warning))' }}
+                >
                   <Clock className="w-6 h-6" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-[hsl(var(--muted))]">Pending</p>
-                  <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{stats.pending_files}</p>
+                  <p className="text-2xl font-bold text-[hsl(var(--foreground))]">
+                    {stats.pending_files}
+                  </p>
                 </div>
               </div>
             </div>
 
             <div className="card p-6">
               <div className="flex items-center">
-                <div className="p-3 rounded-full" style={{ backgroundColor: 'hsl(var(--border))', color: 'hsl(var(--success))' }}>
+                <div
+                  className="p-3 rounded-full"
+                  style={{ backgroundColor: 'hsl(var(--border))', color: 'hsl(var(--success))' }}
+                >
                   <CheckCircle className="w-6 h-6" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-[hsl(var(--muted))]">Approved</p>
-                  <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{stats.approved_files}</p>
+                  <p className="text-2xl font-bold text-[hsl(var(--foreground))]">
+                    {stats.approved_files}
+                  </p>
                 </div>
               </div>
             </div>
 
             <div className="card p-6">
               <div className="flex items-center">
-                <div className="p-3 rounded-full" style={{ backgroundColor: 'hsl(var(--border))', color: 'hsl(var(--error))' }}>
+                <div
+                  className="p-3 rounded-full"
+                  style={{ backgroundColor: 'hsl(var(--border))', color: 'hsl(var(--error))' }}
+                >
                   <XCircle className="w-6 h-6" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-[hsl(var(--muted))]">Rejected</p>
-                  <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{stats.rejected_files}</p>
+                  <p className="text-2xl font-bold text-[hsl(var(--foreground))]">
+                    {stats.rejected_files}
+                  </p>
                 </div>
               </div>
             </div>
 
             <div className="card p-6">
               <div className="flex items-center">
-                <div className="p-3 rounded-full" style={{ backgroundColor: 'hsl(var(--border))', color: 'hsl(var(--warning))' }}>
+                <div
+                  className="p-3 rounded-full"
+                  style={{ backgroundColor: 'hsl(var(--border))', color: 'hsl(var(--warning))' }}
+                >
                   <Flag className="w-6 h-6" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-[hsl(var(--muted))]">Flagged</p>
-                  <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{stats.flagged_files}</p>
+                  <p className="text-2xl font-bold text-[hsl(var(--foreground))]">
+                    {stats.flagged_files}
+                  </p>
                 </div>
               </div>
             </div>
@@ -454,7 +517,9 @@ export default function ContentModerationPage() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-[hsl(var(--muted))]">Queue Size</p>
-                  <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{stats.queue_size}</p>
+                  <p className="text-2xl font-bold text-[hsl(var(--foreground))]">
+                    {stats.queue_size}
+                  </p>
                 </div>
               </div>
             </div>
@@ -478,12 +543,18 @@ export default function ContentModerationPage() {
         {/* Moderation Modal */}
         {showModerationModal && (
           <div className="fixed inset-0 bg-[hsl(var(--foreground))] bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md" style={{ backgroundColor: 'hsl(var(--secondary))', borderColor: 'hsl(var(--border))' }}>
+            <div
+              className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md"
+              style={{
+                backgroundColor: 'hsl(var(--secondary))',
+                borderColor: 'hsl(var(--border))',
+              }}
+            >
               <div className="mt-3">
                 <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-4">
                   Bulk {moderationAction === 'approve' ? 'Approve' : 'Reject'} Content
                 </h3>
-                
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--muted))] mb-1">
@@ -492,38 +563,36 @@ export default function ContentModerationPage() {
                     <input
                       type="text"
                       value={moderationReason}
-                      onChange={(e) => setModerationReason(e.target.value)}
+                      onChange={e => setModerationReason(e.target.value)}
                       className="input"
                       placeholder="Enter reason for moderation action"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-[hsl(var(--muted))] mb-1">
                       Notes (Optional)
                     </label>
                     <textarea
                       value={moderationNotes}
-                      onChange={(e) => setModerationNotes(e.target.value)}
+                      onChange={e => setModerationNotes(e.target.value)}
                       className="input"
                       rows={3}
                       placeholder="Additional notes"
                     />
                   </div>
                 </div>
-                
+
                 <div className="flex justify-end space-x-3 mt-6">
-                  <button
-                    onClick={() => setShowModerationModal(false)}
-                    className="btn px-4 py-2"
-                  >
+                  <button onClick={() => setShowModerationModal(false)} className="btn px-4 py-2">
                     Cancel
                   </button>
                   <button
                     onClick={handleBulkModerate}
                     className={`px-4 py-2 rounded-md ${moderationAction === 'approve' ? 'btn-approve' : 'btn-reject'}`}
                   >
-                    {moderationAction === 'approve' ? 'Approve' : 'Reject'} {selectedItems.length} Items
+                    {moderationAction === 'approve' ? 'Approve' : 'Reject'} {selectedItems.length}{' '}
+                    Items
                   </button>
                 </div>
               </div>

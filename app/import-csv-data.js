@@ -17,7 +17,9 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABAS
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
-  console.error('Missing Supabase env. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
+  console.error(
+    'Missing Supabase env. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.'
+  );
   process.exit(1);
 }
 
@@ -25,7 +27,7 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
 function parseCsv(content) {
   const lines = content.split(/\r?\n/).filter(Boolean);
-  const header = lines[0].split(',').map((h) => h.trim());
+  const header = lines[0].split(',').map(h => h.trim());
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
     const row = [];
@@ -55,21 +57,25 @@ function parseCsv(content) {
 
 function toNumberEU(val) {
   if (!val) return null;
-  const cleaned = String(val).replace(/[^0-9,\.\-]/g, '').replace(/,(?=\d{1,2}(\D|$))/g, '.');
+  const cleaned = String(val)
+    .replace(/[^0-9,\.\-]/g, '')
+    .replace(/,(?=\d{1,2}(\D|$))/g, '.');
   const num = parseFloat(cleaned);
   return isNaN(num) ? null : num;
 }
 
 function extractSidecut(text) {
   // e.g., 101/65/84 @ Length 193
-  if (!text) return { sidecut_top: null, sidecut_mid: null, sidecut_tail: null, sidecut_length: null };
+  if (!text)
+    return { sidecut_top: null, sidecut_mid: null, sidecut_tail: null, sidecut_length: null };
   const match = text.match(/(\d+[\.,]?\d?)\/(\d+[\.,]?\d?)\/(\d+[\.,]?\d?)\s*@\s*Length\s*(\d+)/i);
-  if (!match) return { sidecut_top: null, sidecut_mid: null, sidecut_tail: null, sidecut_length: null };
+  if (!match)
+    return { sidecut_top: null, sidecut_mid: null, sidecut_tail: null, sidecut_length: null };
   return {
     sidecut_top: match[1],
     sidecut_mid: match[2],
     sidecut_tail: match[3],
-    sidecut_length: match[4]
+    sidecut_length: match[4],
   };
 }
 
@@ -80,7 +86,7 @@ function extractRadius(text) {
   if (!match) return { radius_value: null, radius_length: null };
   return {
     radius_value: toNumberEU(match[1]),
-    radius_length: match[2]
+    radius_length: match[2],
   };
 }
 
@@ -148,7 +154,9 @@ async function importSkis(csvPath) {
       const [ver, lang] = verLang.includes('.') ? verLang.split('.') : ['', verLang];
       const length_list = r['length'] || '';
       const { radius_value, radius_length } = extractRadius(r['radius']);
-      const { sidecut_top, sidecut_mid, sidecut_tail, sidecut_length } = extractSidecut(r['sidecut']);
+      const { sidecut_top, sidecut_mid, sidecut_tail, sidecut_length } = extractSidecut(
+        r['sidecut']
+      );
 
       const payload = {
         article: String(article),
@@ -168,12 +176,10 @@ async function importSkis(csvPath) {
         sidecut_mid,
         sidecut_tail,
         sidecut_length,
-        is_active: true
+        is_active: true,
       };
 
-      const { error } = await supabase
-        .from('ski')
-        .upsert(payload, { onConflict: 'article' });
+      const { error } = await supabase.from('ski').upsert(payload, { onConflict: 'article' });
       if (error) {
         console.error('Upsert ski error for', article, error.message);
       }
@@ -211,12 +217,10 @@ async function importSkis(csvPath) {
       sidecut_mid,
       sidecut_tail,
       sidecut_length,
-      is_active: true
+      is_active: true,
     };
 
-    const { error } = await supabase
-      .from('ski')
-      .upsert(payload, { onConflict: 'article' });
+    const { error } = await supabase.from('ski').upsert(payload, { onConflict: 'article' });
     if (error) {
       console.error('Upsert ski error for', article, error.message);
     }
@@ -248,12 +252,10 @@ async function importBindings(csvPath) {
         din_min,
         din_max,
         weight_value,
-        is_active: true
+        is_active: true,
       };
 
-      const { error } = await supabase
-        .from('bindings')
-        .upsert(payload, { onConflict: 'article' });
+      const { error } = await supabase.from('bindings').upsert(payload, { onConflict: 'article' });
       if (error) {
         console.error('Upsert bindings error for', article, error.message);
       }
@@ -284,12 +286,10 @@ async function importBindings(csvPath) {
       din_min,
       din_max,
       weight_value,
-      is_active: true
+      is_active: true,
     };
 
-    const { error } = await supabase
-      .from('bindings')
-      .upsert(payload, { onConflict: 'article' });
+    const { error } = await supabase.from('bindings').upsert(payload, { onConflict: 'article' });
     if (error) {
       console.error('Upsert bindings error for', article, error.message);
     }
@@ -301,11 +301,11 @@ async function importAccessories(csvPath) {
   console.log('Importing ACCESSORIES from', csvPath);
   const content = fs.readFileSync(csvPath, 'utf-8');
   const rows = parseCsv(content);
-  
+
   for (const r of rows) {
     const article = r['article'];
     if (!article) continue;
-    
+
     const payload = {
       article: String(article),
       ver: r['ver'] || null,
@@ -315,12 +315,10 @@ async function importAccessories(csvPath) {
       length: r['length'] || null,
       colors: r['colors'] || null,
       diameter: r['diameter'] || null,
-      is_active: true
+      is_active: true,
     };
 
-    const { error } = await supabase
-      .from('accessories')
-      .upsert(payload, { onConflict: 'article' });
+    const { error } = await supabase.from('accessories').upsert(payload, { onConflict: 'article' });
     if (error) {
       console.error('Upsert accessories error for', article, error.message);
     }
@@ -331,11 +329,11 @@ async function importBoots(csvPath) {
   console.log('Importing BOOTS from', csvPath);
   const content = fs.readFileSync(csvPath, 'utf-8');
   const rows = parseCsv(content);
-  
+
   for (const r of rows) {
     const article = r['article'];
     if (!article) continue;
-    
+
     const payload = {
       article: String(article),
       category: r['category'] || 'BOOTS',
@@ -350,12 +348,10 @@ async function importBoots(csvPath) {
       last1: r['last1'] || null,
       last2: r['last2'] || null,
       size: r['size'] || null,
-      is_active: true
+      is_active: true,
     };
 
-    const { error } = await supabase
-      .from('boots')
-      .upsert(payload, { onConflict: 'article' });
+    const { error } = await supabase.from('boots').upsert(payload, { onConflict: 'article' });
     if (error) {
       console.error('Upsert boots error for', article, error.message);
     }
@@ -366,11 +362,11 @@ async function importGoggles(csvPath) {
   console.log('Importing GOGGLES from', csvPath);
   const content = fs.readFileSync(csvPath, 'utf-8');
   const rows = parseCsv(content);
-  
+
   for (const r of rows) {
     const article = r['article'];
     if (!article) continue;
-    
+
     const payload = {
       article: String(article),
       ver: r['ver'] || null,
@@ -380,12 +376,10 @@ async function importGoggles(csvPath) {
       length: r['length'] || null,
       color: r['color'] || null,
       weather: r['weather'] || null,
-      is_active: true
+      is_active: true,
     };
 
-    const { error } = await supabase
-      .from('goggles')
-      .upsert(payload, { onConflict: 'article' });
+    const { error } = await supabase.from('goggles').upsert(payload, { onConflict: 'article' });
     if (error) {
       console.error('Upsert goggles error for', article, error.message);
     }
@@ -396,11 +390,11 @@ async function importHelmets(csvPath) {
   console.log('Importing HELMETS from', csvPath);
   const content = fs.readFileSync(csvPath, 'utf-8');
   const rows = parseCsv(content);
-  
+
   for (const r of rows) {
     const article = r['article'];
     if (!article) continue;
-    
+
     const payload = {
       article: String(article),
       ver: r['ver'] || null,
@@ -410,12 +404,10 @@ async function importHelmets(csvPath) {
       sizes: r['sizes'] || null,
       colors: r['colors'] || null,
       visor: r['visor'] || null,
-      is_active: true
+      is_active: true,
     };
 
-    const { error } = await supabase
-      .from('helmet')
-      .upsert(payload, { onConflict: 'article' });
+    const { error } = await supabase.from('helmet').upsert(payload, { onConflict: 'article' });
     if (error) {
       console.error('Upsert helmet error for', article, error.message);
     }
@@ -426,11 +418,11 @@ async function importSnowboardsBoots(csvPath) {
   console.log('Importing SNOWBOARDS_BOOTS from', csvPath);
   const content = fs.readFileSync(csvPath, 'utf-8');
   const rows = parseCsv(content);
-  
+
   for (const r of rows) {
     const article = r['article'];
     if (!article) continue;
-    
+
     const payload = {
       article: String(article),
       ver: r['ver'] || null,
@@ -441,7 +433,7 @@ async function importSnowboardsBoots(csvPath) {
       colors: r['colors'] || null,
       flex: r['flex'] || null,
       forward_lean: r['forward_lean'] || null,
-      is_active: true
+      is_active: true,
     };
 
     const { error } = await supabase
@@ -457,11 +449,11 @@ async function importSnowboardsAccessories(csvPath) {
   console.log('Importing SNOWBOARDS_ACCESSORIES from', csvPath);
   const content = fs.readFileSync(csvPath, 'utf-8');
   const rows = parseCsv(content);
-  
+
   for (const r of rows) {
     const article = r['article'];
     if (!article) continue;
-    
+
     const payload = {
       article: String(article),
       ver: r['ver'] || null,
@@ -471,7 +463,7 @@ async function importSnowboardsAccessories(csvPath) {
       colors: r['colors'] || null,
       volume: r['volume'] || null,
       dimensions: r['dimensions'] || null,
-      is_active: true
+      is_active: true,
     };
 
     const { error } = await supabase
@@ -487,11 +479,11 @@ async function importSnowboardsBindings(csvPath) {
   console.log('Importing SNOWBOARDS_BINDINGS from', csvPath);
   const content = fs.readFileSync(csvPath, 'utf-8');
   const rows = parseCsv(content);
-  
+
   for (const r of rows) {
     const article = r['article'];
     if (!article) continue;
-    
+
     const payload = {
       article: String(article),
       ver: r['ver'] || null,
@@ -502,7 +494,7 @@ async function importSnowboardsBindings(csvPath) {
       colors: r['colors'] || null,
       skills: r['skills'] || null,
       flex: r['flex'] || null,
-      is_active: true
+      is_active: true,
     };
 
     const { error } = await supabase
@@ -518,11 +510,11 @@ async function importSnowboardsBoards(csvPath) {
   console.log('Importing SNOWBOARDS_BOARDS from', csvPath);
   const content = fs.readFileSync(csvPath, 'utf-8');
   const rows = parseCsv(content);
-  
+
   for (const r of rows) {
     const article = r['article'];
     if (!article) continue;
-    
+
     const payload = {
       article: String(article),
       ver: r['ver'] || null,
@@ -536,7 +528,7 @@ async function importSnowboardsBoards(csvPath) {
       graphene_or_bamboo: r['graphene_or_bamboo'] || null,
       flex: r['flex'] || null,
       base: r['base'] || null,
-      is_active: true
+      is_active: true,
     };
 
     const { error } = await supabase
@@ -566,7 +558,7 @@ async function main() {
       { file: 'snowboards_boots.csv', importFn: importSnowboardsBoots },
       { file: 'snowboards_accessories.csv', importFn: importSnowboardsAccessories },
       { file: 'snowboards_bindings.csv', importFn: importSnowboardsBindings },
-      { file: 'snowboards_boards.csv', importFn: importSnowboardsBoards }
+      { file: 'snowboards_boards.csv', importFn: importSnowboardsBoards },
     ];
 
     for (const { file, importFn } of csvFiles) {
@@ -589,17 +581,15 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { 
-  importSkis, 
-  importBindings, 
-  importAccessories, 
-  importBoots, 
-  importGoggles, 
-  importHelmets, 
-  importSnowboardsBoots, 
-  importSnowboardsAccessories, 
-  importSnowboardsBindings, 
-  importSnowboardsBoards 
+module.exports = {
+  importSkis,
+  importBindings,
+  importAccessories,
+  importBoots,
+  importGoggles,
+  importHelmets,
+  importSnowboardsBoots,
+  importSnowboardsAccessories,
+  importSnowboardsBindings,
+  importSnowboardsBoards,
 };
-
-

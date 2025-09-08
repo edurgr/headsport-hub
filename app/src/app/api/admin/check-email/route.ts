@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { createClient } from '@supabase/supabase-js';
 
 export async function GET(req: Request) {
@@ -14,7 +15,10 @@ export async function GET(req: Request) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!supabaseUrl || !serviceKey) {
-      return NextResponse.json({ error: 'Server not configured for admin operations' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Server not configured for admin operations' },
+        { status: 500 }
+      );
     }
 
     const admin = createClient(supabaseUrl, serviceKey);
@@ -35,10 +39,7 @@ export async function GET(req: Request) {
     // Check invitations/invites tables
     const invitationsResult: any = { found: false, rows: [] as any[] };
     try {
-      const { data, error } = await admin
-        .from('invitations')
-        .select('*')
-        .ilike('email', email);
+      const { data, error } = await admin.from('invitations').select('*').ilike('email', email);
       if (!error && data && data.length > 0) {
         invitationsResult.found = true;
         invitationsResult.rows = data;
@@ -46,10 +47,7 @@ export async function GET(req: Request) {
     } catch {}
 
     try {
-      const { data, error } = await admin
-        .from('invites')
-        .select('*')
-        .ilike('email', email);
+      const { data, error } = await admin.from('invites').select('*').ilike('email', email);
       if (!error && data && data.length > 0) {
         invitationsResult.found = true;
         invitationsResult.rows = [...invitationsResult.rows, ...data];
@@ -68,7 +66,12 @@ export async function GET(req: Request) {
         const match = users.find((u: any) => (u.email || '').toLowerCase() === email);
         if (match) {
           authResult.found = true;
-          authResult.user = { id: match.id, email: match.email, created_at: match.created_at, confirmed_at: match.confirmed_at };
+          authResult.user = {
+            id: match.id,
+            email: match.email,
+            created_at: match.created_at,
+            confirmed_at: match.confirmed_at,
+          };
           break;
         }
         if (users.length < perPage) break; // no more pages
@@ -85,9 +88,12 @@ export async function GET(req: Request) {
       invitations: invitationsResult,
     });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown' }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown',
+      },
+      { status: 500 }
+    );
   }
 }
-
-
-

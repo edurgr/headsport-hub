@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
+
 import { createClient } from '@supabase/supabase-js';
-import { supabaseServer } from '@/lib/supabase-server';
+
 import { supabaseAdmin as supabaseAdminClient } from '@/lib/supabase-admin';
+import { supabaseServer } from '@/lib/supabase-server';
 
 export async function GET(req: Request) {
   try {
@@ -17,7 +19,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Configuration error' }, { status: 500 });
     }
 
-    const supabaseAdmin = supabaseAdminClient ?? (serviceRoleKey ? createClient(supabaseUrl, serviceRoleKey) : null);
+    const supabaseAdmin =
+      supabaseAdminClient ?? (serviceRoleKey ? createClient(supabaseUrl, serviceRoleKey) : null);
     let sb = await supabaseServer();
 
     // Resolve current user id and role
@@ -34,7 +37,9 @@ export async function GET(req: Request) {
         .single();
       role = (prof?.role as any) || 'athlete';
     } else {
-      const authHeader = (req as any).headers?.get?.('authorization') || (req as any).headers?.get?.('Authorization');
+      const authHeader =
+        (req as any).headers?.get?.('authorization') ||
+        (req as any).headers?.get?.('Authorization');
       if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
         try {
@@ -73,7 +78,11 @@ export async function GET(req: Request) {
           .eq('user_id', filterUserId);
         if (sessErr) return NextResponse.json({ error: sessErr.message }, { status: 500 });
         const ids = (sessions || []).map((s: any) => s.id);
-        if (ids.length === 0) return NextResponse.json({ total: 0, byType: group === 'type' ? { image: 0, video: 0 } : undefined });
+        if (ids.length === 0)
+          return NextResponse.json({
+            total: 0,
+            byType: group === 'type' ? { image: 0, video: 0 } : undefined,
+          });
         if (group === 'type') {
           const { count: totalCount, error: totalErr } = await source
             .from('upload_files')
@@ -90,7 +99,10 @@ export async function GET(req: Request) {
             .select('*', { count: 'exact', head: true })
             .in('session_id', ids)
             .eq('file_type', 'video');
-          return NextResponse.json({ total: totalCount || 0, byType: { image: imageCount || 0, video: videoCount || 0 } });
+          return NextResponse.json({
+            total: totalCount || 0,
+            byType: { image: imageCount || 0, video: videoCount || 0 },
+          });
         }
         const { count, error } = await source
           .from('upload_files')
@@ -112,7 +124,10 @@ export async function GET(req: Request) {
           .from('upload_files')
           .select('*', { count: 'exact', head: true })
           .eq('file_type', 'video');
-        return NextResponse.json({ total: totalCount || 0, byType: { image: imageCount || 0, video: videoCount || 0 } });
+        return NextResponse.json({
+          total: totalCount || 0,
+          byType: { image: imageCount || 0, video: videoCount || 0 },
+        });
       }
       const { count, error } = await source
         .from('upload_files')
@@ -128,7 +143,11 @@ export async function GET(req: Request) {
       .eq('user_id', currentUserId);
     if (sessErr) return NextResponse.json({ error: sessErr.message }, { status: 500 });
     const ids = (mySessions || []).map((s: any) => s.id);
-    if (ids.length === 0) return NextResponse.json({ total: 0, byType: group === 'type' ? { image: 0, video: 0 } : undefined });
+    if (ids.length === 0)
+      return NextResponse.json({
+        total: 0,
+        byType: group === 'type' ? { image: 0, video: 0 } : undefined,
+      });
 
     if (group === 'type') {
       const { count: totalCount, error: totalErr } = await source
@@ -146,7 +165,10 @@ export async function GET(req: Request) {
         .select('*', { count: 'exact', head: true })
         .in('session_id', ids)
         .eq('file_type', 'video');
-      return NextResponse.json({ total: totalCount || 0, byType: { image: imageCount || 0, video: videoCount || 0 } });
+      return NextResponse.json({
+        total: totalCount || 0,
+        byType: { image: imageCount || 0, video: videoCount || 0 },
+      });
     }
 
     const { count, error } = await source
@@ -160,5 +182,3 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-
-

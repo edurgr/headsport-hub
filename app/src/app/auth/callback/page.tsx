@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+
 import { useRouter } from 'next/navigation';
+
 import { supabaseClient } from '@/lib/supabase-client';
 
 export default function AuthCallbackPage() {
@@ -29,7 +31,7 @@ export default function AuthCallbackPage() {
       try {
         // Handle other auth flows (e.g., magic link, OAuth)
         const { data, error } = await supabaseClient.auth.getSession();
-        
+
         if (error) {
           console.error('Auth callback getSession error:', error);
           setStatus('error');
@@ -40,7 +42,7 @@ export default function AuthCallbackPage() {
         if (data.session) {
           setStatus('success');
           setMessage('Authentication successful! Redirecting...');
-          
+
           // Redirect to dashboard; schedule and allow cancellation
           redirectTimerRef.current = window.setTimeout(() => {
             router.push('/');
@@ -59,7 +61,9 @@ export default function AuthCallbackPage() {
     handleAuthCallback();
 
     // Set up a listener for PASSWORD_RECOVERY as a fallback
-    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((event) => {
+    const {
+      data: { subscription },
+    } = supabaseClient.auth.onAuthStateChange(event => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsRecovery(true);
         setStatus('success');
@@ -115,13 +119,15 @@ export default function AuthCallbackPage() {
           await fetch('/api/invitations/accept', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: inviteToken })
+            body: JSON.stringify({ token: inviteToken }),
           });
         } catch {}
       }
 
       // Clear hash to avoid re-triggering recovery on back/refresh
-      try { window.history.replaceState({}, '', window.location.pathname + window.location.search); } catch {}
+      try {
+        window.history.replaceState({}, '', window.location.pathname + window.location.search);
+      } catch {}
       setTimeout(() => router.push('/'), 1500);
     } catch (err) {
       setFormError('Unexpected error updating password');
@@ -144,8 +150,18 @@ export default function AuthCallbackPage() {
         {status === 'success' && !isRecovery && (
           <>
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg
+                className="w-6 h-6 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
             </div>
             <h1 className="text-xl font-semibold text-green-900 mb-2">Success!</h1>
@@ -156,8 +172,18 @@ export default function AuthCallbackPage() {
         {status === 'error' && (
           <>
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </div>
             <h1 className="text-xl font-semibold text-red-900 mb-2">Authentication Failed</h1>
@@ -174,8 +200,18 @@ export default function AuthCallbackPage() {
         {status === 'success' && isRecovery && (
           <>
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c0-1.657-1.343-3-3-3S6 9.343 6 11s1.343 3 3 3 3-1.343 3-3z M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2" />
+              <svg
+                className="w-6 h-6 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 11c0-1.657-1.343-3-3-3S6 9.343 6 11s1.343 3 3 3 3-1.343 3-3z M19 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2"
+                />
               </svg>
             </div>
             <h1 className="text-xl font-semibold text-gray-900 mb-2">Reset your password</h1>
@@ -186,7 +222,7 @@ export default function AuthCallbackPage() {
                 <input
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={e => setPassword(e.target.value)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   minLength={6}
                   required
@@ -194,11 +230,13 @@ export default function AuthCallbackPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm new password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Confirm new password
+                </label>
                 <input
                   type="password"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={e => setConfirmPassword(e.target.value)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   minLength={6}
                   required
@@ -206,9 +244,15 @@ export default function AuthCallbackPage() {
                 />
               </div>
               {formError && (
-                <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">{formError}</div>
+                <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
+                  {formError}
+                </div>
               )}
-              <button type="submit" disabled={updating} className={`w-full py-2.5 rounded-md text-white font-medium ${updating ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}>
+              <button
+                type="submit"
+                disabled={updating}
+                className={`w-full py-2.5 rounded-md text-white font-medium ${updating ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+              >
                 {updating ? 'Updating…' : 'Update password'}
               </button>
             </form>

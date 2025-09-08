@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
@@ -27,7 +28,10 @@ export async function POST(request: NextRequest) {
       if (error) break;
       const users = data?.users || [];
       const match = users.find((u: any) => (u.email || '').toLowerCase() === target);
-      if (match) { userId = match.id; break; }
+      if (match) {
+        userId = match.id;
+        break;
+      }
       if (users.length < perPage) break;
       page += 1;
     }
@@ -43,9 +47,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, userId });
   } catch (e) {
-    return NextResponse.json({ error: 'Internal server error', details: e instanceof Error ? e.message : 'Unknown' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error', details: e instanceof Error ? e.message : 'Unknown' },
+      { status: 500 }
+    );
   }
 }
-
-
-

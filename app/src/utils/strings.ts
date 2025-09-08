@@ -1,14 +1,19 @@
 export const normalize = (s: string) =>
-  s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+  s
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase();
 
 /**
  * Format a display name by capitalizing each word
  */
 export const formatDisplayName = (name?: string): string => {
   if (!name) return 'Anonymous';
-  return name.trim().split(/\s+/).map(part => 
-    part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
-  ).join(' ');
+  return name
+    .trim()
+    .split(/\s+/)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
 };
 
 /**

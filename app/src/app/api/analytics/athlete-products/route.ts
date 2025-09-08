@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
+
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET() {
   try {
     const supabaseAdminClient = getSupabaseAdmin();
-    
+
     if (!supabaseAdminClient) {
-      return NextResponse.json({ error: 'Database connection required for analytics' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Database connection required for analytics' },
+        { status: 500 }
+      );
     }
 
     // Get all athletes
@@ -20,16 +24,16 @@ export async function GET() {
     }
 
     if (!athletes || athletes.length === 0) {
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         data: [],
-        type: 'athlete_products'
+        type: 'athlete_products',
       });
     }
 
     // Get products for each athlete from approved orders
     const athleteProductsData = await Promise.all(
-      athletes.map(async (athlete) => {
+      athletes.map(async athlete => {
         // Get approved orders for this athlete
         const { data: orders } = await supabaseAdminClient
           .from('orders')
@@ -44,7 +48,7 @@ export async function GET() {
             athlete_email: athlete.email,
             products: [],
             total_products: 0,
-            total_quantity: 0
+            total_quantity: 0,
           };
         }
 
@@ -53,12 +57,14 @@ export async function GET() {
         // Get order items for approved orders
         const { data: orderItems } = await supabaseAdminClient
           .from('order_items')
-          .select(`
+          .select(
+            `
             quantity,
             product_name,
             product_category,
             product_sku
-          `)
+          `
+          )
           .in('order_id', orderIds);
 
         if (!orderItems || orderItems.length === 0) {
@@ -68,7 +74,7 @@ export async function GET() {
             athlete_email: athlete.email,
             products: [],
             total_products: 0,
-            total_quantity: 0
+            total_quantity: 0,
           };
         }
 
@@ -83,7 +89,7 @@ export async function GET() {
               name: item.product_name,
               category: item.product_category,
               sku: item.product_sku,
-              quantity: item.quantity || 0
+              quantity: item.quantity || 0,
             });
           }
         });
@@ -97,7 +103,7 @@ export async function GET() {
           athlete_email: athlete.email,
           products: products,
           total_products: products.length,
-          total_quantity: totalQuantity
+          total_quantity: totalQuantity,
         };
       })
     );
@@ -108,13 +114,16 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       data: athletesWithProducts,
-      type: 'athlete_products'
+      type: 'athlete_products',
     });
   } catch (error) {
     console.error('Athlete products error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
 }

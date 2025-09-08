@@ -1,5 +1,16 @@
 export type UserRole = 'athlete' | 'manager' | 'admin';
-export type ProductCategory = 'accessories' | 'bindings' | 'boots' | 'goggles' | 'helmet' | 'ski' | 'snowboard' | 'snowboard_boots' | 'snowboard_accessories' | 'snowboard_bindings' | 'snowboard_boards';
+export type ProductCategory =
+  | 'accessories'
+  | 'bindings'
+  | 'boots'
+  | 'goggles'
+  | 'helmet'
+  | 'ski'
+  | 'snowboard'
+  | 'snowboard_boots'
+  | 'snowboard_accessories'
+  | 'snowboard_bindings'
+  | 'snowboard_boards';
 export type OrderStatus = 'pending_approval' | 'approved' | 'rejected' | 'cancelled';
 export type UploadStatus = 'uploading' | 'processing' | 'completed' | 'failed';
 export type FileType = 'image' | 'video' | 'document' | 'other';

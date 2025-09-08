@@ -1,9 +1,11 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
+
+import { Session, User } from '@supabase/supabase-js';
+
 import { supabaseClient } from '@/lib/supabase-client';
-import { Profile, Invitation } from '@/types';
+import { Invitation, Profile } from '@/types';
 
 interface AuthContextType {
   user: User | null;
@@ -13,11 +15,24 @@ interface AuthContextType {
   hydrated: boolean; // Nuevo estado para controlar la hidratación inicial
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
-  signUpWithEmail: (email: string, password: string, name?: string) => Promise<{ requiresEmailConfirmation: boolean }>;
-  signUpWithInvitation: (email: string, password: string, name: string, invitationToken: string) => Promise<{ requiresEmailConfirmation: boolean }>;
+  signUpWithEmail: (
+    email: string,
+    password: string,
+    name?: string
+  ) => Promise<{ requiresEmailConfirmation: boolean }>;
+  signUpWithInvitation: (
+    email: string,
+    password: string,
+    name: string,
+    invitationToken: string
+  ) => Promise<{ requiresEmailConfirmation: boolean }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
-  createInvitation: (email: string, role: 'manager' | 'athlete', personalMessage?: string) => Promise<void>;
+  createInvitation: (
+    email: string,
+    role: 'manager' | 'athlete',
+    personalMessage?: string
+  ) => Promise<void>;
   getInvitations: () => Promise<Invitation[]>;
   deleteInvitation: (invitationId: string) => Promise<void>;
 }
@@ -99,7 +114,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         // Treat "no rows" as a valid state (no profile yet)
-        if ((error as any).code === 'PGRST116' || error.message?.toLowerCase().includes('no rows')) {
+        if (
+          (error as any).code === 'PGRST116' ||
+          error.message?.toLowerCase().includes('no rows')
+        ) {
           setProfile(null);
           return;
         }
@@ -114,9 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setProfile(data);
     } catch (error) {
-      const normalizedError = error instanceof Error
-        ? { message: error.message, stack: error.stack }
-        : error;
+      const normalizedError =
+        error instanceof Error ? { message: error.message, stack: error.stack } : error;
       console.error('Error fetching profile:', normalizedError);
     }
   }
@@ -154,24 +171,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error('AuthContext: Supabase signIn error:', error);
-        
+
         // Provide more user-friendly error messages
         let userMessage = 'Invalid login credentials';
         if (error.message.includes('Invalid login credentials')) {
-          userMessage = 'Email or password is incorrect. Please check your credentials and try again.';
+          userMessage =
+            'Email or password is incorrect. Please check your credentials and try again.';
         } else if (error.message.includes('Email not confirmed')) {
           userMessage = 'Please check your email and confirm your account before signing in.';
         } else if (error.message.includes('Too many requests')) {
           userMessage = 'Too many login attempts. Please wait a moment before trying again.';
         }
-        
+
         // Create a custom error with a user-friendly message
         const customError = new Error(userMessage);
         customError.name = error.name;
         throw customError;
       }
 
-      console.log('AuthContext: Supabase signIn successful. Session:', data.session ? 'Exists' : 'null', 'User:', data.user ? data.user.id : 'null');
+      console.log(
+        'AuthContext: Supabase signIn successful. Session:',
+        data.session ? 'Exists' : 'null',
+        'User:',
+        data.user ? data.user.id : 'null'
+      );
       setSession(data.session ?? null);
       setUser(data.user ?? null);
       if (data.user) {
@@ -201,14 +224,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Only allow registration if there are no administrators or if current user is admin
       if (existingAdmins && existingAdmins.length > 0 && (!profile || profile.role !== 'admin')) {
-        throw new Error('Registration is restricted. Only administrators can create new accounts. Please contact your system administrator for an invitation.');
+        throw new Error(
+          'Registration is restricted. Only administrators can create new accounts. Please contact your system administrator for an invitation.'
+        );
       }
 
       const { data, error } = await supabaseClient.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
+          emailRedirectTo:
+            typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
           data: name ? { name } : undefined,
         },
       });
@@ -223,7 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.session && data.user) {
         setSession(data.session);
         setUser(data.user);
-        
+
         // Create profile automatically for new admin users
         try {
           await createProfileForUser(data.user.id, email, name, 'admin');
@@ -243,14 +269,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   // Registration with invitation
-  async function signUpWithInvitation(email: string, password: string, name: string, invitationToken: string) {
+  async function signUpWithInvitation(
+    email: string,
+    password: string,
+    name: string,
+    invitationToken: string
+  ) {
     try {
       // Verify invitation using validation API
       const validationResponse = await fetch(`/api/invitations/validate?token=${invitationToken}`);
       const validationData = await validationResponse.json();
 
       if (!validationResponse.ok || !validationData.valid) {
-        throw new Error(validationData.error || 'Invalid or expired invitation. Please contact your administrator for a new invitation.');
+        throw new Error(
+          validationData.error ||
+            'Invalid or expired invitation. Please contact your administrator for a new invitation.'
+        );
       }
 
       // Invitation is valid, proceed with registration
@@ -258,19 +292,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
         options: {
-          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
+          emailRedirectTo:
+            typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
           data: { name },
         },
       });
 
       if (error) {
         console.error('Error signing up with invitation:', error);
-        
+
         // Handle rate limiting error specifically
         if (error.message && error.message.includes('36 seconds')) {
-          throw new Error('Please wait 36 seconds before trying to create another account. This is a Supabase security limit.');
+          throw new Error(
+            'Please wait 36 seconds before trying to create another account. This is a Supabase security limit.'
+          );
         }
-        
+
         throw error;
       }
 
@@ -279,11 +316,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.session && data.user) {
         setSession(data.session);
         setUser(data.user);
-        
+
         // Create profile with the role from invitation
         try {
           await createProfileForUser(data.user.id, email, name, validationData.role);
-          
+
           // Mark invitation as accepted (use API for this as well)
           await fetch('/api/invitations/accept', {
             method: 'POST',
@@ -292,10 +329,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             },
             body: JSON.stringify({
               token: invitationToken,
-              userId: data.user.id
+              userId: data.user.id,
             }),
           });
-            
+
           await fetchProfile(data.user.id);
         } catch (profileError) {
           console.warn('Failed to create profile for invited user:', profileError);
@@ -310,18 +347,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function createProfileForUser(userId: string, email: string, name?: string, role: 'admin' | 'manager' | 'athlete' = 'athlete') {
+  async function createProfileForUser(
+    userId: string,
+    email: string,
+    name?: string,
+    role: 'admin' | 'manager' | 'athlete' = 'athlete'
+  ) {
     try {
-      const { error } = await supabaseClient
-        .from('profiles')
-        .insert({
-          id: userId,
-          email: email,
-          name: name || email.split('@')[0],
-          role: role,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
+      const { error } = await supabaseClient.from('profiles').insert({
+        id: userId,
+        email: email,
+        name: name || email.split('@')[0],
+        role: role,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
 
       if (error) {
         console.error('Error creating profile:', error);
@@ -334,7 +374,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   // Invitation management (only for administrators)
-  async function createInvitation(email: string, role: 'manager' | 'athlete', personalMessage?: string): Promise<void> {
+  async function createInvitation(
+    email: string,
+    role: 'manager' | 'athlete',
+    personalMessage?: string
+  ): Promise<void> {
     if (!profile || profile.role !== 'admin') {
       throw new Error('Only administrators can create invitations');
     }
@@ -357,7 +401,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (existingInvitation.status === 'pending') {
           // If pending, check if it hasn't expired
           if (new Date(existingInvitation.expires_at) > new Date()) {
-            throw new Error(`An invitation for ${email} already exists and is still valid. It expires on ${new Date(existingInvitation.expires_at).toLocaleDateString()}.`);
+            throw new Error(
+              `An invitation for ${email} already exists and is still valid. It expires on ${new Date(existingInvitation.expires_at).toLocaleDateString()}.`
+            );
           } else {
             // If expired, update the existing invitation
             const token = crypto.randomUUID();
@@ -372,7 +418,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 token: token,
                 expires_at: expiresAt.toISOString(),
                 status: 'pending',
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
               })
               .eq('id', existingInvitation.id);
 
@@ -401,7 +447,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               token: token,
               expires_at: expiresAt.toISOString(),
               status: 'pending',
-              updated_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
             })
             .eq('id', existingInvitation.id);
 
@@ -421,16 +467,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7); // Expires in 7 days
 
-      const { error } = await supabaseClient
-        .from('invitations')
-        .insert({
-          email,
-          role,
-          invited_by: user!.id,
-          token,
-          expires_at: expiresAt.toISOString(),
-          status: 'pending'
-        });
+      const { error } = await supabaseClient.from('invitations').insert({
+        email,
+        role,
+        invited_by: user!.id,
+        token,
+        expires_at: expiresAt.toISOString(),
+        status: 'pending',
+      });
 
       if (error) {
         console.error('Error creating invitation:', error);
@@ -439,7 +483,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Send email with new invitation
       await sendInvitationEmail(email, role, token, personalMessage);
-
     } catch (error) {
       console.error('Failed to create invitation:', error);
       throw error;
@@ -447,7 +490,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   // Function to send invitation email
-  async function sendInvitationEmail(email: string, role: string, token: string, personalMessage?: string) {
+  async function sendInvitationEmail(
+    email: string,
+    role: string,
+    token: string,
+    personalMessage?: string
+  ) {
     try {
       // Call API route to send email
       const response = await fetch('/api/invitations/send', {
@@ -460,7 +508,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role,
           token,
           invitedBy: user!.id,
-          personalMessage
+          personalMessage,
         }),
       });
 
@@ -470,7 +518,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const result = await response.json();
-      
+
       // Mostrar información en consola para desarrollo
       console.log('=== INVITATION EMAIL SENT ===');
       console.log('To:', email);
@@ -482,10 +530,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('=============================');
 
       return result;
-
     } catch (error) {
       console.error('Failed to send invitation email:', error);
-      throw new Error(`Failed to send invitation email: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to send invitation email: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -526,10 +575,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const { error } = await supabaseClient
-        .from('invitations')
-        .delete()
-        .eq('id', invitationId);
+      const { error } = await supabaseClient.from('invitations').delete().eq('id', invitationId);
 
       if (error) {
         console.error('Error deleting invitation:', error);

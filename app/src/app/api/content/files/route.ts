@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import { NextRequest } from 'next/server';
+
 import { createClient } from '@supabase/supabase-js';
+
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabaseServer } from '@/lib/supabase-server';
 
 async function getClientFromRequest(req: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string | undefined;
@@ -12,7 +14,7 @@ async function getClientFromRequest(req: Request) {
     if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
       return createClient(supabaseUrl, supabaseAnonKey, {
-        global: { headers: { Authorization: `Bearer ${token}` } }
+        global: { headers: { Authorization: `Bearer ${token}` } },
       });
     }
   }
@@ -79,7 +81,8 @@ export async function PATCH(req: NextRequest) {
       .select('id, session_id, file_path, thumbnail_path, metadata')
       .eq('id', id)
       .single();
-    if (fileErr || !file) return NextResponse.json({ error: fileErr?.message || 'Not found' }, { status: 404 });
+    if (fileErr || !file)
+      return NextResponse.json({ error: fileErr?.message || 'Not found' }, { status: 404 });
 
     let thumbnail_path = file.thumbnail_path as string | null;
 
@@ -90,7 +93,9 @@ export async function PATCH(req: NextRequest) {
       if (base64Data) {
         const buffer = Buffer.from(base64Data, 'base64');
         const thumbPath = `${file.file_path}.thumb.jpg`;
-        await supabaseAdmin.storage.from(bucket).upload(thumbPath, buffer, { contentType: 'image/jpeg', upsert: true });
+        await supabaseAdmin.storage
+          .from(bucket)
+          .upload(thumbPath, buffer, { contentType: 'image/jpeg', upsert: true });
         thumbnail_path = thumbPath;
       }
     }
@@ -122,7 +127,16 @@ export async function PATCH(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { session_id, filename, file_path, file_size, file_type, mime_type, thumbnail_path, metadata } = body || {};
+    const {
+      session_id,
+      filename,
+      file_path,
+      file_size,
+      file_type,
+      mime_type,
+      thumbnail_path,
+      metadata,
+    } = body || {};
 
     if (!session_id || !filename || !file_path || !file_type) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -186,5 +200,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
-
-

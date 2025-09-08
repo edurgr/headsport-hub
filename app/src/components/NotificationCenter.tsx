@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Notification {
@@ -38,10 +39,12 @@ export default function NotificationCenter() {
     try {
       const response = await fetch('/api/notifications?limit=20');
       const data = await response.json();
-      
+
       if (response.ok) {
         setNotifications(data.notifications || []);
-        setUnreadCount(data.notifications?.filter((n: Notification) => n.status === 'unread').length || 0);
+        setUnreadCount(
+          data.notifications?.filter((n: Notification) => n.status === 'unread').length || 0
+        );
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -53,13 +56,13 @@ export default function NotificationCenter() {
       const response = await fetch('/api/notifications', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'mark_read', notificationId })
+        body: JSON.stringify({ action: 'mark_read', notificationId }),
       });
 
       if (response.ok) {
-        setNotifications(prev => 
-          prev.map(n => 
-            n.id === notificationId 
+        setNotifications(prev =>
+          prev.map(n =>
+            n.id === notificationId
               ? { ...n, status: 'read' as const, read_at: new Date().toISOString() }
               : n
           )
@@ -77,11 +80,11 @@ export default function NotificationCenter() {
       const response = await fetch('/api/notifications', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'mark_all_read' })
+        body: JSON.stringify({ action: 'mark_all_read' }),
       });
 
       if (response.ok) {
-        setNotifications(prev => 
+        setNotifications(prev =>
           prev.map(n => ({ ...n, status: 'read' as const, read_at: new Date().toISOString() }))
         );
         setUnreadCount(0);
@@ -98,7 +101,7 @@ export default function NotificationCenter() {
       const response = await fetch('/api/notifications', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'archive', notificationId })
+        body: JSON.stringify({ action: 'archive', notificationId }),
       });
 
       if (response.ok) {
@@ -112,11 +115,16 @@ export default function NotificationCenter() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'critical': return 'text-red-600 bg-red-100';
-      case 'high': return 'text-orange-600 bg-orange-100';
-      case 'medium': return 'text-blue-600 bg-blue-100';
-      case 'low': return 'text-gray-600 bg-gray-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'critical':
+        return 'text-red-600 bg-red-100';
+      case 'high':
+        return 'text-orange-600 bg-orange-100';
+      case 'medium':
+        return 'text-blue-600 bg-blue-100';
+      case 'low':
+        return 'text-gray-600 bg-gray-100';
+      default:
+        return 'text-gray-600 bg-gray-100';
     }
   };
 
@@ -127,32 +135,57 @@ export default function NotificationCenter() {
       case 'order_rejected':
         return (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+            />
           </svg>
         );
       case 'user_registered':
         return (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            />
           </svg>
         );
       case 'content_uploaded':
         return (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+            />
           </svg>
         );
       case 'system_alert':
       case 'security_alert':
         return (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
+            />
           </svg>
         );
       default:
         return (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4 19h6v-6H4v6zM4 5h6V1H4v4zM15 3h5l-5-5v5z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 17h5l-5 5v-5zM4 19h6v-6H4v6zM4 5h6V1H4v4zM15 3h5l-5-5v5z"
+            />
           </svg>
         );
     }
@@ -168,7 +201,12 @@ export default function NotificationCenter() {
         className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4 19h6v-6H4v6zM4 5h6V1H4v4zM15 3h5l-5-5v5z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 17h5l-5 5v-5zM4 19h6v-6H4v6zM4 5h6V1H4v4zM15 3h5l-5-5v5z"
+          />
         </svg>
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
@@ -198,14 +236,24 @@ export default function NotificationCenter() {
           <div className="max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="p-6 text-center text-gray-500">
-                <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4 19h6v-6H4v6zM4 5h6V1H4v4zM15 3h5l-5-5v5z" />
+                <svg
+                  className="w-12 h-12 mx-auto mb-4 text-gray-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 17h5l-5 5v-5zM4 19h6v-6H4v6zM4 5h6V1H4v4zM15 3h5l-5-5v5z"
+                  />
                 </svg>
                 <p className="text-sm">No notifications</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
-                {notifications.map((notification) => (
+                {notifications.map(notification => (
                   <div
                     key={notification.id}
                     className={`p-4 hover:bg-gray-50 cursor-pointer ${
@@ -221,14 +269,18 @@ export default function NotificationCenter() {
                     }}
                   >
                     <div className="flex items-start space-x-3">
-                      <div className={`p-2 rounded-full ${getPriorityColor(notification.priority)}`}>
+                      <div
+                        className={`p-2 rounded-full ${getPriorityColor(notification.priority)}`}
+                      >
                         {getTypeIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p className={`text-sm font-medium ${
-                            notification.status === 'unread' ? 'text-gray-900' : 'text-gray-700'
-                          }`}>
+                          <p
+                            className={`text-sm font-medium ${
+                              notification.status === 'unread' ? 'text-gray-900' : 'text-gray-700'
+                            }`}
+                          >
                             {notification.title}
                           </p>
                           <div className="flex items-center space-x-2">
@@ -236,15 +288,25 @@ export default function NotificationCenter() {
                               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                             )}
                             <button
-                              onClick={(e) => {
+                              onClick={e => {
                                 e.stopPropagation();
                                 archiveNotification(notification.id);
                               }}
                               className="text-gray-400 hover:text-gray-600"
                               title="Archive"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8l4 4m0 0l4-4m-4 4V3" />
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 8l4 4m0 0l4-4m-4 4V3"
+                                />
                               </svg>
                             </button>
                           </div>
@@ -278,12 +340,7 @@ export default function NotificationCenter() {
       )}
 
       {/* Backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+      {isOpen && <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />}
     </div>
   );
 }

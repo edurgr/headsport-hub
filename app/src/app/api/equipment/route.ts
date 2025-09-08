@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-server';
+
 import { createClient } from '@supabase/supabase-js';
+
+import { supabaseServer } from '@/lib/supabase-server';
 
 // Ensure Node runtime and prevent static optimization to avoid redirect loops in dev
 export const runtime = 'nodejs';
@@ -20,9 +22,11 @@ export async function GET(req: Request) {
 
   const items: any[] = [];
   const sources: Array<{ table: string; cat: string }> = [];
-  if (!category || category === 'skis' || category === 'ski') sources.push({ table: 'ski', cat: 'skis' });
+  if (!category || category === 'skis' || category === 'ski')
+    sources.push({ table: 'ski', cat: 'skis' });
   if (!category || category === 'bindings') sources.push({ table: 'bindings', cat: 'bindings' });
-  if (!category || category === 'accessories') sources.push({ table: 'accessories', cat: 'accessories' });
+  if (!category || category === 'accessories')
+    sources.push({ table: 'accessories', cat: 'accessories' });
   if (!category || category === 'boots') sources.push({ table: 'boots', cat: 'boots' });
   if (!category || category === 'goggles') sources.push({ table: 'goggles', cat: 'goggles' });
   if (!category || category === 'helmet') sources.push({ table: 'helmet', cat: 'helmet' });
@@ -35,7 +39,7 @@ export async function GET(req: Request) {
   }
 
   // Execute all queries in parallel for better performance
-  const queries = sources.map(async (src) => {
+  const queries = sources.map(async src => {
     let query = sb
       .from(src.table)
       .select('*')
@@ -47,12 +51,12 @@ export async function GET(req: Request) {
       query = query.or(`name.ilike.%${q}%,article.ilike.%${q}%`);
     }
 
-    const { data, error } = await query as any;
+    const { data, error } = (await query) as any;
     return { data: data || [], error, cat: src.cat };
   });
 
   const results = await Promise.all(queries);
-  
+
   for (const result of results) {
     if (!result.error) {
       for (const product of result.data) {
@@ -82,7 +86,8 @@ export async function GET(req: Request) {
           price: null,
           notes: null,
           is_active: product.is_active,
-          available_lengths: result.cat === 'skis' ? lengths.sort((a: number, b: number) => a - b) : [],
+          available_lengths:
+            result.cat === 'skis' ? lengths.sort((a: number, b: number) => a - b) : [],
           brake_widths: [],
           sizes: [],
           specifications: specs,
@@ -94,15 +99,19 @@ export async function GET(req: Request) {
 
   // Fallback to products if normalized tables empty or missing
   if (items.length === 0) {
-    let query = sb.from('products').select('*').order('name', { ascending: true }).range(offset, offset + limit - 1);
+    let query = sb
+      .from('products')
+      .select('*')
+      .order('name', { ascending: true })
+      .range(offset, offset + limit - 1);
     if (category) {
       if (category === 'skis' || category === 'ski') query = query.ilike('meta', '%TYPE:SKI.SKIS%');
       else if (category === 'bindings') query = query.ilike('meta', '%TYPE:SKI.BINDINGS%');
     }
     if (q) query = query.or(`name.ilike.%${q}%,article.ilike.%${q}%`);
-    const { data: products, error } = await query as any;
+    const { data: products, error } = (await query) as any;
     if (!error) {
-      for (const product of (products || [])) {
+      for (const product of products || []) {
         const lengths: number[] = [];
         if (product.length_list) {
           for (const token of String(product.length_list).split(',')) {
@@ -110,7 +119,11 @@ export async function GET(req: Request) {
             if (!isNaN(n) && n > 0) lengths.push(n);
           }
         }
-        const cat = product.meta?.includes('TYPE:SKI.BINDINGS') ? 'bindings' : (product.meta?.includes('TYPE:SKI.SKIS') ? 'skis' : 'other');
+        const cat = product.meta?.includes('TYPE:SKI.BINDINGS')
+          ? 'bindings'
+          : product.meta?.includes('TYPE:SKI.SKIS')
+            ? 'skis'
+            : 'other';
         items.push({
           id: product.article,
           name: product.name,

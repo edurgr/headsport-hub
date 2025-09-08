@@ -9,7 +9,7 @@ export const demoProducts = {
       diameter: 13,
       length: '105-135',
       colors: 'carbon/blue',
-      is_active: true
+      is_active: true,
     },
     {
       id: 'demo-acc-2',
@@ -19,8 +19,8 @@ export const demoProducts = {
       diameter: 12.3,
       length: '105-140',
       colors: 'carbon/black/white',
-      is_active: true
-    }
+      is_active: true,
+    },
   ],
   boots: [
     {
@@ -32,7 +32,7 @@ export const demoProducts = {
       sizes: '225-235-….-285',
       colors: 'White',
       shell: 'Racing PU',
-      is_active: true
+      is_active: true,
     },
     {
       id: 'demo-boot-2',
@@ -43,8 +43,8 @@ export const demoProducts = {
       sizes: '225-235-….-285',
       colors: 'White',
       shell: 'Racing PU',
-      is_active: true
-    }
+      is_active: true,
+    },
   ],
   skis: [
     {
@@ -55,7 +55,7 @@ export const demoProducts = {
       length: '183/188/193',
       radius: '30,5 @ Length 193',
       sidecut: '101/65/84 @ Length 193',
-      is_active: true
+      is_active: true,
     },
     {
       id: 'demo-ski-2',
@@ -65,8 +65,8 @@ export const demoProducts = {
       length: '176/181/186/188',
       radius: '25,0 @ Length 181',
       sidecut: '102/65/86 @ Length 181',
-      is_active: true
-    }
+      is_active: true,
+    },
   ],
   snowboards: [
     {
@@ -77,8 +77,8 @@ export const demoProducts = {
       shape: 'Directional',
       skill: 'Advanced',
       camber: 'Traditional',
-      is_active: true
-    }
+      is_active: true,
+    },
   ],
   helmets: [
     {
@@ -88,8 +88,8 @@ export const demoProducts = {
       category: 'helmets',
       sizes: 'S/M/L',
       colors: 'Black/White',
-      is_active: true
-    }
+      is_active: true,
+    },
   ],
   goggles: [
     {
@@ -100,8 +100,8 @@ export const demoProducts = {
       lens: 'Clear',
       color: 'Black',
       weather_condition: 'All conditions',
-      is_active: true
-    }
+      is_active: true,
+    },
   ],
   bindings: [
     {
@@ -112,9 +112,9 @@ export const demoProducts = {
       stand_height: 14,
       din: '3-12',
       weight: 450,
-      is_active: true
-    }
-  ]
+      is_active: true,
+    },
+  ],
 };
 
 export const getAllDemoProducts = () => {
@@ -128,9 +128,10 @@ export const getDemoProductsByCategory = (category: string) => {
 export const searchDemoProducts = (query: string) => {
   const allProducts = getAllDemoProducts();
   const lowercaseQuery = query.toLowerCase();
-  
-  return allProducts.filter(product => 
-    product.name.toLowerCase().includes(lowercaseQuery) ||
-    product.article.toLowerCase().includes(lowercaseQuery)
+
+  return allProducts.filter(
+    product =>
+      product.name.toLowerCase().includes(lowercaseQuery) ||
+      product.article.toLowerCase().includes(lowercaseQuery)
   );
 };

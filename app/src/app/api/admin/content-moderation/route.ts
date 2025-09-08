@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseServer } from '@/lib/supabase-server';
 
@@ -25,10 +26,12 @@ export async function GET(req: Request) {
 
       const filesById: Record<string, any> = {};
       if (queueItems.length > 0) {
-        const fileIds = Array.from(new Set(queueItems.map((q) => q.file_id)));
+        const fileIds = Array.from(new Set(queueItems.map(q => q.file_id)));
         const { data: files } = await (sb as any)
           .from('upload_files')
-          .select('id, filename, file_type, file_size, created_at, upload_sessions(id, profiles(name,email))')
+          .select(
+            'id, filename, file_type, file_size, created_at, upload_sessions(id, profiles(name,email))'
+          )
           .in('id', fileIds);
         for (const f of files || []) filesById[f.id] = f;
       }
@@ -37,7 +40,9 @@ export async function GET(req: Request) {
       if (queueItems.length === 0) {
         const { data: pendingFiles } = await (sb as any)
           .from('upload_files')
-          .select('id, filename, file_type, file_size, created_at, upload_sessions(id, profiles(name,email))')
+          .select(
+            'id, filename, file_type, file_size, created_at, upload_sessions(id, profiles(name,email))'
+          )
           .eq('moderation_status', 'pending')
           .order('created_at', { ascending: false })
           .limit(100);
@@ -70,10 +75,22 @@ export async function GET(req: Request) {
       const sbClient = sb as any;
       const [totalRes, pendingRes, approvedRes, rejectedRes, flaggedRes] = await Promise.all([
         sbClient.from('upload_files').select('*', { count: 'exact', head: true }),
-        sbClient.from('upload_files').select('*', { count: 'exact', head: true }).eq('moderation_status', 'pending'),
-        sbClient.from('upload_files').select('*', { count: 'exact', head: true }).eq('moderation_status', 'approved'),
-        sbClient.from('upload_files').select('*', { count: 'exact', head: true }).eq('moderation_status', 'rejected'),
-        sbClient.from('upload_files').select('*', { count: 'exact', head: true }).eq('moderation_status', 'flagged'),
+        sbClient
+          .from('upload_files')
+          .select('*', { count: 'exact', head: true })
+          .eq('moderation_status', 'pending'),
+        sbClient
+          .from('upload_files')
+          .select('*', { count: 'exact', head: true })
+          .eq('moderation_status', 'approved'),
+        sbClient
+          .from('upload_files')
+          .select('*', { count: 'exact', head: true })
+          .eq('moderation_status', 'rejected'),
+        sbClient
+          .from('upload_files')
+          .select('*', { count: 'exact', head: true })
+          .eq('moderation_status', 'flagged'),
       ]);
 
       let queueSize = 0;
@@ -99,10 +116,13 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
-    return NextResponse.json({
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error',
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -114,11 +134,16 @@ export async function POST(req: Request) {
 
     const mapActionToStatus = (a: string) => {
       switch (a) {
-        case 'approve': return 'approved';
-        case 'reject': return 'rejected';
-        case 'flag': return 'flagged';
-        case 'unflag': return 'pending';
-        default: return null;
+        case 'approve':
+          return 'approved';
+        case 'reject':
+          return 'rejected';
+        case 'flag':
+          return 'flagged';
+        case 'unflag':
+          return 'pending';
+        default:
+          return null;
       }
     };
 
@@ -180,11 +205,12 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
-    return NextResponse.json({
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error',
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
 }
-
-

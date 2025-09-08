@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { supabaseClient } from '@/lib/supabase-client';
+import { useEffect, useState } from 'react';
+
 import { Address } from '@/components/AddressManager';
+import { supabaseClient } from '@/lib/supabase-client';
 
 export function useAddresses(userId?: string) {
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -39,7 +40,7 @@ export function useAddresses(userId?: string) {
         postalCode: addr.postal_code,
         country: addr.country,
         phone: addr.phone,
-        isPreferred: addr.is_preferred
+        isPreferred: addr.is_preferred,
       }));
 
       setAddresses(formattedAddresses);
@@ -69,7 +70,7 @@ export function useAddresses(userId?: string) {
           postal_code: address.postalCode,
           country: address.country,
           phone: address.phone,
-          is_preferred: address.isPreferred
+          is_preferred: address.isPreferred,
         })
         .select()
         .single();
@@ -94,7 +95,7 @@ export function useAddresses(userId?: string) {
 
     try {
       const updateData: any = {};
-      
+
       if (updates.name !== undefined) updateData.name = updates.name;
       if (updates.addressLine1 !== undefined) updateData.address_line1 = updates.addressLine1;
       if (updates.addressLine2 !== undefined) updateData.address_line2 = updates.addressLine2;
@@ -154,10 +155,7 @@ export function useAddresses(userId?: string) {
 
     try {
       // First, unset all preferred addresses for this user
-      await supabaseClient
-        .from('addresses')
-        .update({ is_preferred: false })
-        .eq('user_id', userId);
+      await supabaseClient.from('addresses').update({ is_preferred: false }).eq('user_id', userId);
 
       // Then set the selected address as preferred
       const { error: updateError } = await supabaseClient
@@ -190,6 +188,6 @@ export function useAddresses(userId?: string) {
     saveAddress,
     updateAddress,
     deleteAddress,
-    setPreferredAddress
+    setPreferredAddress,
   };
 }

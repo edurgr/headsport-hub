@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { logger } from './logger';
 
 export interface ErrorContext {
@@ -76,44 +77,50 @@ export class RateLimitError extends AppError {
  */
 export function handleApiError(error: unknown, context?: ErrorContext): NextResponse {
   const requestId = context?.requestId || Math.random().toString(36).substring(7);
-  
+
   if (error instanceof AppError) {
     logger.error(`${error.name}: ${error.message}`, error, {
       ...context,
       requestId,
       statusCode: error.statusCode,
-      errorCode: error.code
+      errorCode: error.code,
     });
 
-    return NextResponse.json({
-      error: {
-        message: error.message,
-        code: error.code,
-        requestId
-      }
-    }, { status: error.statusCode });
+    return NextResponse.json(
+      {
+        error: {
+          message: error.message,
+          code: error.code,
+          requestId,
+        },
+      },
+      { status: error.statusCode }
+    );
   }
 
   // Handle Supabase errors
   if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
     const supabaseError = error as { code: string; message: string; details?: string };
-    
+
     logger.error('Supabase error', error, {
       ...context,
       requestId,
-      errorCode: supabaseError.code
+      errorCode: supabaseError.code,
     });
 
     // Map common Supabase errors to appropriate HTTP status codes
     const statusCode = getSupabaseErrorStatusCode(supabaseError.code);
-    
-    return NextResponse.json({
-      error: {
-        message: 'Database operation failed',
-        code: 'DATABASE_ERROR',
-        requestId
-      }
-    }, { status: statusCode });
+
+    return NextResponse.json(
+      {
+        error: {
+          message: 'Database operation failed',
+          code: 'DATABASE_ERROR',
+          requestId,
+        },
+      },
+      { status: statusCode }
+    );
   }
 
   // Handle standard JavaScript errors
@@ -121,32 +128,38 @@ export function handleApiError(error: unknown, context?: ErrorContext): NextResp
     logger.error(`Unhandled error: ${error.message}`, error, {
       ...context,
       requestId,
-      stack: error.stack
+      stack: error.stack,
     });
 
-    return NextResponse.json({
-      error: {
-        message: 'Internal server error',
-        code: 'INTERNAL_ERROR',
-        requestId
-      }
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: {
+          message: 'Internal server error',
+          code: 'INTERNAL_ERROR',
+          requestId,
+        },
+      },
+      { status: 500 }
+    );
   }
 
   // Handle unknown errors
   logger.error('Unknown error type', error, {
     ...context,
     requestId,
-    errorType: typeof error
+    errorType: typeof error,
   });
 
-  return NextResponse.json({
-    error: {
-      message: 'Internal server error',
-      code: 'INTERNAL_ERROR',
-      requestId
-    }
-  }, { status: 500 });
+  return NextResponse.json(
+    {
+      error: {
+        message: 'Internal server error',
+        code: 'INTERNAL_ERROR',
+        requestId,
+      },
+    },
+    { status: 500 }
+  );
 }
 
 /**
@@ -174,15 +187,13 @@ function getSupabaseErrorStatusCode(code: string): number {
  */
 export function getErrorContext(request: Request): ErrorContext {
   const url = new URL(request.url);
-  
+
   return {
     endpoint: url.pathname,
     action: request.method,
     requestId: Math.random().toString(36).substring(7),
     userAgent: request.headers.get('user-agent') || undefined,
-    ip: request.headers.get('x-forwarded-for') || 
-        request.headers.get('x-real-ip') || 
-        undefined
+    ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
   };
 }
 

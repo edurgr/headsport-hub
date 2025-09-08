@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET(req: Request) {
@@ -8,7 +9,10 @@ export async function GET(req: Request) {
 
     const supabaseAdmin = getSupabaseAdmin();
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Database connection required for analytics' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Database connection required for analytics' },
+        { status: 500 }
+      );
     }
 
     console.log('Analytics Orders API called with groupBy:', groupBy);
@@ -26,7 +30,7 @@ export async function GET(req: Request) {
       }
 
       const athleteStats = await Promise.all(
-        (athletes || []).map(async (athlete) => {
+        (athletes || []).map(async athlete => {
           // Get orders for this athlete
           const { data: orders } = await supabaseAdmin!
             .from('orders')
@@ -34,7 +38,8 @@ export async function GET(req: Request) {
             .eq('athlete_email', athlete.email);
 
           const totalOrders = orders?.length || 0;
-          const pendingOrders = orders?.filter((o: any) => o.status === 'pending_approval').length || 0;
+          const pendingOrders =
+            orders?.filter((o: any) => o.status === 'pending_approval').length || 0;
           const approvedOrders = orders?.filter((o: any) => o.status === 'approved').length || 0;
           const rejectedOrders = orders?.filter((o: any) => o.status === 'rejected').length || 0;
 
@@ -46,7 +51,10 @@ export async function GET(req: Request) {
               .from('order_items')
               .select('quantity')
               .in('order_id', orderIds);
-            totalItems = (orderItems || []).reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
+            totalItems = (orderItems || []).reduce(
+              (sum: number, item: any) => sum + (item.quantity || 0),
+              0
+            );
           }
 
           return {
@@ -57,7 +65,7 @@ export async function GET(req: Request) {
             pending_orders: pendingOrders,
             approved_orders: approvedOrders,
             rejected_orders: rejectedOrders,
-            total_items: totalItems
+            total_items: totalItems,
           };
         })
       );
@@ -65,7 +73,7 @@ export async function GET(req: Request) {
       return NextResponse.json({
         success: true,
         data: athleteStats,
-        type: 'athlete_breakdown'
+        type: 'athlete_breakdown',
       });
     } else if (groupBy === 'products') {
       // Get most requested products
@@ -79,8 +87,11 @@ export async function GET(req: Request) {
       }
 
       // Group by product and sum quantities
-      const productStats: Record<string, { name: string; category: string; sku: string; total_quantity: number; order_count: number }> = {};
-      
+      const productStats: Record<
+        string,
+        { name: string; category: string; sku: string; total_quantity: number; order_count: number }
+      > = {};
+
       (orderItems || []).forEach(item => {
         const key = item.product_sku || item.product_name;
         if (!productStats[key]) {
@@ -89,7 +100,7 @@ export async function GET(req: Request) {
             category: item.product_category || 'Unknown',
             sku: item.product_sku || 'Unknown',
             total_quantity: 0,
-            order_count: 0
+            order_count: 0,
           };
         }
         productStats[key].total_quantity += item.quantity || 0;
@@ -103,7 +114,7 @@ export async function GET(req: Request) {
       return NextResponse.json({
         success: true,
         data: sortedProducts,
-        type: 'products_breakdown'
+        type: 'products_breakdown',
       });
     } else {
       // Get global order stats
@@ -138,16 +149,19 @@ export async function GET(req: Request) {
           pending_orders: pendingOrders,
           approved_orders: approvedOrders,
           rejected_orders: rejectedOrders,
-          total_items: totalItems
+          total_items: totalItems,
         },
-        type: 'global_summary'
+        type: 'global_summary',
       });
     }
   } catch (error) {
     console.error('Analytics orders error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
 }

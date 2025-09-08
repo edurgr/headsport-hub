@@ -1,9 +1,12 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-import SidebarContainer from './SidebarContainer';
-import { DownloadProvider } from '@/contexts/DownloadContext';
 import dynamic from 'next/dynamic';
+import { usePathname } from 'next/navigation';
+
+import { DownloadProvider } from '@/contexts/DownloadContext';
+
+import SidebarContainer from './SidebarContainer';
+
 const DownloadOverlay = dynamic(() => import('./DownloadOverlay'), { ssr: false });
 
 interface LayoutWrapperProps {
@@ -12,19 +15,19 @@ interface LayoutWrapperProps {
 
 export default function LayoutWrapper({ children }: LayoutWrapperProps) {
   const pathname = usePathname();
-  
+
   // Páginas públicas que no necesitan sidebar ni layout especial
   const publicPages = [
     '/login',
-    '/signup', 
+    '/signup',
     '/accept-invite',
     '/auth/callback',
     '/onboarding',
-    '/forgot-password'
+    '/forgot-password',
   ];
-  
+
   const isPublicPage = publicPages.some(page => pathname?.startsWith(page));
-  
+
   if (isPublicPage) {
     return (
       <div className="min-h-screen">
@@ -35,7 +38,7 @@ export default function LayoutWrapper({ children }: LayoutWrapperProps) {
       </div>
     );
   }
-  
+
   // Páginas protegidas con sidebar
   return (
     <DownloadProvider>

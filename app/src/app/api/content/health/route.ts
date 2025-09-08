@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
+
 import { createClient } from '@supabase/supabase-js';
-import { logHealthCheck, logError } from '@/lib/logger';
+
+import { logError, logHealthCheck } from '@/lib/logger';
 
 export async function GET() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -29,7 +31,10 @@ export async function GET() {
     results.db_profiles_read = { ok: !error, error: error?.message };
     logHealthCheck('database.profiles', error ? 'error' : 'healthy', error?.message);
   } catch (error) {
-    results.db_profiles_read = { ok: false, error: error instanceof Error ? error.message : 'unknown' };
+    results.db_profiles_read = {
+      ok: false,
+      error: error instanceof Error ? error.message : 'unknown',
+    };
     logError('Health check failed for profiles table', error);
   }
 
@@ -37,14 +42,20 @@ export async function GET() {
     const { error } = await anon.from('upload_sessions').select('id').limit(1);
     results.db_sessions_read = { ok: !error, error: error?.message };
   } catch (error) {
-    results.db_sessions_read = { ok: false, error: error instanceof Error ? error.message : 'unknown' };
+    results.db_sessions_read = {
+      ok: false,
+      error: error instanceof Error ? error.message : 'unknown',
+    };
   }
 
   try {
     const { error } = await anon.from('upload_files').select('id').limit(1);
     results.db_files_read = { ok: !error, error: error?.message };
   } catch (error) {
-    results.db_files_read = { ok: false, error: error instanceof Error ? error.message : 'unknown' };
+    results.db_files_read = {
+      ok: false,
+      error: error instanceof Error ? error.message : 'unknown',
+    };
   }
 
   try {
@@ -52,10 +63,11 @@ export async function GET() {
     await storageClient.storage.from(bucket).createSignedUrl('non-existent', 60);
     results.storage_signed_url = { ok: true };
   } catch (error) {
-    results.storage_signed_url = { ok: false, error: error instanceof Error ? error.message : 'unknown' };
+    results.storage_signed_url = {
+      ok: false,
+      error: error instanceof Error ? error.message : 'unknown',
+    };
   }
 
   return NextResponse.json({ ok: true, results });
 }
-
-

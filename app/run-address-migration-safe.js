@@ -44,20 +44,20 @@ const migrationSteps = [
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
-    `
+    `,
   },
   {
     name: 'Create indexes',
     sql: `
       CREATE INDEX IF NOT EXISTS idx_addresses_user_id ON addresses(user_id);
       CREATE INDEX IF NOT EXISTS idx_addresses_preferred ON addresses(user_id, is_preferred);
-    `
+    `,
   },
   {
     name: 'Enable RLS',
     sql: `
       ALTER TABLE addresses ENABLE ROW LEVEL SECURITY;
-    `
+    `,
   },
   {
     name: 'Create RLS policies',
@@ -78,7 +78,7 @@ const migrationSteps = [
 
       CREATE POLICY "Users can delete their own addresses" ON addresses
         FOR DELETE USING (auth.uid() = user_id);
-    `
+    `,
   },
   {
     name: 'Create trigger function',
@@ -94,7 +94,7 @@ const migrationSteps = [
         RETURN NEW;
       END;
       $$ LANGUAGE plpgsql;
-    `
+    `,
   },
   {
     name: 'Create preferred address trigger',
@@ -104,7 +104,7 @@ const migrationSteps = [
         BEFORE INSERT OR UPDATE ON addresses
         FOR EACH ROW
         EXECUTE FUNCTION ensure_single_preferred_address();
-    `
+    `,
   },
   {
     name: 'Create updated_at function',
@@ -116,7 +116,7 @@ const migrationSteps = [
         RETURN NEW;
       END;
       $$ LANGUAGE plpgsql;
-    `
+    `,
   },
   {
     name: 'Create updated_at trigger',
@@ -126,20 +126,20 @@ const migrationSteps = [
         BEFORE UPDATE ON addresses
         FOR EACH ROW
         EXECUTE FUNCTION update_updated_at_column();
-    `
-  }
+    `,
+  },
 ];
 
 async function executeStep(step) {
   console.log(`🔄 ${step.name}...`);
-  
+
   try {
     // For Supabase, we need to use a different approach
     // Since we can't execute raw SQL directly, we'll provide instructions
     console.log(`   📝 Please run this SQL in your Supabase SQL Editor:`);
     console.log(`   ${step.sql.trim()}`);
     console.log('');
-    
+
     return true;
   } catch (error) {
     console.error(`   ❌ Error: ${error.message}`);
@@ -149,7 +149,7 @@ async function executeStep(step) {
 
 async function migrateExistingAddresses() {
   console.log('🔄 Migrating existing profile addresses...');
-  
+
   const migrationSQL = `
     INSERT INTO addresses (user_id, name, address_line1, city, state, postal_code, country, phone, is_preferred)
     SELECT 
@@ -176,7 +176,7 @@ async function migrateExistingAddresses() {
       AND postal_code IS NOT NULL 
       AND postal_code != '';
   `;
-  
+
   console.log('   📝 Please run this SQL in your Supabase SQL Editor:');
   console.log(`   ${migrationSQL.trim()}`);
   console.log('');
@@ -184,13 +184,10 @@ async function migrateExistingAddresses() {
 
 async function verifyMigration() {
   console.log('🔍 Verifying migration...');
-  
+
   try {
-    const { data, error } = await supabase
-      .from('addresses')
-      .select('*')
-      .limit(1);
-    
+    const { data, error } = await supabase.from('addresses').select('*').limit(1);
+
     if (error) {
       if (error.code === 'PGRST116') {
         console.log('   ❌ Addresses table not found. Please complete the migration steps above.');
@@ -199,18 +196,18 @@ async function verifyMigration() {
       }
       return false;
     }
-    
+
     console.log('   ✅ Addresses table is accessible!');
-    
+
     // Count addresses
     const { data: addressCount, error: countError } = await supabase
       .from('addresses')
       .select('*', { count: 'exact', head: true });
-    
+
     if (!countError) {
       console.log(`   📊 Found ${addressCount.length || 0} addresses in the database`);
     }
-    
+
     return true;
   } catch (error) {
     console.log(`   ❌ Verification failed: ${error.message}`);
@@ -222,18 +219,18 @@ async function runMigration() {
   try {
     console.log('🚀 Starting safe addresses migration...');
     console.log('');
-    
+
     // Execute each step
     for (const step of migrationSteps) {
       await executeStep(step);
     }
-    
+
     // Migrate existing addresses
     await migrateExistingAddresses();
-    
+
     // Verify migration
     await verifyMigration();
-    
+
     console.log('🎉 Migration instructions completed!');
     console.log('');
     console.log('📋 Summary:');
@@ -241,8 +238,9 @@ async function runMigration() {
     console.log('   2. Execute them in order');
     console.log('   3. Test the address functionality in your app');
     console.log('');
-    console.log('🔗 Supabase SQL Editor: https://supabase.com/dashboard/project/[your-project]/sql');
-    
+    console.log(
+      '🔗 Supabase SQL Editor: https://supabase.com/dashboard/project/[your-project]/sql'
+    );
   } catch (error) {
     console.error('❌ Migration failed:', error.message);
     process.exit(1);

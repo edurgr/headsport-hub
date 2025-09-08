@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useState } from 'react';
+
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface OrderItem {
   id: string;
@@ -44,7 +45,9 @@ export default function PendingOrdersPage() {
   const [approvalAction, setApprovalAction] = useState<'approve' | 'reject'>('approve');
   const [managerNotes, setManagerNotes] = useState('');
   const [sendToSAP, setSendToSAP] = useState(false);
-  const [pricing, setPricing] = useState<Record<string, { unitPrice: number; totalPrice: number }>>({});
+  const [pricing, setPricing] = useState<Record<string, { unitPrice: number; totalPrice: number }>>(
+    {}
+  );
 
   useEffect(() => {
     if (profile?.role === 'manager' || profile?.role === 'admin') {
@@ -56,7 +59,7 @@ export default function PendingOrdersPage() {
     try {
       const response = await fetch('/api/orders/pending');
       const result = await response.json();
-      
+
       if (response.ok) {
         setPendingOrders(result.orders || []);
       } else {
@@ -81,12 +84,12 @@ export default function PendingOrdersPage() {
           action: approvalAction,
           managerNotes,
           sendToSAP,
-          pricing: Object.keys(pricing).length > 0 ? pricing : undefined
-        })
+          pricing: Object.keys(pricing).length > 0 ? pricing : undefined,
+        }),
       });
 
       const result = await response.json();
-      
+
       if (response.ok) {
         alert(`Order ${approvalAction}ed successfully!`);
         setShowApprovalModal(false);
@@ -116,8 +119,8 @@ export default function PendingOrdersPage() {
       ...prev,
       [itemId]: {
         ...prev[itemId],
-        [field]: value
-      }
+        [field]: value,
+      },
     }));
   };
 
@@ -161,15 +164,28 @@ export default function PendingOrdersPage() {
         <div className="space-y-6">
           {pendingOrders.length === 0 ? (
             <div className="bg-gray-50 p-8 rounded-lg text-center">
-              <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <svg
+                className="w-16 h-16 text-gray-400 mx-auto mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
               </svg>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Pending Orders</h3>
               <p className="text-gray-600">All orders have been processed.</p>
             </div>
           ) : (
-            pendingOrders.map((order) => (
-              <div key={order.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            pendingOrders.map(order => (
+              <div
+                key={order.id}
+                className="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
+              >
                 {/* Order Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div>
@@ -203,16 +219,19 @@ export default function PendingOrdersPage() {
                 <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                   <h4 className="font-medium text-gray-900 mb-2">Shipping Address:</h4>
                   <div className="text-sm text-gray-600">
-                    <p><strong>{order.shipping_address.name}</strong></p>
+                    <p>
+                      <strong>{order.shipping_address.name}</strong>
+                    </p>
                     <p>{order.shipping_address.addressLine1}</p>
                     {order.shipping_address.addressLine2 && (
                       <p>{order.shipping_address.addressLine2}</p>
                     )}
-                    <p>{order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.postalCode}</p>
+                    <p>
+                      {order.shipping_address.city}, {order.shipping_address.state}{' '}
+                      {order.shipping_address.postalCode}
+                    </p>
                     <p>{order.shipping_address.country}</p>
-                    {order.shipping_address.phone && (
-                      <p>Phone: {order.shipping_address.phone}</p>
-                    )}
+                    {order.shipping_address.phone && <p>Phone: {order.shipping_address.phone}</p>}
                   </div>
                 </div>
 
@@ -220,8 +239,11 @@ export default function PendingOrdersPage() {
                 <div className="mb-4">
                   <h4 className="font-medium text-gray-900 mb-2">Order Items:</h4>
                   <div className="space-y-2">
-                    {order.order_items.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    {order.order_items.map(item => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      >
                         <div className="flex-1">
                           <p className="font-medium text-gray-900">{item.product_name}</p>
                           <p className="text-sm text-gray-600">
@@ -250,10 +272,10 @@ export default function PendingOrdersPage() {
         {showApprovalModal && selectedOrder && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-                              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  {approvalAction === 'approve' ? 'Approve' : 'Reject'} HEAD Hub Order
-                </h2>
-              
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                {approvalAction === 'approve' ? 'Approve' : 'Reject'} HEAD Hub Order
+              </h2>
+
               <div className="mb-4">
                 <p className="text-sm text-gray-600 mb-2">
                   Order #{selectedOrder.id.slice(-8)} by {selectedOrder.athlete_name}
@@ -265,14 +287,16 @@ export default function PendingOrdersPage() {
                 <div className="mb-4">
                   <h4 className="font-medium text-gray-900 mb-2">Set Pricing:</h4>
                   <div className="space-y-2">
-                    {selectedOrder.order_items.map((item) => (
+                    {selectedOrder.order_items.map(item => (
                       <div key={item.id} className="flex items-center space-x-2">
                         <span className="text-sm text-gray-600 flex-1">{item.product_name}</span>
                         <input
                           type="number"
                           placeholder="Unit Price"
                           className="px-2 py-1 border border-gray-300 rounded text-sm w-24"
-                          onChange={(e) => updatePricing(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                          onChange={e =>
+                            updatePricing(item.id, 'unitPrice', parseFloat(e.target.value) || 0)
+                          }
                         />
                         <span className="text-sm text-gray-600">×</span>
                         <span className="text-sm text-gray-600 w-8">{item.quantity}</span>
@@ -294,7 +318,7 @@ export default function PendingOrdersPage() {
                 <textarea
                   rows={3}
                   value={managerNotes}
-                  onChange={(e) => setManagerNotes(e.target.value)}
+                  onChange={e => setManagerNotes(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Add notes about this order..."
                 />
@@ -307,7 +331,7 @@ export default function PendingOrdersPage() {
                     <input
                       type="checkbox"
                       checked={sendToSAP}
-                      onChange={(e) => setSendToSAP(e.target.checked)}
+                      onChange={e => setSendToSAP(e.target.checked)}
                       className="mr-2"
                     />
                     <span className="text-sm text-gray-700">
@@ -328,8 +352,8 @@ export default function PendingOrdersPage() {
                 <button
                   onClick={handleApproval}
                   className={`px-4 py-2 text-white rounded-lg transition-colors ${
-                    approvalAction === 'approve' 
-                      ? 'bg-green-600 hover:bg-green-700' 
+                    approvalAction === 'approve'
+                      ? 'bg-green-600 hover:bg-green-700'
                       : 'bg-red-600 hover:bg-red-700'
                   }`}
                 >

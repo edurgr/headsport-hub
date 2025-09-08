@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-server';
-import { BackupService } from '@/lib/backup';
+
 import { verifyAdminAccessBypass } from '@/lib/admin-auth-bypass';
+import { BackupService } from '@/lib/backup';
+import { supabaseServer } from '@/lib/supabase-server';
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest) {
       const page = parseInt(url.searchParams.get('page') || '1');
       const limit = parseInt(url.searchParams.get('limit') || '50');
       const status = url.searchParams.get('status');
-      
+
       const result = await BackupService.getBackupOperations(
         limit,
         (page - 1) * limit,
@@ -46,7 +47,6 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-
   } catch (error) {
     console.error('Error in backup API:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -56,9 +56,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const supabase = await supabaseServer();
-    
+
     // Check if user is admin
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -78,13 +81,13 @@ export async function POST(req: NextRequest) {
 
     if (action === 'create') {
       const { type, tables_included } = body;
-      
+
       if (!type) {
         return NextResponse.json({ error: 'Backup type is required' }, { status: 400 });
       }
 
       const backupId = await BackupService.createBackup(type, tables_included, user.id);
-      
+
       // Log the action
       // const requestInfo = getRequestInfo(req);
       // await AuditLogger.logAction(
@@ -106,9 +109,12 @@ export async function POST(req: NextRequest) {
 
     if (action === 'schedule') {
       const { name, type, cron_expression, retention_days, tables_to_include } = body;
-      
+
       if (!name || !type || !cron_expression) {
-        return NextResponse.json({ error: 'Name, type, and cron expression are required' }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Name, type, and cron expression are required' },
+          { status: 400 }
+        );
       }
 
       await BackupService.createBackupSchedule({
@@ -117,7 +123,7 @@ export async function POST(req: NextRequest) {
         cron_expression,
         is_active: true,
         retention_days: retention_days || 30,
-        tables_to_include
+        tables_to_include,
       });
 
       // Log the action
@@ -153,7 +159,6 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-
   } catch (error) {
     console.error('Error in backup API:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -163,9 +168,12 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const supabase = await supabaseServer();
-    
+
     // Check if user is admin
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -185,7 +193,7 @@ export async function PUT(req: NextRequest) {
 
     if (action === 'schedule') {
       const { schedule_id, updates } = body;
-      
+
       if (!schedule_id) {
         return NextResponse.json({ error: 'Schedule ID is required' }, { status: 400 });
       }
@@ -208,7 +216,7 @@ export async function PUT(req: NextRequest) {
 
     if (action === 'settings') {
       const { settings } = body;
-      
+
       await BackupService.updateBackupSettings(settings);
 
       // Log the action
@@ -226,7 +234,6 @@ export async function PUT(req: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-
   } catch (error) {
     console.error('Error in backup API:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -236,9 +243,12 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const supabase = await supabaseServer();
-    
+
     // Check if user is admin
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -274,7 +284,6 @@ export async function DELETE(req: NextRequest) {
     // );
 
     return NextResponse.json({ success: true });
-
   } catch (error) {
     console.error('Error in backup API:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

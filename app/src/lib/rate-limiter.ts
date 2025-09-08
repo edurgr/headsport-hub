@@ -19,7 +19,7 @@ const adminConfig: RateLimitConfig = {
 };
 
 export function rateLimit(
-  req: NextRequest, 
+  req: NextRequest,
   config: RateLimitConfig = defaultConfig
 ): { allowed: boolean; remaining: number; resetTime: number } {
   const ip = getClientIP(req);
@@ -40,7 +40,7 @@ export function rateLimit(
     return {
       allowed: false,
       remaining: 0,
-      resetTime: current.resetTime
+      resetTime: current.resetTime,
     };
   }
 
@@ -50,7 +50,7 @@ export function rateLimit(
   return {
     allowed: true,
     remaining: config.maxRequests - current.count,
-    resetTime: current.resetTime
+    resetTime: current.resetTime,
   };
 }
 
@@ -62,38 +62,42 @@ function getClientIP(req: NextRequest): string {
   const forwarded = req.headers.get('x-forwarded-for');
   const realIP = req.headers.get('x-real-ip');
   const cfConnectingIP = req.headers.get('cf-connecting-ip');
-  
+
   if (cfConnectingIP) return cfConnectingIP;
   if (realIP) return realIP;
   if (forwarded) return forwarded.split(',')[0].trim();
-  
+
   return 'unknown';
 }
 
 // Función para verificar rate limit en APIs
 export function checkRateLimit(req: NextRequest, isAdmin = false) {
   const result = isAdmin ? adminRateLimit(req) : rateLimit(req);
-  
+
   if (!result.allowed) {
     return {
       success: false,
       error: 'Too many requests',
       status: 429,
       headers: {
-        'X-RateLimit-Limit': isAdmin ? adminConfig.maxRequests.toString() : defaultConfig.maxRequests.toString(),
+        'X-RateLimit-Limit': isAdmin
+          ? adminConfig.maxRequests.toString()
+          : defaultConfig.maxRequests.toString(),
         'X-RateLimit-Remaining': '0',
         'X-RateLimit-Reset': result.resetTime.toString(),
-        'Retry-After': Math.ceil((result.resetTime - Date.now()) / 1000).toString()
-      }
+        'Retry-After': Math.ceil((result.resetTime - Date.now()) / 1000).toString(),
+      },
     };
   }
 
   return {
     success: true,
     headers: {
-      'X-RateLimit-Limit': isAdmin ? adminConfig.maxRequests.toString() : defaultConfig.maxRequests.toString(),
+      'X-RateLimit-Limit': isAdmin
+        ? adminConfig.maxRequests.toString()
+        : defaultConfig.maxRequests.toString(),
       'X-RateLimit-Remaining': result.remaining.toString(),
-      'X-RateLimit-Reset': result.resetTime.toString()
-    }
+      'X-RateLimit-Reset': result.resetTime.toString(),
+    },
   };
 }

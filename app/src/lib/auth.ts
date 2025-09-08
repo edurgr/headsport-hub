@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+
 import { createClient } from '@supabase/supabase-js';
 
 export async function getUserServer() {
@@ -9,6 +10,8 @@ export async function getUserServer() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     { global: { headers: { Authorization: `Bearer ${token}` } } }
   );
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   return user;
 }

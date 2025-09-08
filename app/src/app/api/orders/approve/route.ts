@@ -1,12 +1,23 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+
 import { emailService } from '@/lib/email-service';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabaseServer } from '@/lib/supabase-server';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { orderId, action, managerNotes, approverEmail: fromClient } = body as { orderId: string; action: 'approve' | 'reject'; managerNotes?: string; approverEmail?: string };
+    const {
+      orderId,
+      action,
+      managerNotes,
+      approverEmail: fromClient,
+    } = body as {
+      orderId: string;
+      action: 'approve' | 'reject';
+      managerNotes?: string;
+      approverEmail?: string;
+    };
 
     if (!orderId || !['approve', 'reject'].includes(action)) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
@@ -26,7 +37,7 @@ export async function POST(req: Request) {
       .select('email, role')
       .eq('email', approverEmail)
       .single();
-    if (!approverProfile || !['manager','admin'].includes(approverProfile.role)) {
+    if (!approverProfile || !['manager', 'admin'].includes(approverProfile.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -34,31 +45,37 @@ export async function POST(req: Request) {
     const newStatus = action === 'approve' ? 'approved' : 'rejected';
     const { data: updated, error } = await sb
       .from('orders')
-      .update({ 
-        status: newStatus, 
-        notes: managerNotes || null, 
+      .update({
+        status: newStatus,
+        notes: managerNotes || null,
         approved_by_email: approverEmail,
         approved_at: new Date().toISOString(),
-        updated_at: new Date().toISOString() 
+        updated_at: new Date().toISOString(),
       })
       .eq('id', orderId)
       .select('*, order_items(*)')
       .single();
 
-    if (error || !updated) return NextResponse.json({ error: 'Failed to update order: ' + (error?.message || '') }, { status: 500 });
+    if (error || !updated)
+      return NextResponse.json(
+        { error: 'Failed to update order: ' + (error?.message || '') },
+        { status: 500 }
+      );
 
     // Optional email sending is controlled by env toggle
     if (process.env.NEXT_PUBLIC_ORDER_EMAILS_ENABLED === 'true') {
       const subject = `Order ${action === 'approve' ? 'Approved' : 'Rejected'} — ${updated.athlete_email}`;
-      const itemsHtml = (updated.order_items || []).map((it: any) => {
-        const parts: string[] = [];
-        parts.push(`${it.quantity}x ${it.product_name}`);
-        if (it.product_sku) parts.push(`SKU: ${it.product_sku}`);
-        if (it.length_cm) parts.push(`Length: ${it.length_cm}cm`);
-        if (it.boot_size) parts.push(`Boot Size: ${it.boot_size}`);
-        if (it.binding_color) parts.push(`Color: ${it.binding_color}`);
-        return `<li>${parts.join(' — ')}</li>`;
-      }).join('');
+      const itemsHtml = (updated.order_items || [])
+        .map((it: any) => {
+          const parts: string[] = [];
+          parts.push(`${it.quantity}x ${it.product_name}`);
+          if (it.product_sku) parts.push(`SKU: ${it.product_sku}`);
+          if (it.length_cm) parts.push(`Length: ${it.length_cm}cm`);
+          if (it.boot_size) parts.push(`Boot Size: ${it.boot_size}`);
+          if (it.binding_color) parts.push(`Color: ${it.binding_color}`);
+          return `<li>${parts.join(' — ')}</li>`;
+        })
+        .join('');
 
       const html = `
         <h2>Order ${action === 'approve' ? 'Approved' : 'Rejected'}</h2>
@@ -76,7 +93,7 @@ export async function POST(req: Request) {
 
       const envRecipients = (process.env.NEXT_PUBLIC_ORDER_NOTIFICATION_EMAILS || '')
         .split(',')
-        .map((s) => s.trim())
+        .map(s => s.trim())
         .filter(Boolean);
       // Primary: approver email; Fallback: env recipients (if approver email not available)
       const recipients = approverEmail ? [approverEmail] : envRecipients;

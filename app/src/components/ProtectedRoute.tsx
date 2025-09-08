@@ -1,8 +1,10 @@
 'use client';
 
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+
+import { useRouter } from 'next/navigation';
+
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,11 +12,7 @@ interface ProtectedRouteProps {
   fallback?: React.ReactNode;
 }
 
-export default function ProtectedRoute({ 
-  children, 
-  requiredRole, 
-  fallback 
-}: ProtectedRouteProps) {
+export default function ProtectedRoute({ children, requiredRole, fallback }: ProtectedRouteProps) {
   const { user, profile, loading, hydrated } = useAuth();
   const router = useRouter();
 
@@ -24,9 +22,15 @@ export default function ProtectedRoute({
       router.push('/login');
       return;
     }
-    
+
     // Onboarding redirect: si el perfil está cargado y no tiene nombre, mandar a onboarding
-    if (hydrated && !loading && user && profile && (!profile.name || profile.name.trim().length === 0)) {
+    if (
+      hydrated &&
+      !loading &&
+      user &&
+      profile &&
+      (!profile.name || profile.name.trim().length === 0)
+    ) {
       if (window.location.pathname !== '/onboarding') {
         router.push('/onboarding');
       }
@@ -47,19 +51,21 @@ export default function ProtectedRoute({
 
   // Si después de cargar no hay usuario, mostrar "Acceso denegado"
   if (!user) {
-    return fallback || (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-4">Please sign in to access this page.</p>
-          <button
-            onClick={() => router.push('/login')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Go to Login
-          </button>
+    return (
+      fallback || (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
+            <p className="text-gray-600 mb-4">Please sign in to access this page.</p>
+            <button
+              onClick={() => router.push('/login')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Go to Login
+            </button>
+          </div>
         </div>
-      </div>
+      )
     );
   }
 
@@ -75,12 +81,12 @@ export default function ProtectedRoute({
       </div>
     );
   }
-  
+
   // Check role access
   if (requiredRole && profile) {
     const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
     const hasAccess = allowedRoles.includes(profile.role as any);
-    
+
     if (!hasAccess) {
       const roleText = Array.isArray(requiredRole) ? requiredRole.join(' or ') : requiredRole;
       return (

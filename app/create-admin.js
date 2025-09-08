@@ -19,7 +19,7 @@ const supabase = createClient(supabaseUrl, serviceKey);
 async function createAdminUser() {
   try {
     console.log('🔍 Checking for existing admin users...');
-    
+
     // Check if admin users already exist
     const { data: existingAdmins, error: checkError } = await supabase
       .from('profiles')
@@ -40,7 +40,7 @@ async function createAdminUser() {
     }
 
     console.log('📧 No admin users found. Creating first admin user...');
-    
+
     // Create admin user
     const adminEmail = 'admin@headhub.com';
     const adminPassword = 'Admin123!';
@@ -51,8 +51,8 @@ async function createAdminUser() {
       password: adminPassword,
       email_confirm: true,
       user_metadata: {
-        name: adminName
-      }
+        name: adminName,
+      },
     });
 
     if (authError) {
@@ -76,7 +76,7 @@ async function createAdminUser() {
         name: adminName,
         role: 'admin',
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .select()
       .single();
@@ -91,7 +91,6 @@ async function createAdminUser() {
     console.log(`   Email: ${adminEmail}`);
     console.log(`   Password: ${adminPassword}`);
     console.log('⚠️  Please change the password after first login!');
-
   } catch (error) {
     console.error('❌ Unexpected error:', error);
   }

@@ -2,14 +2,14 @@
 export interface EmailConfig {
   // Email service configuration
   service: 'sendgrid' | 'aws-ses' | 'nodemailer' | 'mock';
-  
+
   // SendGrid configuration
   sendgrid?: {
     apiKey: string;
     fromEmail: string;
     fromName: string;
   };
-  
+
   // AWS SES configuration
   awsSes?: {
     accessKeyId: string;
@@ -17,7 +17,7 @@ export interface EmailConfig {
     region: string;
     fromEmail: string;
   };
-  
+
   // Nodemailer configuration
   nodemailer?: {
     host: string;
@@ -37,13 +37,13 @@ export const defaultEmailConfig: EmailConfig = {
   sendgrid: {
     apiKey: process.env.SENDGRID_API_KEY || '',
     fromEmail: process.env.FROM_EMAIL || 'noreply@athletehub.com',
-    fromName: process.env.FROM_NAME || 'Athlete Hub'
+    fromName: process.env.FROM_NAME || 'Athlete Hub',
   },
   awsSes: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
     region: process.env.AWS_REGION || 'us-east-1',
-    fromEmail: process.env.FROM_EMAIL || 'noreply@athletehub.com'
+    fromEmail: process.env.FROM_EMAIL || 'noreply@athletehub.com',
   },
   nodemailer: {
     host: process.env.SMTP_HOST || 'localhost',
@@ -51,10 +51,10 @@ export const defaultEmailConfig: EmailConfig = {
     secure: process.env.SMTP_SECURE === 'true',
     auth: {
       user: process.env.SMTP_USER || '',
-      pass: process.env.SMTP_PASS || ''
+      pass: process.env.SMTP_PASS || '',
     },
-    fromEmail: process.env.FROM_EMAIL || 'noreply@athletehub.com'
-  }
+    fromEmail: process.env.FROM_EMAIL || 'noreply@athletehub.com',
+  },
 };
 
 // Función para obtener la configuración actual
@@ -63,10 +63,10 @@ export function getEmailConfig(): EmailConfig {
   if (process.env.SENDGRID_API_KEY) {
     return {
       ...defaultEmailConfig,
-      service: 'sendgrid'
+      service: 'sendgrid',
     };
   }
-  
+
   // If no SendGrid, use mock for development
   return defaultEmailConfig;
 }
@@ -74,10 +74,10 @@ export function getEmailConfig(): EmailConfig {
 // Function to verify if email service is configured
 export function isEmailServiceConfigured(): boolean {
   const config = getEmailConfig();
-  
+
   switch (config.service) {
     case 'sendgrid':
-      return !!(config.sendgrid?.apiKey);
+      return !!config.sendgrid?.apiKey;
     case 'aws-ses':
       return !!(config.awsSes?.accessKeyId && config.awsSes?.secretAccessKey);
     case 'nodemailer':
@@ -92,7 +92,7 @@ export function isEmailServiceConfigured(): boolean {
 // Function to get sender email
 export function getFromEmail(): string {
   const config = getEmailConfig();
-  
+
   switch (config.service) {
     case 'sendgrid':
       return config.sendgrid?.fromEmail || 'noreply@athletehub.com';

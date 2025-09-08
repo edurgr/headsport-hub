@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import { useRouter } from 'next/navigation';
+
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function OnboardingPage() {
@@ -56,7 +58,7 @@ export default function OnboardingPage() {
       <div className="p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <h1 className="text-2xl font-bold text-red-800 mb-4">Access Denied</h1>
-                      <p className="text-red-700">Please sign in to HEAD Hub to continue.</p>
+          <p className="text-red-700">Please sign in to HEAD Hub to continue.</p>
         </div>
       </div>
     );
@@ -78,10 +80,13 @@ export default function OnboardingPage() {
     <div className="p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Complete your HEAD Hub profile</h1>
-                  <p className="text-gray-600">Tell us a bit about you to get started with HEAD Hub</p>
+        <p className="text-gray-600">Tell us a bit about you to get started with HEAD Hub</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 max-w-3xl">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 max-w-3xl"
+      >
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
@@ -89,7 +94,7 @@ export default function OnboardingPage() {
               type="text"
               required
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Your name"
             />
@@ -100,7 +105,7 @@ export default function OnboardingPage() {
             <input
               type="text"
               value={formData.organization}
-              onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
+              onChange={e => setFormData({ ...formData, organization: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Company / Team (optional)"
             />
@@ -111,7 +116,7 @@ export default function OnboardingPage() {
             <input
               type="text"
               value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              onChange={e => setFormData({ ...formData, phone: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Phone number"
             />
@@ -122,7 +127,7 @@ export default function OnboardingPage() {
             <input
               type="text"
               value={formData.country}
-              onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+              onChange={e => setFormData({ ...formData, country: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Country"
             />
@@ -133,7 +138,7 @@ export default function OnboardingPage() {
             <input
               type="text"
               value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              onChange={e => setFormData({ ...formData, address: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Street and number"
             />
@@ -144,7 +149,7 @@ export default function OnboardingPage() {
             <input
               type="text"
               value={formData.city}
-              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+              onChange={e => setFormData({ ...formData, city: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="City"
             />
@@ -155,7 +160,7 @@ export default function OnboardingPage() {
             <input
               type="text"
               value={formData.state}
-              onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+              onChange={e => setFormData({ ...formData, state: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="State / Region"
             />
@@ -166,7 +171,7 @@ export default function OnboardingPage() {
             <input
               type="text"
               value={formData.postal_code}
-              onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
+              onChange={e => setFormData({ ...formData, postal_code: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="ZIP / Postal Code"
             />
@@ -193,5 +198,3 @@ export default function OnboardingPage() {
     </div>
   );
 }
-
-

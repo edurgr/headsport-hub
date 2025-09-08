@@ -11,15 +11,11 @@ const protectedRoutes = [
   '/orders',
   '/analytics',
   '/my-stats',
-  '/admin'
+  '/admin',
 ];
 
 // Routes that only administrators can access
-const adminOnlyRoutes = [
-  '/admin',
-  '/invite-manager',
-  '/signup'
-];
+const adminOnlyRoutes = ['/admin', '/invite-manager', '/signup'];
 
 // Routes that only managers and administrators can access
 // const managerRoutes = [
@@ -29,7 +25,7 @@ const adminOnlyRoutes = [
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
+
   // Permitir acceso a archivos estáticos y API routes
   if (
     pathname.startsWith('/_next') ||
@@ -41,31 +37,39 @@ export function middleware(request: NextRequest) {
   }
 
   // Public routes that don't require middleware
-  const publicRoutes = ['/', '/login', '/login/', '/accept-invite', '/auth/callback', '/forgot-password'];
+  const publicRoutes = [
+    '/',
+    '/login',
+    '/login/',
+    '/accept-invite',
+    '/auth/callback',
+    '/forgot-password',
+  ];
   if (publicRoutes.includes(pathname)) {
     return NextResponse.next();
   }
 
   // Verificar si es una ruta protegida
-  const isProtectedRoute = protectedRoutes.some(route => 
-    pathname.startsWith(route)
-  );
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
 
   if (!isProtectedRoute) {
     return NextResponse.next();
   }
 
   // For protected routes, verify authentication strictly (no demo)
-  const token = request.cookies.get('sb-access-token')?.value || 
-                request.cookies.get('sb:token')?.value ||
-                (() => {
-                  const raw = request.cookies.get('supabase-auth-token')?.value;
-                  try {
-                    if (!raw) return '';
-                    const arr = JSON.parse(decodeURIComponent(raw));
-                    return Array.isArray(arr) ? String(arr[0] || '') : '';
-                  } catch { return ''; }
-                })();
+  const token =
+    request.cookies.get('sb-access-token')?.value ||
+    request.cookies.get('sb:token')?.value ||
+    (() => {
+      const raw = request.cookies.get('supabase-auth-token')?.value;
+      try {
+        if (!raw) return '';
+        const arr = JSON.parse(decodeURIComponent(raw));
+        return Array.isArray(arr) ? String(arr[0] || '') : '';
+      } catch {
+        return '';
+      }
+    })();
 
   if (!token) {
     return NextResponse.redirect(new URL('/login', request.url));
@@ -74,7 +78,7 @@ export function middleware(request: NextRequest) {
   // For routes that require specific roles, verify permissions
   // This is better done in the frontend with the ProtectedRoute component
   // but here we can do a basic verification
-  
+
   if (adminOnlyRoutes.some(route => pathname.startsWith(route))) {
     // Verify if user is admin (this would require decoding the JWT)
     // For now, we allow access and verification is done in the frontend

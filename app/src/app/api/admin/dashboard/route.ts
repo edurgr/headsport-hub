@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminAccess } from '@/lib/admin-auth-secure';
-import { checkRateLimit } from '@/lib/rate-limiter';
-import { validateRequest } from '@/lib/input-validator';
+
 import { createClient } from '@supabase/supabase-js';
+
+import { verifyAdminAccess } from '@/lib/admin-auth-secure';
+import { validateRequest } from '@/lib/input-validator';
+import { checkRateLimit } from '@/lib/rate-limiter';
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,10 +12,10 @@ export async function GET(req: NextRequest) {
     const rateLimitResult = checkRateLimit(req, true); // Admin rate limit
     if (!rateLimitResult.success) {
       return NextResponse.json(
-        { error: rateLimitResult.error }, 
-        { 
-          status: rateLimitResult.status, 
-          headers: rateLimitResult.headers as Record<string, string>
+        { error: rateLimitResult.error },
+        {
+          status: rateLimitResult.status,
+          headers: rateLimitResult.headers as Record<string, string>,
         }
       );
     }
@@ -30,18 +32,18 @@ export async function GET(req: NextRequest) {
       console.log('Admin access denied:', adminResult.error);
       return NextResponse.json({ error: adminResult.error }, { status: adminResult.status });
     }
-    
+
     const adminUser = adminResult.user;
     console.log('Admin access granted for:', adminUser.email);
-    
+
     // Use service role key for admin operations
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
+
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
     }
-    
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const url = new URL(req.url);
@@ -56,7 +58,7 @@ export async function GET(req: NextRequest) {
       recentActivity,
       systemHealth,
       backupStats,
-      notificationStats
+      notificationStats,
     ] = await Promise.all([
       getUserStats(supabase, parseInt(period)),
       getOrderStats(supabase, parseInt(period)),
@@ -65,7 +67,7 @@ export async function GET(req: NextRequest) {
       getRecentActivity(supabase),
       getSystemHealth(supabase),
       getBackupStats(),
-      getNotificationStats(supabase, adminUser.id)
+      getNotificationStats(supabase, adminUser.id),
     ]);
 
     return NextResponse.json({
@@ -77,9 +79,8 @@ export async function GET(req: NextRequest) {
       recent_activity: recentActivity,
       system_health: systemHealth,
       backup_stats: backupStats,
-      notification_stats: notificationStats
+      notification_stats: notificationStats,
     });
-
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -102,33 +103,32 @@ async function getUserStats(supabase: any, period: number) {
         total_users: 0,
         new_users: 0,
         active_users: 0,
-        users_by_role: {}
+        users_by_role: {},
       };
     }
 
     const totalUsers = allUsers?.length || 0;
 
     // New users in period
-    const newUsers = allUsers?.filter((user: any) => 
-      new Date(user.created_at) >= startDate
-    ).length || 0;
+    const newUsers =
+      allUsers?.filter((user: any) => new Date(user.created_at) >= startDate).length || 0;
 
     // Users by role
-    const roleCounts = allUsers?.reduce((acc: any, user: any) => {
-      acc[user.role] = (acc[user.role] || 0) + 1;
-      return acc;
-    }, {}) || {};
+    const roleCounts =
+      allUsers?.reduce((acc: any, user: any) => {
+        acc[user.role] = (acc[user.role] || 0) + 1;
+        return acc;
+      }, {}) || {};
 
     // Active users (users with recent activity)
-    const activeUsers = allUsers?.filter((user: any) => 
-      new Date(user.updated_at) >= startDate
-    ).length || 0;
+    const activeUsers =
+      allUsers?.filter((user: any) => new Date(user.updated_at) >= startDate).length || 0;
 
     return {
       total_users: totalUsers,
       new_users: newUsers,
       active_users: activeUsers,
-      users_by_role: roleCounts
+      users_by_role: roleCounts,
     };
   } catch (error) {
     console.error('Error in getUserStats:', error);
@@ -136,7 +136,7 @@ async function getUserStats(supabase: any, period: number) {
       total_users: 0,
       new_users: 0,
       active_users: 0,
-      users_by_role: {}
+      users_by_role: {},
     };
   }
 }
@@ -163,17 +163,18 @@ async function getOrderStats(supabase: any, period: number) {
       .select('status')
       .gte('created_at', startDate.toISOString());
 
-    const statusCounts = ordersByStatus?.reduce((acc: any, order: any) => {
-      acc[order.status] = (acc[order.status] || 0) + 1;
-      return acc;
-    }, {}) || {};
+    const statusCounts =
+      ordersByStatus?.reduce((acc: any, order: any) => {
+        acc[order.status] = (acc[order.status] || 0) + 1;
+        return acc;
+      }, {}) || {};
 
     return {
       total_orders: totalOrders || 0,
       period_orders: periodOrders || 0,
       orders_by_status: statusCounts,
       total_revenue: 0, // No hay columna total_amount
-      average_order_value: 0
+      average_order_value: 0,
     };
   } catch (error) {
     console.error('Error in getOrderStats:', error);
@@ -182,7 +183,7 @@ async function getOrderStats(supabase: any, period: number) {
       period_orders: 0,
       orders_by_status: {},
       total_revenue: 0,
-      average_order_value: 0
+      average_order_value: 0,
     };
   }
 }
@@ -203,32 +204,32 @@ async function getContentStats(supabase: any, period: number) {
         total_content: 0,
         period_content: 0,
         content_by_type: {},
-        total_storage_mb: 0
+        total_storage_mb: 0,
       };
     }
 
     const totalContent = allContent?.length || 0;
 
     // Content in period
-    const periodContent = allContent?.filter((file: any) => 
-      new Date(file.created_at) >= startDate
-    ).length || 0;
+    const periodContent =
+      allContent?.filter((file: any) => new Date(file.created_at) >= startDate).length || 0;
 
     // Content by type
-    const typeCounts = allContent?.reduce((acc: any, file: any) => {
-      acc[file.file_type] = (acc[file.file_type] || 0) + 1;
-      return acc;
-    }, {}) || {};
+    const typeCounts =
+      allContent?.reduce((acc: any, file: any) => {
+        acc[file.file_type] = (acc[file.file_type] || 0) + 1;
+        return acc;
+      }, {}) || {};
 
     // Total storage
-    const totalStorage = allContent?.reduce((sum: number, file: any) => 
-      sum + (parseInt(file.file_size) || 0), 0) || 0;
+    const totalStorage =
+      allContent?.reduce((sum: number, file: any) => sum + (parseInt(file.file_size) || 0), 0) || 0;
 
     return {
       total_content: totalContent,
       period_content: periodContent,
       content_by_type: typeCounts,
-      total_storage_mb: Math.round(totalStorage / 1024 / 1024 * 100) / 100
+      total_storage_mb: Math.round((totalStorage / 1024 / 1024) * 100) / 100,
     };
   } catch (error) {
     console.error('Error in getContentStats:', error);
@@ -236,7 +237,7 @@ async function getContentStats(supabase: any, period: number) {
       total_content: 0,
       period_content: 0,
       content_by_type: {},
-      total_storage_mb: 0
+      total_storage_mb: 0,
     };
   }
 }
@@ -248,17 +249,23 @@ async function getProductStats(supabase: any) {
 
   try {
     for (const category of categories) {
-      const { count } = await supabase
-        .from(category)
-        .select('*', { count: 'exact', head: true });
-      
+      const { count } = await supabase.from(category).select('*', { count: 'exact', head: true });
+
       const countValue = count || 0;
       totalProducts += countValue;
       productsByCategory[category] = countValue;
     }
 
     // Agregar categorías que no existen con 0
-    const allCategories = ['accessories', 'bindings', 'boots', 'goggles', 'helmet', 'ski', 'snowboard'];
+    const allCategories = [
+      'accessories',
+      'bindings',
+      'boots',
+      'goggles',
+      'helmet',
+      'ski',
+      'snowboard',
+    ];
     allCategories.forEach(cat => {
       if (!productsByCategory[cat]) {
         productsByCategory[cat] = 0;
@@ -268,7 +275,7 @@ async function getProductStats(supabase: any) {
     return {
       total_products: totalProducts,
       active_products: totalProducts, // Asumimos que todos están activos
-      products_by_category: productsByCategory
+      products_by_category: productsByCategory,
     };
   } catch (error) {
     console.error('Error in getProductStats:', error);
@@ -282,8 +289,8 @@ async function getProductStats(supabase: any) {
         goggles: 0,
         helmet: 0,
         ski: 0,
-        snowboard: 0
-      }
+        snowboard: 0,
+      },
     };
   }
 }
@@ -305,11 +312,11 @@ async function getRecentActivity(supabase: any) {
           .select('name, email')
           .eq('email', order.athlete_email)
           .single();
-        
+
         return {
           ...order,
           user_name: profile?.name || 'Unknown User',
-          user_email: profile?.email || order.athlete_email
+          user_email: profile?.email || order.athlete_email,
         };
       })
     );
@@ -324,7 +331,8 @@ async function getRecentActivity(supabase: any) {
     // Recent content with user names
     const { data: recentContent } = await supabase
       .from('upload_files')
-      .select(`
+      .select(
+        `
         id, 
         filename, 
         file_type, 
@@ -333,31 +341,29 @@ async function getRecentActivity(supabase: any) {
         upload_sessions!upload_files_session_id_fkey(
           profiles!upload_sessions_user_id_fkey(name, email)
         )
-      `)
+      `
+      )
       .order('created_at', { ascending: false })
       .limit(5);
 
     return {
       recent_orders: ordersWithNames || [],
       recent_users: recentUsers || [],
-      recent_content: recentContent || []
+      recent_content: recentContent || [],
     };
   } catch (error) {
     console.error('Error in getRecentActivity:', error);
     return {
       recent_orders: [],
       recent_users: [],
-      recent_content: []
+      recent_content: [],
     };
   }
 }
 
 async function getSystemHealth(supabase: any) {
   // Database health
-  const { data: dbHealth } = await supabase
-    .from('profiles')
-    .select('id')
-    .limit(1);
+  const { data: dbHealth } = await supabase.from('profiles').select('id').limit(1);
 
   // Storage health (check if storage is accessible)
   let storageHealth = true;
@@ -376,7 +382,7 @@ async function getSystemHealth(supabase: any) {
     database_healthy: !!dbHealth,
     storage_healthy: storageHealth,
     uptime_seconds: uptime,
-    uptime_hours: Math.round(uptime / 3600 * 100) / 100
+    uptime_hours: Math.round((uptime / 3600) * 100) / 100,
   };
 }
 
@@ -388,7 +394,7 @@ async function getBackupStats() {
     failed_backups: 0,
     total_size_mb: 0,
     last_backup_date: null,
-    avg_backup_duration_minutes: 0
+    avg_backup_duration_minutes: 0,
   };
 }
 
@@ -396,6 +402,6 @@ async function getNotificationStats(supabase: any, userId: string) {
   // Por ahora, devolver stats mock ya que las tablas de notificaciones no existen
   return {
     unread_count: 0,
-    recent_notifications: []
+    recent_notifications: [],
   };
 }

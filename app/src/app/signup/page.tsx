@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useState } from 'react';
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function SignupPage() {
   const { signUpWithEmail, profile } = useAuth();
@@ -24,7 +26,7 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Check permissions
     if (!profile || profile.role !== 'admin') {
       setError('Access denied. Only administrators can create new accounts.');
@@ -34,9 +36,13 @@ export default function SignupPage() {
     setError(null);
     setInfo(null);
     setIsLoading(true);
-    
+
     try {
-      const { requiresEmailConfirmation } = await signUpWithEmail(email, password, name || undefined);
+      const { requiresEmailConfirmation } = await signUpWithEmail(
+        email,
+        password,
+        name || undefined
+      );
       if (requiresEmailConfirmation) {
         setInfo('Check your email to confirm the new administrator account.');
       } else {
@@ -56,23 +62,34 @@ export default function SignupPage() {
         <div className="w-full max-w-md bg-white rounded-lg shadow p-6">
           <div className="text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              <svg
+                className="w-8 h-8 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
               </svg>
             </div>
             <h1 className="text-2xl font-semibold text-gray-900 mb-2">Access Denied</h1>
             <p className="text-gray-600 mb-6">
-              Only administrators can create new accounts. Please contact your system administrator for an invitation.
+              Only administrators can create new accounts. Please contact your system administrator
+              for an invitation.
             </p>
             <div className="space-y-3">
-              <Link 
-                href="/login" 
+              <Link
+                href="/login"
                 className="w-full inline-block px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
               >
                 Go to Login
               </Link>
-              <Link 
-                href="/" 
+              <Link
+                href="/"
                 className="w-full inline-block px-6 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors font-medium"
               >
                 Back to Home
@@ -88,7 +105,9 @@ export default function SignupPage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow p-6">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-1">Create Administrator Account</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+            Create Administrator Account
+          </h1>
           <p className="text-gray-600">Register a new administrator for the system</p>
         </div>
 
@@ -97,7 +116,7 @@ export default function SignupPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
             <input
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={e => setName(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Administrator name"
               type="text"
@@ -108,7 +127,7 @@ export default function SignupPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="admin@example.com"
               type="email"
@@ -119,21 +138,28 @@ export default function SignupPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <input
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="••••••••"
               type="password"
               minLength={6}
               required
             />
-            <p className="text-xs text-gray-500 mt-1">Password must be at least 6 characters long</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Password must be at least 6 characters long
+            </p>
           </div>
 
           {error && (
             <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
               <div className="flex items-center">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
                 </svg>
                 {error}
               </div>
@@ -143,7 +169,12 @@ export default function SignupPage() {
             <div className="text-sm text-green-700 bg-green-50 p-3 rounded-md border border-green-200">
               <div className="flex items-center">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
                 {info}
               </div>
@@ -166,7 +197,12 @@ export default function SignupPage() {
           <div className="text-sm text-blue-800">
             <div className="flex items-center mb-1">
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <span className="font-medium">Administrator Registration</span>
             </div>
@@ -188,5 +224,3 @@ export default function SignupPage() {
     </div>
   );
 }
-
-

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { createClient } from '@supabase/supabase-js';
+
 import { emailService } from '@/lib/email-service';
 
 export async function POST(request: NextRequest) {
@@ -9,7 +11,8 @@ export async function POST(request: NextRequest) {
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !serviceKey) return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
+    if (!supabaseUrl || !serviceKey)
+      return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
 
     const admin = createClient(supabaseUrl, serviceKey);
 
@@ -28,7 +31,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await admin.auth.admin.generateLink({
       type: 'recovery',
       email,
-      options: { redirectTo }
+      options: { redirectTo },
     });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -60,13 +63,18 @@ export async function POST(request: NextRequest) {
     if (!sent) {
       // Si el servicio de correo no está configurado, no exponemos el enlace en producción
       const isDev = process.env.NODE_ENV !== 'production';
-      return NextResponse.json({ success: true, emailed: false, ...(isDev ? { action_link: actionLink } : {}) });
+      return NextResponse.json({
+        success: true,
+        emailed: false,
+        ...(isDev ? { action_link: actionLink } : {}),
+      });
     }
 
     return NextResponse.json({ success: true, emailed: true });
   } catch (e) {
-    return NextResponse.json({ error: 'Internal server error', details: e instanceof Error ? e.message : 'Unknown' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error', details: e instanceof Error ? e.message : 'Unknown' },
+      { status: 500 }
+    );
   }
 }
-
-

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
@@ -8,7 +9,8 @@ export async function POST(request: NextRequest) {
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !serviceKey) return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
+    if (!supabaseUrl || !serviceKey)
+      return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
 
     const admin = createClient(supabaseUrl, serviceKey);
 
@@ -23,15 +25,19 @@ export async function POST(request: NextRequest) {
     const { data, error } = await admin.auth.admin.generateLink({
       type: 'magiclink',
       email,
-      options: { redirectTo: `${baseUrl}/auth/callback` }
+      options: { redirectTo: `${baseUrl}/auth/callback` },
     });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    return NextResponse.json({ success: true, action_link: (data as any)?.properties?.action_link || null });
+    return NextResponse.json({
+      success: true,
+      action_link: (data as any)?.properties?.action_link || null,
+    });
   } catch (e) {
-    return NextResponse.json({ error: 'Internal server error', details: e instanceof Error ? e.message : 'Unknown' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error', details: e instanceof Error ? e.message : 'Unknown' },
+      { status: 500 }
+    );
   }
 }
-
-

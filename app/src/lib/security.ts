@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { z } from 'zod';
 
 // Rate limiting store (in production, use Redis or similar)
@@ -14,21 +15,21 @@ const RATE_LIMIT_MAX_REQUESTS = 100; // 100 requests per window
 export function rateLimit(identifier: string): boolean {
   const now = Date.now();
   const key = `rate_limit_${identifier}`;
-  
+
   const current = rateLimitStore.get(key);
-  
+
   if (!current || now > current.resetTime) {
     rateLimitStore.set(key, {
       count: 1,
-      resetTime: now + RATE_LIMIT_WINDOW
+      resetTime: now + RATE_LIMIT_WINDOW,
     });
     return true;
   }
-  
+
   if (current.count >= RATE_LIMIT_MAX_REQUESTS) {
     return false;
   }
-  
+
   current.count++;
   return true;
 }
@@ -39,15 +40,15 @@ export function rateLimit(identifier: string): boolean {
 export function getClientIP(req: NextRequest): string {
   const forwarded = req.headers.get('x-forwarded-for');
   const realIP = req.headers.get('x-real-ip');
-  
+
   if (forwarded) {
     return forwarded.split(',')[0].trim();
   }
-  
+
   if (realIP) {
     return realIP;
   }
-  
+
   return 'unknown';
 }
 
@@ -56,7 +57,7 @@ export function getClientIP(req: NextRequest): string {
  */
 export function sanitizeString(input: string): string {
   if (typeof input !== 'string') return '';
-  
+
   return input
     .replace(/[<>]/g, '') // Remove < and >
     .replace(/javascript:/gi, '') // Remove javascript: protocol
@@ -70,11 +71,8 @@ export function sanitizeString(input: string): string {
  */
 export function sanitizeEmail(email: string): string {
   if (typeof email !== 'string') return '';
-  
-  return email
-    .toLowerCase()
-    .trim()
-    .substring(0, 254); // RFC 5321 limit
+
+  return email.toLowerCase().trim().substring(0, 254); // RFC 5321 limit
 }
 
 /**
@@ -104,7 +102,15 @@ export function isValidUUID(uuid: string): boolean {
  * Validate product category
  */
 export function isValidProductCategory(category: string): boolean {
-  const validCategories = ['accessories', 'bindings', 'boots', 'goggles', 'helmet', 'skis', 'snowboard'];
+  const validCategories = [
+    'accessories',
+    'bindings',
+    'boots',
+    'goggles',
+    'helmet',
+    'skis',
+    'snowboard',
+  ];
   return validCategories.includes(category);
 }
 
@@ -126,7 +132,9 @@ export function sanitizeOrderItem(item: any) {
       name: sanitizeString(item.product?.name || ''),
       sku: sanitizeString(item.product?.sku || ''),
       vertical_number: sanitizeString(item.product?.vertical_number || ''),
-      category: isValidProductCategory(item.product?.category) ? item.product.category : 'accessories',
+      category: isValidProductCategory(item.product?.category)
+        ? item.product.category
+        : 'accessories',
     },
     quantity: Math.max(1, Math.min(100, parseInt(item.quantity) || 1)),
     length_cm: item.length_cm ? sanitizeString(item.length_cm) : undefined,
@@ -158,11 +166,11 @@ export function sanitizeShippingAddress(address: any) {
 export function createSecureErrorResponse(message: string, status: number = 400) {
   // Don't expose internal details in production
   const isProduction = process.env.NODE_ENV === 'production';
-  
+
   return NextResponse.json(
     {
       error: isProduction ? 'Request failed' : message,
-      ...(isProduction ? {} : { details: message })
+      ...(isProduction ? {} : { details: message }),
     },
     { status }
   );
@@ -182,9 +190,17 @@ export const schemas = {
   email: z.string().email().max(254),
   role: z.enum(['athlete', 'manager', 'admin']),
   uuid: z.string().uuid(),
-  productCategory: z.enum(['accessories', 'bindings', 'boots', 'goggles', 'helmet', 'skis', 'snowboard']),
+  productCategory: z.enum([
+    'accessories',
+    'bindings',
+    'boots',
+    'goggles',
+    'helmet',
+    'skis',
+    'snowboard',
+  ]),
   orderStatus: z.enum(['pending_approval', 'approved', 'rejected', 'cancelled']),
-  
+
   profile: z.object({
     email: z.string().email().max(254),
     name: z.string().min(1).max(100),
@@ -192,21 +208,29 @@ export const schemas = {
     organization: z.string().max(100).optional(),
     phone: z.string().max(20).optional(),
   }),
-  
+
   orderItem: z.object({
     product: z.object({
       id: z.string().min(1).max(100),
       name: z.string().min(1).max(200),
       sku: z.string().min(1).max(50),
       vertical_number: z.string().min(1).max(50),
-      category: z.enum(['accessories', 'bindings', 'boots', 'goggles', 'helmet', 'skis', 'snowboard']),
+      category: z.enum([
+        'accessories',
+        'bindings',
+        'boots',
+        'goggles',
+        'helmet',
+        'skis',
+        'snowboard',
+      ]),
     }),
     quantity: z.number().min(1).max(100),
     length_cm: z.string().optional(),
     boot_size: z.string().optional(),
     binding_color: z.string().optional(),
   }),
-  
+
   shippingAddress: z.object({
     name: z.string().min(1).max(100),
     addressLine1: z.string().min(1).max(200),
@@ -223,7 +247,10 @@ export const schemas = {
 /**
  * Validate request with Zod schema
  */
-export function validateRequest<T>(schema: z.ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; error: string } {
+export function validateRequest<T>(
+  schema: z.ZodSchema<T>,
+  data: unknown
+): { success: true; data: T } | { success: false; error: string } {
   try {
     const result = schema.parse(data);
     return { success: true, data: result };

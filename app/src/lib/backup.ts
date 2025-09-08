@@ -1,5 +1,5 @@
-import { supabaseServer } from './supabase-server';
 import { NotificationService } from './notifications';
+import { supabaseServer } from './supabase-server';
 
 export type BackupType = 'full' | 'incremental' | 'schema_only' | 'data_only';
 export type BackupStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
@@ -66,11 +66,11 @@ export class BackupService {
     createdBy?: string
   ): Promise<string> {
     const supabase = await supabaseServer();
-    
+
     const { data, error } = await supabase.rpc('create_backup_operation', {
       p_type: type,
       p_tables_included: tablesIncluded || null,
-      p_created_by: createdBy || null
+      p_created_by: createdBy || null,
     });
 
     if (error) {
@@ -90,13 +90,13 @@ export class BackupService {
     errorMessage?: string
   ): Promise<void> {
     const supabase = await supabaseServer();
-    
+
     const { error } = await supabase.rpc('update_backup_status', {
       p_backup_id: backupId,
       p_status: status,
       p_file_path: filePath || null,
       p_file_size: fileSize || null,
-      p_error_message: errorMessage || null
+      p_error_message: errorMessage || null,
     });
 
     if (error) {
@@ -112,7 +112,7 @@ export class BackupService {
     status?: BackupStatus
   ): Promise<{ operations: BackupOperation[]; total: number }> {
     const supabase = await supabaseServer();
-    
+
     let query = supabase
       .from('backup_operations')
       .select('*', { count: 'exact' })
@@ -132,14 +132,14 @@ export class BackupService {
 
     return {
       operations: data || [],
-      total: count || 0
+      total: count || 0,
     };
   }
 
   // Get backup statistics
   static async getBackupStats(): Promise<BackupStats> {
     const supabase = await supabaseServer();
-    
+
     const { data, error } = await supabase.rpc('get_backup_stats');
 
     if (error) {
@@ -147,20 +147,22 @@ export class BackupService {
       throw new Error('Failed to fetch backup stats');
     }
 
-    return data?.[0] || {
-      total_backups: 0,
-      successful_backups: 0,
-      failed_backups: 0,
-      total_size_mb: 0,
-      last_backup_date: undefined,
-      avg_backup_duration_minutes: 0
-    };
+    return (
+      data?.[0] || {
+        total_backups: 0,
+        successful_backups: 0,
+        failed_backups: 0,
+        total_size_mb: 0,
+        last_backup_date: undefined,
+        avg_backup_duration_minutes: 0,
+      }
+    );
   }
 
   // Get backup schedules
   static async getBackupSchedules(): Promise<BackupSchedule[]> {
     const supabase = await supabaseServer();
-    
+
     const { data, error } = await supabase
       .from('backup_schedules')
       .select('*')
@@ -175,16 +177,16 @@ export class BackupService {
   }
 
   // Create backup schedule
-  static async createBackupSchedule(schedule: Omit<BackupSchedule, 'id' | 'created_at' | 'updated_at'>): Promise<void> {
+  static async createBackupSchedule(
+    schedule: Omit<BackupSchedule, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<void> {
     const supabase = await supabaseServer();
-    
-    const { error } = await supabase
-      .from('backup_schedules')
-      .insert({
-        ...schedule,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
+
+    const { error } = await supabase.from('backup_schedules').insert({
+      ...schedule,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
 
     if (error) {
       console.error('Error creating backup schedule:', error);
@@ -198,12 +200,12 @@ export class BackupService {
     updates: Partial<Omit<BackupSchedule, 'id' | 'created_at' | 'updated_at'>>
   ): Promise<void> {
     const supabase = await supabaseServer();
-    
+
     const { error } = await supabase
       .from('backup_schedules')
       .update({
         ...updates,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', scheduleId);
 
@@ -216,11 +218,8 @@ export class BackupService {
   // Delete backup schedule
   static async deleteBackupSchedule(scheduleId: string): Promise<void> {
     const supabase = await supabaseServer();
-    
-    const { error } = await supabase
-      .from('backup_schedules')
-      .delete()
-      .eq('id', scheduleId);
+
+    const { error } = await supabase.from('backup_schedules').delete().eq('id', scheduleId);
 
     if (error) {
       console.error('Error deleting backup schedule:', error);
@@ -231,7 +230,7 @@ export class BackupService {
   // Get backup settings
   static async getBackupSettings(): Promise<BackupSettings> {
     const supabase = await supabaseServer();
-    
+
     const { data, error } = await supabase
       .from('backup_settings')
       .select('*')
@@ -248,14 +247,16 @@ export class BackupService {
   }
 
   // Update backup settings
-  static async updateBackupSettings(settings: Partial<Omit<BackupSettings, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+  static async updateBackupSettings(
+    settings: Partial<Omit<BackupSettings, 'id' | 'created_at' | 'updated_at'>>
+  ): Promise<void> {
     const supabase = await supabaseServer();
-    
+
     const { error } = await supabase
       .from('backup_settings')
       .update({
         ...settings,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', 1);
 
@@ -268,9 +269,9 @@ export class BackupService {
   // Cleanup old backups
   static async cleanupOldBackups(retentionDays: number = 30): Promise<number> {
     const supabase = await supabaseServer();
-    
+
     const { data, error } = await supabase.rpc('cleanup_old_backups', {
-      p_retention_days: retentionDays
+      p_retention_days: retentionDays,
     });
 
     if (error) {
@@ -293,7 +294,7 @@ export class BackupService {
 
       // Get backup settings
       const settings = await this.getBackupSettings();
-      
+
       if (!settings.backup_enabled) {
         throw new Error('Backup is disabled in settings');
       }
@@ -332,10 +333,9 @@ export class BackupService {
         undefined,
         'low'
       );
-
     } catch (error) {
       console.error('Backup failed:', error);
-      
+
       // Update status to failed
       await this.updateBackupStatus(
         backupId,
@@ -350,7 +350,11 @@ export class BackupService {
         'backup_failed',
         'Backup Failed',
         `Backup ${type} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        { backup_id: backupId, backup_type: type, error_message: error instanceof Error ? error.message : 'Unknown error' },
+        {
+          backup_id: backupId,
+          backup_type: type,
+          error_message: error instanceof Error ? error.message : 'Unknown error',
+        },
         undefined,
         'critical'
       );
@@ -373,7 +377,7 @@ export class BackupService {
       cron_expression: cronExpression,
       is_active: true,
       retention_days: 30,
-      tables_to_include: tablesIncluded
+      tables_to_include: tablesIncluded,
     });
   }
 }

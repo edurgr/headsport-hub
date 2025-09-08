@@ -1,8 +1,8 @@
 import { supabaseServer } from './supabase-server';
 
-export type NotificationType = 
-  | 'order_pending' 
-  | 'order_approved' 
+export type NotificationType =
+  | 'order_pending'
+  | 'order_approved'
   | 'order_rejected'
   | 'user_registered'
   | 'content_uploaded'
@@ -54,7 +54,7 @@ export class NotificationService {
     expiresAt?: Date
   ): Promise<string> {
     const supabase = await supabaseServer();
-    
+
     const { data: result, error } = await supabase.rpc('create_notification', {
       p_user_id: userId,
       p_type: type,
@@ -63,7 +63,7 @@ export class NotificationService {
       p_data: data || null,
       p_action_url: actionUrl || null,
       p_priority: priority,
-      p_expires_at: expiresAt?.toISOString() || null
+      p_expires_at: expiresAt?.toISOString() || null,
     });
 
     if (error) {
@@ -83,13 +83,13 @@ export class NotificationService {
     expiresAt?: Date
   ): Promise<string> {
     const supabase = await supabaseServer();
-    
+
     const { data: result, error } = await supabase.rpc('create_notification_from_template', {
       p_user_id: userId,
       p_type: type,
       p_template_data: templateData || null,
       p_action_url: actionUrl || null,
-      p_expires_at: expiresAt?.toISOString() || null
+      p_expires_at: expiresAt?.toISOString() || null,
     });
 
     if (error) {
@@ -110,14 +110,14 @@ export class NotificationService {
     priority: NotificationPriority = 'medium'
   ): Promise<number> {
     const supabase = await supabaseServer();
-    
+
     const { data: result, error } = await supabase.rpc('notify_all_admins', {
       p_type: type,
       p_title: title,
       p_message: message,
       p_data: data || null,
       p_action_url: actionUrl || null,
-      p_priority: priority
+      p_priority: priority,
     });
 
     if (error) {
@@ -136,7 +136,7 @@ export class NotificationService {
     offset: number = 0
   ): Promise<{ notifications: Notification[]; total: number }> {
     const supabase = await supabaseServer();
-    
+
     let query = supabase
       .from('notifications')
       .select('*', { count: 'exact' })
@@ -157,19 +157,19 @@ export class NotificationService {
 
     return {
       notifications: data || [],
-      total: count || 0
+      total: count || 0,
     };
   }
 
   // Mark notification as read
   static async markAsRead(notificationId: string, userId: string): Promise<void> {
     const supabase = await supabaseServer();
-    
+
     const { error } = await supabase
       .from('notifications')
-      .update({ 
+      .update({
         status: 'read',
-        read_at: new Date().toISOString()
+        read_at: new Date().toISOString(),
       })
       .eq('id', notificationId)
       .eq('user_id', userId);
@@ -183,12 +183,12 @@ export class NotificationService {
   // Mark all notifications as read
   static async markAllAsRead(userId: string): Promise<void> {
     const supabase = await supabaseServer();
-    
+
     const { error } = await supabase
       .from('notifications')
-      .update({ 
+      .update({
         status: 'read',
-        read_at: new Date().toISOString()
+        read_at: new Date().toISOString(),
       })
       .eq('user_id', userId)
       .eq('status', 'unread');
@@ -202,7 +202,7 @@ export class NotificationService {
   // Archive notification
   static async archiveNotification(notificationId: string, userId: string): Promise<void> {
     const supabase = await supabaseServer();
-    
+
     const { error } = await supabase
       .from('notifications')
       .update({ status: 'archived' })
@@ -218,7 +218,7 @@ export class NotificationService {
   // Get unread count
   static async getUnreadCount(userId: string): Promise<number> {
     const supabase = await supabaseServer();
-    
+
     const { count, error } = await supabase
       .from('notifications')
       .select('*', { count: 'exact', head: true })
@@ -236,7 +236,7 @@ export class NotificationService {
   // Clean up expired notifications
   static async cleanupExpired(): Promise<number> {
     const supabase = await supabaseServer();
-    
+
     const { data, error } = await supabase
       .from('notifications')
       .delete()
@@ -254,7 +254,7 @@ export class NotificationService {
   // Get notification templates
   static async getTemplates(): Promise<NotificationTemplate[]> {
     const supabase = await supabaseServer();
-    
+
     const { data, error } = await supabase
       .from('notification_templates')
       .select('*')
@@ -275,12 +275,12 @@ export class NotificationService {
     updates: Partial<NotificationTemplate>
   ): Promise<void> {
     const supabase = await supabaseServer();
-    
+
     const { error } = await supabase
       .from('notification_templates')
       .update({
         ...updates,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', templateId);
 
@@ -294,7 +294,12 @@ export class NotificationService {
 // Convenience methods for common notifications
 export class AdminNotifications {
   // Notify when new order is pending
-  static async notifyOrderPending(orderId: string, userId: string, userName: string, totalAmount: number): Promise<void> {
+  static async notifyOrderPending(
+    orderId: string,
+    userId: string,
+    userName: string,
+    totalAmount: number
+  ): Promise<void> {
     await NotificationService.notifyAllAdmins(
       'order_pending',
       'New Order Pending Approval',
@@ -306,7 +311,12 @@ export class AdminNotifications {
   }
 
   // Notify when user registers
-  static async notifyUserRegistered(userId: string, userName: string, userEmail: string, userRole: string): Promise<void> {
+  static async notifyUserRegistered(
+    userId: string,
+    userName: string,
+    userEmail: string,
+    userRole: string
+  ): Promise<void> {
     await NotificationService.notifyAllAdmins(
       'user_registered',
       'New User Registration',
@@ -318,7 +328,11 @@ export class AdminNotifications {
   }
 
   // Notify when content is uploaded
-  static async notifyContentUploaded(userId: string, userName: string, contentTitle: string): Promise<void> {
+  static async notifyContentUploaded(
+    userId: string,
+    userName: string,
+    contentTitle: string
+  ): Promise<void> {
     await NotificationService.notifyAllAdmins(
       'content_uploaded',
       'New Content Uploaded',
@@ -330,7 +344,10 @@ export class AdminNotifications {
   }
 
   // Notify system alerts
-  static async notifySystemAlert(message: string, priority: NotificationPriority = 'high'): Promise<void> {
+  static async notifySystemAlert(
+    message: string,
+    priority: NotificationPriority = 'high'
+  ): Promise<void> {
     await NotificationService.notifyAllAdmins(
       'system_alert',
       'System Alert',

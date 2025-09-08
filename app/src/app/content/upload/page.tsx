@@ -1,9 +1,18 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+import {
+  AlertCircle,
+  CheckCircle2,
+  Image as ImageIcon,
+  Loader2,
+  Upload as UploadIcon,
+  Video as VideoIcon,
+} from 'lucide-react';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { supabaseClient } from '@/lib/supabase-client';
-import { Image as ImageIcon, Video as VideoIcon, CheckCircle2, AlertCircle, Loader2, Upload as UploadIcon } from 'lucide-react';
 
 export default function UploadPage() {
   const { user, profile } = useAuth();
@@ -15,7 +24,9 @@ export default function UploadPage() {
   const [uploadStatus, setUploadStatus] = useState('');
   const [smoothProgress, setSmoothProgress] = useState(0); // visually smoothed progress (0-100)
   const [etaText, setEtaText] = useState<string>(''); // estimated time remaining
-  const [perFileStatus, setPerFileStatus] = useState<Array<'pending' | 'uploading' | 'done' | 'error'>>([]);
+  const [perFileStatus, setPerFileStatus] = useState<
+    Array<'pending' | 'uploading' | 'done' | 'error'>
+  >([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [galleryItems, setGalleryItems] = useState<any[]>([]);
   const [showOptions, setShowOptions] = useState(false);
@@ -29,12 +40,16 @@ export default function UploadPage() {
   const startTimeRef = useRef<number>(0);
   const lastAnimTimeRef = useRef<number>(0);
 
-  async function xhrUploadSignedUrl(url: string, file: File, onProgress: (loaded: number, total: number, deltaBytes: number, dt: number) => void): Promise<void> {
+  async function xhrUploadSignedUrl(
+    url: string,
+    file: File,
+    onProgress: (loaded: number, total: number, deltaBytes: number, dt: number) => void
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       let lastLoaded = 0;
       let lastTime = performance.now();
-      xhr.upload.onprogress = (e) => {
+      xhr.upload.onprogress = e => {
         const now = performance.now();
         const dt = Math.max(0.001, (now - lastTime) / 1000);
         lastTime = now;
@@ -162,7 +177,7 @@ export default function UploadPage() {
           title: title || `Upload Session ${new Date().toLocaleString()}`,
           description: description,
           user_id: user.id,
-          status: 'uploading'
+          status: 'uploading',
         })
         .select()
         .single();
@@ -196,7 +211,9 @@ export default function UploadPage() {
           const filePath = `content/${user.id}/${session.id}/${uniqueFileName}`;
 
           // Use signed URL + XHR to get realtime progress
-          const { data: signed, error: signErr } = await supabaseClient.storage.from(bucket).createSignedUploadUrl(filePath);
+          const { data: signed, error: signErr } = await supabaseClient.storage
+            .from(bucket)
+            .createSignedUploadUrl(filePath);
           if (signErr || !signed?.signedUrl) {
             throw new Error('Failed to create signed upload URL');
           }
@@ -214,8 +231,10 @@ export default function UploadPage() {
           const fileTypePrefix = file.type.startsWith('image')
             ? 'image'
             : file.type.startsWith('video')
-            ? 'video'
-            : file.type ? 'other' : 'other';
+              ? 'video'
+              : file.type
+                ? 'other'
+                : 'other';
 
           // Generate thumbnail automatically
           let thumbnailPath: string | null = null;
@@ -314,7 +333,9 @@ export default function UploadPage() {
           // Update totals and speed estimate (EMA)
           const elapsed = Math.max(0.1, (performance.now() - startedAt) / 1000);
           const fileSpeed = (file.size || 0) / elapsed;
-          speedRef.current = speedRef.current ? speedRef.current * 0.6 + fileSpeed * 0.4 : fileSpeed;
+          speedRef.current = speedRef.current
+            ? speedRef.current * 0.6 + fileSpeed * 0.4
+            : fileSpeed;
           uploadedBytesRef.current += file.size || 0;
           setUploadProgress((uploadedCount / fileArray.length) * 100);
           setUploadStatus(`Uploaded ${uploadedCount}/${fileArray.length} files`);
@@ -323,10 +344,11 @@ export default function UploadPage() {
             next[i] = 'done';
             return next;
           });
-
         } catch (fileError) {
           console.error(`Error uploading ${file.name}:`, fileError);
-          setUploadStatus(`Error uploading ${file.name}: ${fileError instanceof Error ? fileError.message : 'Unknown error'}`);
+          setUploadStatus(
+            `Error uploading ${file.name}: ${fileError instanceof Error ? fileError.message : 'Unknown error'}`
+          );
           setPerFileStatus(prev => {
             const next = [...prev];
             next[i] = 'error';
@@ -346,14 +368,13 @@ export default function UploadPage() {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2500);
       fetchGallery();
-      
+
       // Reset form (campos opcionales, no obligatorios)
       setTitle('');
       setDescription('');
       setFiles(null);
       setPerFileStatus([]);
       setUploadProgress(0);
-
     } catch (error) {
       console.error('Upload failed:', error);
       setUploadStatus(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -383,17 +404,27 @@ export default function UploadPage() {
           reader.onerror = reject;
           reader.readAsDataURL(file);
         });
-        await new Promise<void>((resolve, reject) => { img.onload = () => resolve(); img.onerror = reject; img.src = dataUrl; });
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = reject;
+          img.src = dataUrl;
+        });
         const canvas = document.createElement('canvas');
-        const maxW = 640, maxH = 360;
-        let w = img.width, h = img.height;
+        const maxW = 640,
+          maxH = 360;
+        let w = img.width,
+          h = img.height;
         const ratio = Math.min(maxW / w, maxH / h, 1);
-        w = Math.round(w * ratio); h = Math.round(h * ratio);
-        canvas.width = w; canvas.height = h;
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+        canvas.width = w;
+        canvas.height = h;
         const ctx = canvas.getContext('2d');
         if (!ctx) return null;
         ctx.drawImage(img, 0, 0, w, h);
-        const blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+        const blob: Blob | null = await new Promise(resolve =>
+          canvas.toBlob(resolve, 'image/jpeg', 0.8)
+        );
         console.log('Image thumbnail generated, size:', blob?.size);
         return blob;
       } else if (file.type.startsWith('video')) {
@@ -408,21 +439,32 @@ export default function UploadPage() {
         });
         // Seek to 1s or 0.1 if shorter
         const target = Math.min(1, Math.max(0.1, (video.duration || 1) * 0.1));
-        await new Promise<void>((resolve) => {
-          const handler = () => { video.removeEventListener('seeked', handler); resolve(); };
+        await new Promise<void>(resolve => {
+          const handler = () => {
+            video.removeEventListener('seeked', handler);
+            resolve();
+          };
           video.addEventListener('seeked', handler);
-          try { video.currentTime = target; } catch { resolve(); }
+          try {
+            video.currentTime = target;
+          } catch {
+            resolve();
+          }
         });
         const canvas = document.createElement('canvas');
-        const maxW = 640, maxH = 360;
-        const vw = video.videoWidth || 640, vh = video.videoHeight || 360;
+        const maxW = 640,
+          maxH = 360;
+        const vw = video.videoWidth || 640,
+          vh = video.videoHeight || 360;
         const ratio = Math.min(maxW / vw, maxH / vh, 1);
         canvas.width = Math.round(vw * ratio);
         canvas.height = Math.round(vh * ratio);
         const ctx = canvas.getContext('2d');
         if (!ctx) return null;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+        const blob: Blob | null = await new Promise(resolve =>
+          canvas.toBlob(resolve, 'image/jpeg', 0.8)
+        );
         URL.revokeObjectURL(video.src);
         console.log('Video thumbnail generated, size:', blob?.size);
         return blob;
@@ -464,11 +506,13 @@ export default function UploadPage() {
   return (
     <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-full sm:max-w-2xl overflow-x-hidden">
       <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">Upload content</h1>
-      
+
       <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md border border-gray-200 space-y-4 sm:space-y-6 w-full max-w-full overflow-hidden">
         <style jsx>{`
           @media (max-width: 640px) {
-            .fix-mobile-overflow * { min-width: 0; }
+            .fix-mobile-overflow * {
+              min-width: 0;
+            }
           }
         `}</style>
         {/* Subtle success */}
@@ -509,14 +553,25 @@ export default function UploadPage() {
                 const isImage = file.type?.startsWith('image');
                 const status = perFileStatus[index] || 'pending';
                 return (
-                  <div key={index} className="flex items-center gap-3 rounded bg-gray-50 px-3 py-2 w-full max-w-full">
+                  <div
+                    key={index}
+                    className="flex items-center gap-3 rounded bg-gray-50 px-3 py-2 w-full max-w-full"
+                  >
                     <div className="shrink-0 text-gray-600">
-                      {isImage ? <ImageIcon className="h-5 w-5" /> : <VideoIcon className="h-5 w-5" />}
+                      {isImage ? (
+                        <ImageIcon className="h-5 w-5" />
+                      ) : (
+                        <VideoIcon className="h-5 w-5" />
+                      )}
                     </div>
                     <div className="min-w-0 flex-1 max-w-full">
                       <div className="flex items-center justify-between gap-3 max-w-full">
-                        <span className="truncate text-sm text-gray-800 break-words max-w-[75%]">{file.name}</span>
-                        <span className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                        <span className="truncate text-sm text-gray-800 break-words max-w-[75%]">
+                          {file.name}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </span>
                       </div>
                       <div className="mt-1 flex items-center gap-2 text-xs">
                         {status === 'uploading' && (
@@ -564,7 +619,10 @@ export default function UploadPage() {
               <span>{uploadStatus}</span>
               <span className="inline-flex items-center gap-1">
                 <svg width="14" height="14" viewBox="0 0 24 24" className="text-gray-500">
-                  <path fill="currentColor" d="M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1m1 11V6h-2v8h7v-2Z"/>
+                  <path
+                    fill="currentColor"
+                    d="M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1m1 11V6h-2v8h7v-2Z"
+                  />
                 </svg>
                 {etaText || `${Math.round(Math.max(uploadProgress, smoothProgress))}%`}
               </span>
@@ -575,7 +633,8 @@ export default function UploadPage() {
               <div
                 className="absolute inset-0 opacity-30"
                 style={{
-                  backgroundImage: 'repeating-linear-gradient(45deg, rgba(0,0,0,0.25) 0, rgba(0,0,0,0.25) 10px, transparent 10px, transparent 20px)'
+                  backgroundImage:
+                    'repeating-linear-gradient(45deg, rgba(0,0,0,0.25) 0, rgba(0,0,0,0.25) 10px, transparent 10px, transparent 20px)',
                 }}
               />
               {/* Progress fill */}
@@ -628,12 +687,15 @@ export default function UploadPage() {
                   type="text"
                   placeholder="Add a title"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={e => setTitle(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Description (optional)
                 </label>
                 <textarea
@@ -641,7 +703,7 @@ export default function UploadPage() {
                   rows={3}
                   placeholder="Describe what you upload (optional)"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={e => setDescription(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -659,11 +721,16 @@ export default function UploadPage() {
       <div className="mt-6 w-full max-w-full overflow-hidden">
         <h2 className="text-lg font-semibold text-gray-900 mb-3">Your latest uploads</h2>
         {galleryItems.length === 0 ? (
-          <div className="rounded-md border border-gray-200 bg-white p-4 text-sm text-gray-600">You haven't uploaded anything yet.</div>
+          <div className="rounded-md border border-gray-200 bg-white p-4 text-sm text-gray-600">
+            You haven't uploaded anything yet.
+          </div>
         ) : (
           <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-full">
             {galleryItems.map((item: any) => (
-              <div key={item.id} className="relative overflow-hidden rounded-md border border-gray-200 bg-white w-full max-w-full">
+              <div
+                key={item.id}
+                className="relative overflow-hidden rounded-md border border-gray-200 bg-white w-full max-w-full"
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={item.thumbnail_url || item.url}

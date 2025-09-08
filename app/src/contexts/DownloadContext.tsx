@@ -22,43 +22,45 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
   const [total, setTotal] = useState(0);
   const [current, setCurrent] = useState(0);
 
-  const progressPct = total > 0 ? Math.min(100, Math.max(0, (current / total) * 100)) : (isActive ? 10 : 0);
+  const progressPct =
+    total > 0 ? Math.min(100, Math.max(0, (current / total) * 100)) : isActive ? 10 : 0;
 
-  const api = useMemo<DownloadContextType>(() => ({
-    isActive,
-    label,
-    progressPct,
-    total,
-    current,
-    begin: (lbl: string, tot?: number) => {
-      setIsActive(true);
-      setLabel(lbl || 'Downloading…');
-      setTotal(Math.max(0, tot || 0));
-      setCurrent(0);
-    },
-    setProgress: (cur: number, tot?: number) => {
-      if (typeof tot === 'number') setTotal(Math.max(0, tot));
-      setCurrent(Math.max(0, cur));
-      setIsActive(true);
-    },
-    step: (inc = 1) => {
-      setCurrent(prev => Math.max(0, prev + inc));
-      setIsActive(true);
-    },
-    end: () => {
-      setCurrent(prev => (total > 0 ? total : prev));
-      setTimeout(() => {
-        setIsActive(false);
-        setLabel('');
-        setTotal(0);
+  const api = useMemo<DownloadContextType>(
+    () => ({
+      isActive,
+      label,
+      progressPct,
+      total,
+      current,
+      begin: (lbl: string, tot?: number) => {
+        setIsActive(true);
+        setLabel(lbl || 'Downloading…');
+        setTotal(Math.max(0, tot || 0));
         setCurrent(0);
-      }, 600);
-    },
-  }), [isActive, label, progressPct, total, current]);
-
-  return (
-    <DownloadContext.Provider value={api}>{children}</DownloadContext.Provider>
+      },
+      setProgress: (cur: number, tot?: number) => {
+        if (typeof tot === 'number') setTotal(Math.max(0, tot));
+        setCurrent(Math.max(0, cur));
+        setIsActive(true);
+      },
+      step: (inc = 1) => {
+        setCurrent(prev => Math.max(0, prev + inc));
+        setIsActive(true);
+      },
+      end: () => {
+        setCurrent(prev => (total > 0 ? total : prev));
+        setTimeout(() => {
+          setIsActive(false);
+          setLabel('');
+          setTotal(0);
+          setCurrent(0);
+        }, 600);
+      },
+    }),
+    [isActive, label, progressPct, total, current]
   );
+
+  return <DownloadContext.Provider value={api}>{children}</DownloadContext.Provider>;
 }
 
 export function useDownload(): DownloadContextType {
@@ -66,5 +68,3 @@ export function useDownload(): DownloadContextType {
   if (!ctx) throw new Error('useDownload must be used within a DownloadProvider');
   return ctx;
 }
-
-

@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { NextRequest } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-server';
+
+import { createClient } from '@supabase/supabase-js';
+
 import { supabaseAdmin as supabaseAdminClient } from '@/lib/supabase-admin';
+import { supabaseServer } from '@/lib/supabase-server';
 
 // GET /api/content/gallery?limit=50
 export async function GET(req: NextRequest) {
@@ -29,7 +31,8 @@ export async function GET(req: NextRequest) {
     // Environment variables check passed
 
     // Create admin client for storage operations if available (prefer shared admin client)
-    const supabaseAdmin = supabaseAdminClient ?? (serviceRoleKey ? createClient(supabaseUrl, serviceRoleKey) : null);
+    const supabaseAdmin =
+      supabaseAdminClient ?? (serviceRoleKey ? createClient(supabaseUrl, serviceRoleKey) : null);
     // Supabase admin client created
 
     // Create user-scoped client from cookies (works even if Authorization header isn't provided)
@@ -43,7 +46,11 @@ export async function GET(req: NextRequest) {
     const { data: userData } = await sb.auth.getUser();
     if (userData?.user) {
       currentUserId = userData.user.id;
-      const { data: prof } = await sb.from('profiles').select('role, name').eq('id', currentUserId).single();
+      const { data: prof } = await sb
+        .from('profiles')
+        .select('role, name')
+        .eq('id', currentUserId)
+        .single();
       role = prof?.role || 'athlete';
     } else {
       // Fallback to Authorization header: decode JWT to extract user id
@@ -58,12 +65,16 @@ export async function GET(req: NextRequest) {
           currentUserId = payload.sub || payload.user_id || null;
           // Build client with header for storage signing if needed
           sb = createClient(supabaseUrl, supabaseAnonKey, {
-            global: { headers: { Authorization: `Bearer ${token}` } }
+            global: { headers: { Authorization: `Bearer ${token}` } },
           });
           if (currentUserId) {
             // Fetch role using admin if available, otherwise user-scoped
             const source = supabaseAdmin ?? sb;
-            const { data: prof } = await source.from('profiles').select('role').eq('id', currentUserId).single();
+            const { data: prof } = await source
+              .from('profiles')
+              .select('role')
+              .eq('id', currentUserId)
+              .single();
             role = prof?.role || 'athlete';
           }
         } catch (e) {
@@ -120,12 +131,12 @@ export async function GET(req: NextRequest) {
         .from('upload_sessions')
         .select('id')
         .eq('user_id', currentUserId);
-      
+
       if (sessErr) {
         console.error('Error fetching sessions:', sessErr);
         return NextResponse.json({ error: sessErr.message }, { status: 500 });
       }
-      
+
       const sessionIds = (ownSessions || []).map((s: any) => s.id);
 
       if (sessionIds.length === 0) {
@@ -138,7 +149,7 @@ export async function GET(req: NextRequest) {
         .order('created_at', { ascending: false })
         .limit(limit)
         .in('session_id', sessionIds);
-      
+
       if (filesErr) {
         console.error('Error fetching user files:', filesErr);
         return NextResponse.json({ error: filesErr.message }, { status: 500 });
@@ -149,7 +160,6 @@ export async function GET(req: NextRequest) {
     if (!files || files.length === 0) {
       return NextResponse.json({ items: [] });
     }
-
 
     // Fetch sessions for those files
     const sessionIds = Array.from(new Set(files.map((f: any) => f.session_id)));
@@ -189,16 +199,17 @@ export async function GET(req: NextRequest) {
     const items = await Promise.all(
       files.map(async (f: any) => {
         const session = sessionMap.get(f.session_id);
-        const authorName = session ? (authorNameById.get(session.user_id) || 'Unknown') : 'Unknown';
-
+        const authorName = session ? authorNameById.get(session.user_id) || 'Unknown' : 'Unknown';
 
         let url: string | null = null;
         let thumbnail_url: string | null = null;
 
         // Generate file URL
         try {
-          const storageClient = (supabaseAdmin ?? sb);
-          const { data } = await storageClient.storage.from(bucket).createSignedUrl(f.file_path, 60 * 60);
+          const storageClient = supabaseAdmin ?? sb;
+          const { data } = await storageClient.storage
+            .from(bucket)
+            .createSignedUrl(f.file_path, 60 * 60);
           url = data?.signedUrl || null;
         } catch (error) {
           console.error(`Error creating signed URL for ${f.filename}:`, error);
@@ -214,13 +225,17 @@ export async function GET(req: NextRequest) {
         // Generate thumbnail URL if present
         if (f.thumbnail_path) {
           try {
-            const storageClient = (supabaseAdmin ?? sb);
-            const { data } = await storageClient.storage.from(bucket).createSignedUrl(f.thumbnail_path, 60 * 60);
+            const storageClient = supabaseAdmin ?? sb;
+            const { data } = await storageClient.storage
+              .from(bucket)
+              .createSignedUrl(f.thumbnail_path, 60 * 60);
             thumbnail_url = data?.signedUrl || null;
           } catch (error) {
             console.error('Error creating signed thumbnail URL:', error);
             try {
-              const { data } = (supabaseAdmin ?? sb).storage.from(bucket).getPublicUrl(f.thumbnail_path);
+              const { data } = (supabaseAdmin ?? sb).storage
+                .from(bucket)
+                .getPublicUrl(f.thumbnail_path);
               thumbnail_url = data.publicUrl;
             } catch (fallbackError) {
               console.error('Error creating public thumbnail URL:', fallbackError);
@@ -244,7 +259,7 @@ export async function GET(req: NextRequest) {
           session_title: session?.title || null,
           author_id: session?.user_id || null,
         };
-        
+
         return item;
       })
     );
@@ -256,5 +271,3 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-
-

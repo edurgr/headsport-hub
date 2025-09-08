@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-server';
+
 import { NotificationService } from '@/lib/notifications';
+import { supabaseServer } from '@/lib/supabase-server';
 
 export async function GET(req: NextRequest) {
   try {
     const supabase = await supabaseServer();
-    
+
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -25,7 +29,6 @@ export async function GET(req: NextRequest) {
     );
 
     return NextResponse.json(result);
-
   } catch (error) {
     console.error('Error fetching notifications:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -35,9 +38,12 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const supabase = await supabaseServer();
-    
+
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -60,7 +66,6 @@ export async function PUT(req: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-
   } catch (error) {
     console.error('Error updating notifications:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

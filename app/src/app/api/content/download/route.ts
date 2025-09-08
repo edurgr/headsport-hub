@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+
 import { createClient } from '@supabase/supabase-js';
+
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabaseServer } from '@/lib/supabase-server';
 
 // POST /api/content/download
 // Body: { file_ids?: string[], athlete_id?: string, all_for_athlete?: boolean }
@@ -21,7 +23,7 @@ export async function POST(req: Request) {
       if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
         sb = createClient(supabaseUrl, supabaseAnonKey, {
-          global: { headers: { Authorization: `Bearer ${token}` } }
+          global: { headers: { Authorization: `Bearer ${token}` } },
         });
         userData = (await sb.auth.getUser()).data;
       }
@@ -37,7 +39,11 @@ export async function POST(req: Request) {
         .select('id,file_path,filename,session_id')
         .in('id', file_ids);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-      files = (data || []).map((f: any) => ({ id: f.id, file_path: f.file_path, filename: f.filename }));
+      files = (data || []).map((f: any) => ({
+        id: f.id,
+        file_path: f.file_path,
+        filename: f.filename,
+      }));
     } else if (all_for_athlete && athlete_id) {
       // Find all sessions for athlete
       const { data: sessions, error: sessErr } = await (supabaseAdmin ?? sb)
@@ -52,7 +58,7 @@ export async function POST(req: Request) {
         .select('id,file_path,filename')
         .in('session_id', sessionIds);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-      files = data || [] as any;
+      files = data || ([] as any);
     } else {
       return NextResponse.json({ error: 'No files specified' }, { status: 400 });
     }
@@ -63,7 +69,9 @@ export async function POST(req: Request) {
     const storageClient = supabaseAdmin ?? sb;
     const signedUrls: { id: string; filename: string; url: string }[] = [];
     for (const f of files) {
-      const { data, error } = await storageClient.storage.from(bucket).createSignedUrl(f.file_path, 60 * 60);
+      const { data, error } = await storageClient.storage
+        .from(bucket)
+        .createSignedUrl(f.file_path, 60 * 60);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       if (data?.signedUrl) {
         signedUrls.push({ id: f.id, filename: f.filename, url: data.signedUrl });
@@ -77,5 +85,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
-
-

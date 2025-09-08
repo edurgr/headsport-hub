@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
-import ProtectedRoute from '@/components/ProtectedRoute';
 
 interface AuditLog {
   id: string;
@@ -29,7 +30,7 @@ export default function AuditLogsPage() {
     resourceType: '',
     userId: '',
     startDate: '',
-    endDate: ''
+    endDate: '',
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -41,7 +42,7 @@ export default function AuditLogsPage() {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: itemsPerPage.toString(),
-        ...Object.fromEntries(Object.entries(filters).filter(([, value]) => value))
+        ...Object.fromEntries(Object.entries(filters).filter(([, value]) => value)),
       });
 
       const response = await authenticatedFetch(`/api/admin/audit-logs?${params}`);
@@ -77,7 +78,7 @@ export default function AuditLogsPage() {
       resourceType: '',
       userId: '',
       startDate: '',
-      endDate: ''
+      endDate: '',
     });
     setCurrentPage(1);
   };
@@ -114,7 +115,7 @@ export default function AuditLogsPage() {
               <input
                 type="text"
                 value={filters.action}
-                onChange={(e) => handleFilterChange('action', e.target.value)}
+                onChange={e => handleFilterChange('action', e.target.value)}
                 placeholder="e.g., login, create_product"
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -124,7 +125,7 @@ export default function AuditLogsPage() {
               <input
                 type="text"
                 value={filters.resourceType}
-                onChange={(e) => handleFilterChange('resourceType', e.target.value)}
+                onChange={e => handleFilterChange('resourceType', e.target.value)}
                 placeholder="e.g., product, user"
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -134,7 +135,7 @@ export default function AuditLogsPage() {
               <input
                 type="text"
                 value={filters.userId}
-                onChange={(e) => handleFilterChange('userId', e.target.value)}
+                onChange={e => handleFilterChange('userId', e.target.value)}
                 placeholder="User ID"
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -144,7 +145,7 @@ export default function AuditLogsPage() {
               <input
                 type="date"
                 value={filters.startDate}
-                onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                onChange={e => handleFilterChange('startDate', e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -153,7 +154,7 @@ export default function AuditLogsPage() {
               <input
                 type="date"
                 value={filters.endDate}
-                onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                onChange={e => handleFilterChange('endDate', e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -173,7 +174,12 @@ export default function AuditLogsPage() {
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
             <div className="flex items-center text-red-800">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               {error}
             </div>
@@ -185,16 +191,14 @@ export default function AuditLogsPage() {
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">Audit Logs</h2>
           </div>
-          
+
           {loading ? (
             <div className="p-6 text-center">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               <p className="mt-2 text-gray-600">Loading logs...</p>
             </div>
           ) : logs.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              No audit logs found
-            </div>
+            <div className="p-6 text-center text-gray-500">No audit logs found</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -221,7 +225,7 @@ export default function AuditLogsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {logs.map((log) => (
+                  {logs.map(log => (
                     <tr key={log.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {new Date(log.created_at).toLocaleString()}

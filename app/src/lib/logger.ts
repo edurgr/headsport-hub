@@ -33,7 +33,7 @@ export enum LogLevel {
 
 class Logger {
   private isDevelopment = process.env.NODE_ENV === 'development';
-  
+
   private formatMessage(level: LogLevel, message: string, context?: LogContext): string {
     const timestamp = new Date().toISOString();
     const logEntry = {
@@ -42,11 +42,11 @@ class Logger {
       message,
       ...context,
     };
-    
+
     if (this.isDevelopment) {
       return JSON.stringify(logEntry, null, 2);
     }
-    
+
     return JSON.stringify(logEntry);
   }
 
@@ -65,18 +65,21 @@ class Logger {
   }
 
   error(message: string, error?: Error | unknown, context?: LogContext): void {
-    const errorInfo = error instanceof Error 
-      ? { 
-          name: error.name, 
-          message: error.message, 
-          stack: error.stack 
-        }
-      : error;
+    const errorInfo =
+      error instanceof Error
+        ? {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          }
+        : error;
 
-    console.error(this.formatMessage(LogLevel.ERROR, message, {
-      ...context,
-      error: errorInfo,
-    }));
+    console.error(
+      this.formatMessage(LogLevel.ERROR, message, {
+        ...context,
+        error: errorInfo,
+      })
+    );
   }
 
   // Convenience methods for common use cases
@@ -98,7 +101,12 @@ class Logger {
     };
   }
 
-  dataEvent(action: string, resource: string, userId?: string, metadata?: Record<string, any>): LogContext {
+  dataEvent(
+    action: string,
+    resource: string,
+    userId?: string,
+    metadata?: Record<string, any>
+  ): LogContext {
     return {
       action,
       resource,
@@ -112,25 +120,29 @@ class Logger {
 export const logger = new Logger();
 
 // Export convenience functions
-export const logApiRequest = (endpoint: string, method: string, userId?: string) => 
+export const logApiRequest = (endpoint: string, method: string, userId?: string) =>
   logger.info(`API ${method} ${endpoint}`, logger.apiRequest(endpoint, method, userId));
 
 export const logAuthEvent = (action: string, userId?: string, userEmail?: string) =>
   logger.info(`Auth: ${action}`, logger.authEvent(action, userId, userEmail));
 
-export const logDataEvent = (action: string, resource: string, userId?: string, metadata?: Record<string, any>) =>
+export const logDataEvent = (
+  action: string,
+  resource: string,
+  userId?: string,
+  metadata?: Record<string, any>
+) =>
   logger.info(`Data: ${action} ${resource}`, logger.dataEvent(action, resource, userId, metadata));
 
 export const logError = (message: string, error?: Error | unknown, context?: LogContext) =>
   logger.error(message, error, context);
 
-export const logWarning = (message: string, context?: LogContext) =>
-  logger.warn(message, context);
+export const logWarning = (message: string, context?: LogContext) => logger.warn(message, context);
 
 // Health check logger
 export const logHealthCheck = (component: string, status: 'healthy' | 'error', details?: any) =>
   logger.info(`Health check: ${component}`, {
     resource: 'health',
     action: 'check',
-    metadata: { component, status, details }
+    metadata: { component, status, details },
   });

@@ -1,12 +1,25 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-server';
+
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabaseServer } from '@/lib/supabase-server';
 
 export async function PATCH(req: Request) {
   try {
     const sb = supabaseAdmin || (await supabaseServer());
     const body = await req.json();
-    const { id, name, email, phone, organization, expectedContentUploads, costPerAthlete, competitionPerformance, festivalAchievements, awards, notes } = body;
+    const {
+      id,
+      name,
+      email,
+      phone,
+      organization,
+      expectedContentUploads,
+      costPerAthlete,
+      competitionPerformance,
+      festivalAchievements,
+      awards,
+      notes,
+    } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Profile ID is required' }, { status: 400 });
@@ -27,9 +40,9 @@ export async function PATCH(req: Request) {
           competitionPerformance,
           festivalAchievements,
           awards,
-          notes
+          notes,
         },
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', id)
       .select()
@@ -37,15 +50,17 @@ export async function PATCH(req: Request) {
 
     if (error) {
       console.error('Error updating profile:', error);
-      return NextResponse.json({ error: 'Failed to update profile: ' + error.message }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to update profile: ' + error.message },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       profile: data,
-      message: 'Profile updated successfully' 
+      message: 'Profile updated successfully',
     });
-
   } catch (error) {
     console.error('Profile update error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

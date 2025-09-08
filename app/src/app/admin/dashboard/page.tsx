@@ -1,19 +1,21 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import { 
-  Users, 
-  ShoppingCart, 
-  FileImage, 
-  Package, 
-  TrendingUp,
+import { useCallback, useEffect, useState } from 'react';
+
+import {
   AlertTriangle,
   CheckCircle,
   Clock,
+  FileImage,
+  Package,
+  ShoppingCart,
+  TrendingUp,
+  Users,
 } from 'lucide-react';
+
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
 
 interface DashboardData {
   period: number;
@@ -76,7 +78,7 @@ export default function AdminDashboard() {
       setLoading(true);
       const response = await authenticatedFetch(`/api/admin/dashboard?period=${selectedPeriod}`);
       const data = await response.json();
-      
+
       if (response.ok) {
         setDashboardData(data);
         setError(null);
@@ -96,13 +98,13 @@ export default function AdminDashboard() {
     }
   }, [profile, selectedPeriod, fetchDashboardData]);
 
-  const StatCard = ({ 
-    title, 
-    value, 
-    icon: Icon, 
+  const StatCard = ({
+    title,
+    value,
+    icon: Icon,
     color = 'blue',
     subtitle,
-    trend
+    trend,
   }: {
     title: string;
     value: string | number;
@@ -117,19 +119,21 @@ export default function AdminDashboard() {
           <div>
             <p className="text-sm font-medium text-[hsl(var(--muted))]">{title}</p>
             <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{value}</p>
-            {subtitle && (
-              <p className="text-sm text-[hsl(var(--muted))] mt-1">{subtitle}</p>
-            )}
+            {subtitle && <p className="text-sm text-[hsl(var(--muted))] mt-1">{subtitle}</p>}
             {trend && (
-              <div className="flex items-center mt-2 text-sm" style={{ color: trend.isPositive ? 'hsl(var(--success))' : 'hsl(var(--error))' }}>
-                <TrendingUp className={`w-4 h-4 mr-1 ${
-                  trend.isPositive ? '' : 'rotate-180'
-                }`} />
+              <div
+                className="flex items-center mt-2 text-sm"
+                style={{ color: trend.isPositive ? 'hsl(var(--success))' : 'hsl(var(--error))' }}
+              >
+                <TrendingUp className={`w-4 h-4 mr-1 ${trend.isPositive ? '' : 'rotate-180'}`} />
                 {Math.abs(trend.value)}%
               </div>
             )}
           </div>
-          <div className="p-3 rounded-full" style={{ backgroundColor: 'hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
+          <div
+            className="p-3 rounded-full"
+            style={{ backgroundColor: 'hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+          >
             <Icon className="w-6 h-6" />
           </div>
         </div>
@@ -137,20 +141,17 @@ export default function AdminDashboard() {
     );
   };
 
-  const HealthIndicator = ({ 
-    healthy, 
-    label 
-  }: { 
-    healthy: boolean; 
-    label: string; 
-  }) => (
+  const HealthIndicator = ({ healthy, label }: { healthy: boolean; label: string }) => (
     <div className="flex items-center space-x-2">
       {healthy ? (
         <CheckCircle className="w-5 h-5" style={{ color: 'hsl(var(--success))' }} />
       ) : (
         <AlertTriangle className="w-5 h-5" style={{ color: 'hsl(var(--error))' }} />
       )}
-      <span className="text-sm" style={{ color: healthy ? 'hsl(var(--success))' : 'hsl(var(--error))' }}>
+      <span
+        className="text-sm"
+        style={{ color: healthy ? 'hsl(var(--success))' : 'hsl(var(--error))' }}
+      >
         {label}
       </span>
     </div>
@@ -171,7 +172,10 @@ export default function AdminDashboard() {
     return (
       <div className="p-6">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'hsl(var(--info))' }}></div>
+          <div
+            className="animate-spin rounded-full h-12 w-12 border-b-2"
+            style={{ borderColor: 'hsl(var(--info))' }}
+          ></div>
         </div>
       </div>
     );
@@ -197,13 +201,15 @@ export default function AdminDashboard() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-[hsl(var(--foreground))] mb-2">Admin Dashboard</h1>
+              <h1 className="text-3xl font-bold text-[hsl(var(--foreground))] mb-2">
+                Admin Dashboard
+              </h1>
               <p className="text-[hsl(var(--muted))]">Overview of your HEAD-Hub system</p>
             </div>
             <div className="flex items-center space-x-4">
               <select
                 value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
+                onChange={e => setSelectedPeriod(e.target.value)}
                 className="input px-3 py-2"
               >
                 <option value="7">Last 7 days</option>
@@ -217,10 +223,7 @@ export default function AdminDashboard() {
               >
                 View All Logs
               </button>
-              <button
-                onClick={fetchDashboardData}
-                className="btn px-4 py-2"
-              >
+              <button onClick={fetchDashboardData} className="btn px-4 py-2">
                 Refresh
               </button>
             </div>
@@ -230,15 +233,17 @@ export default function AdminDashboard() {
         {/* System Health */}
         <div className="mb-8">
           <div className="card p-6">
-            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">System Health</h2>
+            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">
+              System Health
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <HealthIndicator 
-                healthy={dashboardData.system_health.database_healthy} 
-                label="Database" 
+              <HealthIndicator
+                healthy={dashboardData.system_health.database_healthy}
+                label="Database"
               />
-              <HealthIndicator 
-                healthy={dashboardData.system_health.storage_healthy} 
-                label="Storage" 
+              <HealthIndicator
+                healthy={dashboardData.system_health.storage_healthy}
+                label="Storage"
               />
               <div className="flex items-center space-x-2">
                 <Clock className="w-5 h-5" style={{ color: 'hsl(var(--info))' }} />
@@ -284,16 +289,19 @@ export default function AdminDashboard() {
 
         {/* Orders Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-8">
-
           <div className="card p-6">
-            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">Order Status</h2>
+            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">
+              Order Status
+            </h2>
             <div className="space-y-3">
               {Object.entries(dashboardData.order_stats.orders_by_status).map(([status, count]) => (
                 <div key={status} className="flex items-center justify-between">
                   <span className="text-sm text-[hsl(var(--muted))] capitalize">
                     {status.replace('_', ' ')}
                   </span>
-                  <span className="text-sm font-semibold text-[hsl(var(--foreground))]">{count}</span>
+                  <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                    {count}
+                  </span>
                 </div>
               ))}
             </div>
@@ -303,24 +311,32 @@ export default function AdminDashboard() {
         {/* User Distribution and Content Types */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <div className="card p-6">
-            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">User Distribution</h2>
+            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">
+              User Distribution
+            </h2>
             <div className="space-y-3">
               {Object.entries(dashboardData.user_stats.users_by_role).map(([role, count]) => (
                 <div key={role} className="flex items-center justify-between">
                   <span className="text-sm text-[hsl(var(--muted))] capitalize">{role}s</span>
-                  <span className="text-sm font-semibold text-[hsl(var(--foreground))]">{count}</span>
+                  <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                    {count}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="card p-6">
-            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">Content Types</h2>
+            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">
+              Content Types
+            </h2>
             <div className="space-y-3">
               {Object.entries(dashboardData.content_stats.content_by_type).map(([type, count]) => (
                 <div key={type} className="flex items-center justify-between">
                   <span className="text-sm text-[hsl(var(--muted))] capitalize">{type}s</span>
-                  <span className="text-sm font-semibold text-[hsl(var(--foreground))]">{count}</span>
+                  <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                    {count}
+                  </span>
                 </div>
               ))}
             </div>
@@ -330,7 +346,9 @@ export default function AdminDashboard() {
         {/* Recent Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div className="card p-6">
-            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">Recent Orders</h2>
+            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">
+              Recent Orders
+            </h2>
             <div className="space-y-3">
               {dashboardData.recent_activity.recent_orders.map((order: any) => (
                 <div key={order.id} className="flex items-center justify-between">
@@ -338,9 +356,7 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium text-[hsl(var(--foreground))]">
                       {order.user_name || 'Unknown User'}
                     </p>
-                    <p className="text-xs text-[hsl(var(--muted))] capitalize">
-                      {order.status}
-                    </p>
+                    <p className="text-xs text-[hsl(var(--muted))] capitalize">{order.status}</p>
                   </div>
                   <span className="text-xs text-[hsl(var(--muted))]">
                     {new Date(order.created_at).toLocaleDateString()}
@@ -351,7 +367,9 @@ export default function AdminDashboard() {
           </div>
 
           <div className="card p-6">
-            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">Recent Users</h2>
+            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">
+              Recent Users
+            </h2>
             <div className="space-y-3">
               {dashboardData.recent_activity.recent_users.map((user: any) => (
                 <div key={user.id} className="flex items-center justify-between">
@@ -370,16 +388,24 @@ export default function AdminDashboard() {
           </div>
 
           <div className="card p-6">
-            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">Recent Content</h2>
+            <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">
+              Recent Content
+            </h2>
             <div className="space-y-3">
               {dashboardData.recent_activity.recent_content.map((content: any) => (
                 <div key={content.id} className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[hsl(var(--foreground))] truncate" title={content.filename}>
-                      {content.filename.length > 25 ? `${content.filename.substring(0, 25)}...` : content.filename}
+                    <p
+                      className="text-sm font-medium text-[hsl(var(--foreground))] truncate"
+                      title={content.filename}
+                    >
+                      {content.filename.length > 25
+                        ? `${content.filename.substring(0, 25)}...`
+                        : content.filename}
                     </p>
                     <p className="text-xs text-[hsl(var(--muted))] capitalize">
-                      {content.file_type} • {content.upload_sessions?.profiles?.name || 'Unknown User'}
+                      {content.file_type} •{' '}
+                      {content.upload_sessions?.profiles?.name || 'Unknown User'}
                     </p>
                   </div>
                   <span className="text-xs text-[hsl(var(--muted))] ml-2 flex-shrink-0">
@@ -393,26 +419,33 @@ export default function AdminDashboard() {
 
         {/* Backup Status */}
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">Backup Status</h2>
+          <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">
+            Backup Status
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center">
-              <p className="text-2xl font-bold" style={{ color: 'hsl(var(--info))' }}>{dashboardData.backup_stats.total_backups}</p>
+              <p className="text-2xl font-bold" style={{ color: 'hsl(var(--info))' }}>
+                {dashboardData.backup_stats.total_backups}
+              </p>
               <p className="text-sm text-[hsl(var(--muted))]">Total Backups</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold" style={{ color: 'hsl(var(--success))' }}>{dashboardData.backup_stats.successful_backups}</p>
+              <p className="text-2xl font-bold" style={{ color: 'hsl(var(--success))' }}>
+                {dashboardData.backup_stats.successful_backups}
+              </p>
               <p className="text-sm text-[hsl(var(--muted))]">Successful</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold" style={{ color: 'hsl(var(--error))' }}>{dashboardData.backup_stats.failed_backups}</p>
+              <p className="text-2xl font-bold" style={{ color: 'hsl(var(--error))' }}>
+                {dashboardData.backup_stats.failed_backups}
+              </p>
               <p className="text-sm text-[hsl(var(--muted))]">Failed</p>
             </div>
             <div className="text-center">
               <p className="text-sm font-bold text-[hsl(var(--foreground))]">
-                {dashboardData.backup_stats.last_backup_date 
+                {dashboardData.backup_stats.last_backup_date
                   ? new Date(dashboardData.backup_stats.last_backup_date).toLocaleDateString()
-                  : 'Never'
-                }
+                  : 'Never'}
               </p>
               <p className="text-sm text-[hsl(var(--muted))]">Last Backup</p>
             </div>

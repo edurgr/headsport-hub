@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { supabaseServer } from '@/lib/supabase-server';
 
 export async function GET() {
@@ -19,7 +20,7 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   const { orders_enabled } = await req.json();
-  
+
   if (typeof orders_enabled !== 'boolean') {
     return NextResponse.json({ error: 'orders_enabled must be a boolean' }, { status: 400 });
   }

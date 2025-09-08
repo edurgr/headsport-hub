@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
 import { useRouter, useSearchParams } from 'next/navigation';
+
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
@@ -11,11 +13,11 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState('');
-  
+
   const { signInWithEmail, signUpWithEmail, user, profile } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // Redirect if already authenticated
   useEffect(() => {
     if (user || profile) {
@@ -67,12 +69,15 @@ export default function LoginPage() {
             </button>
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             {isSignUp && (
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-[hsl(var(--foreground))]">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-[hsl(var(--foreground))]"
+                >
                   Full Name
                 </label>
                 <input
@@ -81,15 +86,18 @@ export default function LoginPage() {
                   type="text"
                   required={isSignUp}
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={e => setName(e.target.value)}
                   className="input mt-1"
                   placeholder="Enter your full name"
                 />
               </div>
             )}
-            
+
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-[hsl(var(--foreground))]">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-[hsl(var(--foreground))]"
+              >
                 Email address
               </label>
               <input
@@ -99,14 +107,17 @@ export default function LoginPage() {
                 autoComplete="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 className="input mt-1"
                 placeholder="Enter your email"
               />
             </div>
-            
+
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-[hsl(var(--foreground))]">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-[hsl(var(--foreground))]"
+              >
                 Password
               </label>
               <input
@@ -116,7 +127,7 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 className="input mt-1"
                 placeholder="Enter your password"
               />
@@ -125,25 +136,20 @@ export default function LoginPage() {
 
           <div className="flex items-center justify-between">
             <div className="text-sm">
-              <a href="/forgot-password" className="font-medium underline text-[hsl(var(--foreground))] hover:opacity-80">
+              <a
+                href="/forgot-password"
+                className="font-medium underline text-[hsl(var(--foreground))] hover:opacity-80"
+              >
                 Forgot your password?
               </a>
             </div>
           </div>
 
-          {error && (
-            <div className="alert alert-error text-sm justify-center">
-              {error}
-            </div>
-          )}
+          {error && <div className="alert alert-error text-sm justify-center">{error}</div>}
 
           <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn w-full"
-            >
-              {loading ? 'Please wait...' : (isSignUp ? 'Create Account' : 'Sign In')}
+            <button type="submit" disabled={loading} className="btn w-full">
+              {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
             </button>
           </div>
         </form>

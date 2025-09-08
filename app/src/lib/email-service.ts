@@ -1,4 +1,5 @@
 import sgMail from '@sendgrid/mail';
+
 import { getEmailConfig, getFromEmail } from './email-config';
 
 // Configurar SendGrid
@@ -38,10 +39,10 @@ export class EmailService {
 
   private checkConfiguration(): boolean {
     const config = getEmailConfig();
-    
+
     switch (config.service) {
       case 'sendgrid':
-        return !!(process.env.SENDGRID_API_KEY);
+        return !!process.env.SENDGRID_API_KEY;
       case 'aws-ses':
         return !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
       case 'nodemailer':
@@ -56,7 +57,7 @@ export class EmailService {
   public async sendEmail(emailData: EmailData): Promise<boolean> {
     try {
       const config = getEmailConfig();
-      
+
       switch (config.service) {
         case 'sendgrid':
           return await this.sendWithSendGrid(emailData);
@@ -77,7 +78,7 @@ export class EmailService {
 
   public async sendInvitationEmail(data: InvitationEmailData): Promise<boolean> {
     const subject = `You're invited to join Athlete Hub as a ${data.role}`;
-    
+
     const html = this.generateInvitationHTML(data);
     const text = this.generateInvitationText(data);
 
@@ -85,7 +86,7 @@ export class EmailService {
       to: data.to,
       subject,
       html,
-      text
+      text,
     });
   }
 
@@ -99,7 +100,7 @@ export class EmailService {
       from: getFromEmail(),
       subject: emailData.subject,
       html: emailData.html,
-      text: emailData.text || this.htmlToText(emailData.html)
+      text: emailData.text || this.htmlToText(emailData.html),
     };
 
     try {
@@ -235,24 +236,28 @@ This is an automated message. Please do not reply to this email.
 
   public getConfigurationStatus(): { configured: boolean; service: string; details: string } {
     const config = getEmailConfig();
-    
+
     return {
       configured: this.isConfigured,
       service: config.service,
-      details: this.getConfigurationDetails()
+      details: this.getConfigurationDetails(),
     };
   }
 
   private getConfigurationDetails(): string {
     const config = getEmailConfig();
-    
+
     switch (config.service) {
       case 'sendgrid':
         return process.env.SENDGRID_API_KEY ? 'API Key configured' : 'API Key missing';
       case 'aws-ses':
-        return (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) ? 'AWS credentials configured' : 'AWS credentials missing';
+        return process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+          ? 'AWS credentials configured'
+          : 'AWS credentials missing';
       case 'nodemailer':
-        return (process.env.SMTP_HOST && process.env.SMTP_USER) ? 'SMTP configured' : 'SMTP configuration incomplete';
+        return process.env.SMTP_HOST && process.env.SMTP_USER
+          ? 'SMTP configured'
+          : 'SMTP configuration incomplete';
       case 'mock':
         return 'Mock mode active (development)';
       default:
@@ -263,4 +268,3 @@ This is an automated message. Please do not reply to this email.
 
 // Exportar instancia singleton
 export const emailService = EmailService.getInstance();
-

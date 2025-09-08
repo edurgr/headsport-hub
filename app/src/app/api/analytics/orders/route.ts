@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-server';
-import { supabaseAdmin as supabaseAdminClient } from '@/lib/supabase-admin';
+
 import { createClient } from '@supabase/supabase-js';
+
+import { supabaseAdmin as supabaseAdminClient } from '@/lib/supabase-admin';
+import { supabaseServer } from '@/lib/supabase-server';
 
 export async function GET(req: Request) {
   try {
@@ -17,7 +19,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Configuration error' }, { status: 500 });
     }
 
-    const supabaseAdmin = supabaseAdminClient ?? (serviceRoleKey ? createClient(supabaseUrl, serviceRoleKey) : null);
+    const supabaseAdmin =
+      supabaseAdminClient ?? (serviceRoleKey ? createClient(supabaseUrl, serviceRoleKey) : null);
     let sb = await supabaseServer();
 
     // Resolve current user id and role
@@ -34,7 +37,9 @@ export async function GET(req: Request) {
         .single();
       role = (prof?.role as any) || 'athlete';
     } else {
-      const authHeader = (req as any).headers?.get?.('authorization') || (req as any).headers?.get?.('Authorization');
+      const authHeader =
+        (req as any).headers?.get?.('authorization') ||
+        (req as any).headers?.get?.('Authorization');
       if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
         try {
@@ -90,7 +95,8 @@ export async function GET(req: Request) {
             .eq('athlete_email', athlete.email);
 
           const totalOrders = orders?.length || 0;
-          const pendingOrders = orders?.filter((o: any) => o.status === 'pending_approval').length || 0;
+          const pendingOrders =
+            orders?.filter((o: any) => o.status === 'pending_approval').length || 0;
           const approvedOrders = orders?.filter((o: any) => o.status === 'approved').length || 0;
           const rejectedOrders = orders?.filter((o: any) => o.status === 'rejected').length || 0;
 
@@ -102,7 +108,10 @@ export async function GET(req: Request) {
               .from('order_items')
               .select('quantity')
               .in('order_id', orderIds);
-            totalItems = (orderItems || []).reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
+            totalItems = (orderItems || []).reduce(
+              (sum: number, item: any) => sum + (item.quantity || 0),
+              0
+            );
           }
 
           return {
@@ -113,7 +122,7 @@ export async function GET(req: Request) {
             pending_orders: pendingOrders,
             approved_orders: approvedOrders,
             rejected_orders: rejectedOrders,
-            total_items: totalItems
+            total_items: totalItems,
           };
         })
       );
@@ -121,7 +130,7 @@ export async function GET(req: Request) {
       return NextResponse.json({
         success: true,
         data: athleteStats,
-        type: 'athlete_breakdown'
+        type: 'athlete_breakdown',
       });
     } else if (groupBy === 'products') {
       // Get most requested products
@@ -135,13 +144,16 @@ export async function GET(req: Request) {
       }
 
       // Group by product and sum quantities
-      const productStats: Record<string, {
-        name: string;
-        category: string;
-        sku: string;
-        total_quantity: number;
-        order_count: number;
-      }> = {};
+      const productStats: Record<
+        string,
+        {
+          name: string;
+          category: string;
+          sku: string;
+          total_quantity: number;
+          order_count: number;
+        }
+      > = {};
 
       (orderItems || []).forEach((item: any) => {
         const key = `${item.product_sku}-${item.product_name}`;
@@ -151,7 +163,7 @@ export async function GET(req: Request) {
             category: item.product_category,
             sku: item.product_sku,
             total_quantity: 0,
-            order_count: 0
+            order_count: 0,
           };
         }
         productStats[key].total_quantity += item.quantity || 0;
@@ -165,7 +177,7 @@ export async function GET(req: Request) {
       return NextResponse.json({
         success: true,
         data: sortedProducts,
-        type: 'products_breakdown'
+        type: 'products_breakdown',
       });
     } else {
       // Get global order stats
@@ -190,7 +202,10 @@ export async function GET(req: Request) {
           .from('order_items')
           .select('quantity')
           .in('order_id', orderIds);
-        totalItems = (orderItems || []).reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
+        totalItems = (orderItems || []).reduce(
+          (sum: number, item: any) => sum + (item.quantity || 0),
+          0
+        );
       }
 
       return NextResponse.json({
@@ -200,16 +215,19 @@ export async function GET(req: Request) {
           pending_orders: pendingOrders,
           approved_orders: approvedOrders,
           rejected_orders: rejectedOrders,
-          total_items: totalItems
+          total_items: totalItems,
         },
-        type: 'global'
+        type: 'global',
       });
     }
   } catch (error) {
     console.error('Analytics orders error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
 }

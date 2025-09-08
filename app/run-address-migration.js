@@ -27,34 +27,31 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 async function runMigration() {
   try {
     console.log('🚀 Starting addresses migration...');
-    
+
     // Read the migration SQL file
     const migrationPath = path.join(__dirname, '..', 'database-addresses-schema.sql');
     const migrationSQL = fs.readFileSync(migrationPath, 'utf8');
-    
+
     console.log('📄 Executing migration SQL...');
-    
+
     // Execute the migration
     const { data, error } = await supabase.rpc('exec_sql', { sql: migrationSQL });
-    
+
     if (error) {
       // If the RPC function doesn't exist, try direct execution
       console.log('⚠️  RPC function not available, trying direct execution...');
-      
+
       // Split the SQL into individual statements
       const statements = migrationSQL
         .split(';')
         .map(stmt => stmt.trim())
         .filter(stmt => stmt.length > 0);
-      
+
       for (const statement of statements) {
         if (statement.trim()) {
           console.log(`   Executing: ${statement.substring(0, 50)}...`);
-          const { error: stmtError } = await supabase
-            .from('_migration_temp')
-            .select('*')
-            .limit(0); // This will fail but we're using it to execute raw SQL
-          
+          const { error: stmtError } = await supabase.from('_migration_temp').select('*').limit(0); // This will fail but we're using it to execute raw SQL
+
           // For now, we'll just log that we need to run this manually
           console.log(`   ⚠️  Please run this statement manually in your Supabase SQL editor:`);
           console.log(`   ${statement};`);
@@ -63,37 +60,38 @@ async function runMigration() {
     } else {
       console.log('✅ Migration executed successfully!');
     }
-    
+
     // Verify the addresses table was created
     console.log('🔍 Verifying addresses table...');
     const { data: tables, error: tableError } = await supabase
       .from('addresses')
       .select('*')
       .limit(1);
-    
+
     if (tableError && tableError.code === 'PGRST116') {
-      console.log('❌ Addresses table not found. Please run the migration SQL manually in your Supabase SQL editor.');
+      console.log(
+        '❌ Addresses table not found. Please run the migration SQL manually in your Supabase SQL editor.'
+      );
       console.log('📄 Migration file location:', migrationPath);
     } else {
       console.log('✅ Addresses table verified!');
-      
+
       // Check if any addresses were migrated
       const { data: addressCount, error: countError } = await supabase
         .from('addresses')
         .select('*', { count: 'exact', head: true });
-      
+
       if (!countError) {
         console.log(`📊 Found ${addressCount.length || 0} addresses in the database`);
       }
     }
-    
+
     console.log('🎉 Migration process completed!');
     console.log('');
     console.log('📋 Next steps:');
     console.log('   1. If the migration failed, run the SQL manually in Supabase SQL editor');
     console.log('   2. Test the address functionality in your app');
     console.log('   3. Verify that existing profile addresses were migrated');
-    
   } catch (error) {
     console.error('❌ Migration failed:', error.message);
     console.log('');

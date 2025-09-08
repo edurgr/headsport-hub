@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+
 import { createClient } from '@supabase/supabase-js';
+
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabaseServer } from '@/lib/supabase-server';
 
 // Ensure this API runs on Node and bypasses any static optimization or edge caching
 export const runtime = 'nodejs';
@@ -20,8 +22,9 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Configuration error' }, { status: 500 });
     }
 
-    const supabaseAdminClient = supabaseAdmin ?? (serviceRoleKey ? createClient(supabaseUrl, serviceRoleKey) : null);
-    
+    const supabaseAdminClient =
+      supabaseAdmin ?? (serviceRoleKey ? createClient(supabaseUrl, serviceRoleKey) : null);
+
     if (!supabaseAdminClient) {
       return NextResponse.json({ error: 'Admin access required for analytics' }, { status: 500 });
     }
@@ -67,7 +70,7 @@ export async function GET(req: Request) {
         .eq('role', 'athlete')
         .limit(1)
         .single();
-      
+
       if (firstAthlete) {
         targetAthleteId = firstAthlete.id;
       }
@@ -101,20 +104,31 @@ export async function GET(req: Request) {
     let contentStats = {
       total_content: 0,
       photos: 0,
-      videos: 0
+      videos: 0,
     };
 
     if (sessionIds.length > 0) {
       const [totalResult, photosResult, videosResult] = await Promise.all([
-        supabaseAdminClient.from('upload_files').select('*', { count: 'exact', head: true }).in('session_id', sessionIds),
-        supabaseAdminClient.from('upload_files').select('*', { count: 'exact', head: true }).in('session_id', sessionIds).eq('file_type', 'image'),
-        supabaseAdminClient.from('upload_files').select('*', { count: 'exact', head: true }).in('session_id', sessionIds).eq('file_type', 'video')
+        supabaseAdminClient
+          .from('upload_files')
+          .select('*', { count: 'exact', head: true })
+          .in('session_id', sessionIds),
+        supabaseAdminClient
+          .from('upload_files')
+          .select('*', { count: 'exact', head: true })
+          .in('session_id', sessionIds)
+          .eq('file_type', 'image'),
+        supabaseAdminClient
+          .from('upload_files')
+          .select('*', { count: 'exact', head: true })
+          .in('session_id', sessionIds)
+          .eq('file_type', 'video'),
       ]);
 
       contentStats = {
         total_content: totalResult.count || 0,
         photos: photosResult.count || 0,
-        videos: videosResult.count || 0
+        videos: videosResult.count || 0,
       };
     }
 
@@ -129,7 +143,7 @@ export async function GET(req: Request) {
       pending_orders: orders?.filter(o => o.status === 'pending_approval').length || 0,
       approved_orders: orders?.filter(o => o.status === 'approved').length || 0,
       rejected_orders: orders?.filter(o => o.status === 'rejected').length || 0,
-      total_items: 0
+      total_items: 0,
     };
 
     // Get total items ordered
@@ -139,27 +153,36 @@ export async function GET(req: Request) {
         .from('order_items')
         .select('quantity')
         .in('order_id', orderIds);
-      orderStats.total_items = (orderItems || []).reduce((sum, item) => sum + (item.quantity || 0), 0);
+      orderStats.total_items = (orderItems || []).reduce(
+        (sum, item) => sum + (item.quantity || 0),
+        0
+      );
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        athlete: {
-          id: athleteProfile.id,
-          name: athleteProfile.name,
-          email: athleteProfile.email,
-          role: athleteProfile.role
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          athlete: {
+            id: athleteProfile.id,
+            name: athleteProfile.name,
+            email: athleteProfile.email,
+            role: athleteProfile.role,
+          },
+          content: contentStats,
+          orders: orderStats,
         },
-        content: contentStats,
-        orders: orderStats
-      }
-    }, { headers: { 'Cache-Control': 'no-store' } });
+      },
+      { headers: { 'Cache-Control': 'no-store' } }
+    );
   } catch (error) {
     console.error('My stats error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
 }

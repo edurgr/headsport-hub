@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-server';
-import { supabaseAdmin as serviceClient } from '@/lib/supabase-admin';
+
 import { createClient } from '@supabase/supabase-js';
+
+import { supabaseAdmin as serviceClient } from '@/lib/supabase-admin';
+import { supabaseServer } from '@/lib/supabase-server';
 
 export async function GET(req: Request) {
   try {
@@ -17,7 +19,8 @@ export async function GET(req: Request) {
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
     let sb = await supabaseServer();
-    const authHeader = (req as any).headers?.get?.('authorization') || (req as any).headers?.get?.('Authorization');
+    const authHeader =
+      (req as any).headers?.get?.('authorization') || (req as any).headers?.get?.('Authorization');
     if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
       sb = createClient(supabaseUrl, supabaseAnonKey, {
@@ -59,12 +62,16 @@ export async function GET(req: Request) {
     }
 
     // Use service role client for managers/admins to avoid RLS misconfig issues
-    const client = (serviceClient && (requesterRole === 'admin' || requesterRole === 'manager')) ? serviceClient : sb;
+    const client =
+      serviceClient && (requesterRole === 'admin' || requesterRole === 'manager')
+        ? serviceClient
+        : sb;
 
     // Build data query
     let query = client
       .from('profiles')
-      .select(`
+      .select(
+        `
         id,
         email,
         name,
@@ -78,7 +85,8 @@ export async function GET(req: Request) {
         country,
         created_at,
         updated_at
-      `)
+      `
+      )
       .order('created_at', { ascending: false });
 
     // Filter by role if specified
@@ -95,9 +103,7 @@ export async function GET(req: Request) {
     const [countResult, profilesResult] = await Promise.all([
       // Count query
       (async () => {
-        let countQuery = client
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
+        let countQuery = client.from('profiles').select('*', { count: 'exact', head: true });
 
         if (role && ['athlete', 'manager', 'admin'].includes(role)) {
           countQuery = countQuery.eq('role', role);
@@ -109,40 +115,47 @@ export async function GET(req: Request) {
         return await countQuery;
       })(),
       // Data query
-      query.range(offset, offset + limit - 1)
+      query.range(offset, offset + limit - 1),
     ]);
 
     const { count, error: countError } = countResult;
     const { data: profiles, error: profilesError } = profilesResult;
 
     if (countError) {
-      return NextResponse.json({ 
-        error: 'Failed to get profile count: ' + countError.message 
-      }, { status: 500 });
+      return NextResponse.json(
+        {
+          error: 'Failed to get profile count: ' + countError.message,
+        },
+        { status: 500 }
+      );
     }
 
     if (profilesError) {
-      return NextResponse.json({ 
-        error: 'Failed to fetch profiles: ' + profilesError.message 
-      }, { status: 500 });
+      return NextResponse.json(
+        {
+          error: 'Failed to fetch profiles: ' + profilesError.message,
+        },
+        { status: 500 }
+      );
     }
 
     // Transform the data to match frontend expectations
-    const transformedProfiles = profiles?.map((profile: any) => ({
-      id: profile.id,
-      email: profile.email,
-      name: profile.name,
-      role: profile.role,
-      organization: profile.organization,
-      phone: profile.phone,
-      address: profile.address,
-      city: profile.city,
-      state: profile.state,
-      postalCode: profile.postal_code,
-      country: profile.country,
-      createdAt: profile.created_at,
-      updatedAt: profile.updated_at
-    })) || [];
+    const transformedProfiles =
+      profiles?.map((profile: any) => ({
+        id: profile.id,
+        email: profile.email,
+        name: profile.name,
+        role: profile.role,
+        organization: profile.organization,
+        phone: profile.phone,
+        address: profile.address,
+        city: profile.city,
+        state: profile.state,
+        postalCode: profile.postal_code,
+        country: profile.country,
+        createdAt: profile.created_at,
+        updatedAt: profile.updated_at,
+      })) || [];
 
     return NextResponse.json({
       success: true,
@@ -151,15 +164,17 @@ export async function GET(req: Request) {
         page,
         limit,
         total: count || 0,
-        totalPages: Math.ceil((count || 0) / limit)
-      }
+        totalPages: Math.ceil((count || 0) / limit),
+      },
     });
-
   } catch (error) {
     console.error('Error fetching profiles:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error', 
-      details: error instanceof Error ? error.message : 'Unknown error' 
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
 }

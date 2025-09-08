@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 export async function GET(req: Request) {
@@ -8,7 +9,10 @@ export async function GET(req: Request) {
 
     const supabaseAdmin = getSupabaseAdmin();
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Database connection required for analytics' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Database connection required for analytics' },
+        { status: 500 }
+      );
     }
 
     console.log('Analytics API called with groupBy:', groupBy);
@@ -26,7 +30,7 @@ export async function GET(req: Request) {
       }
 
       const athleteStats = await Promise.all(
-        (athletes || []).map(async (athlete) => {
+        (athletes || []).map(async athlete => {
           // Get sessions for this athlete
           const { data: sessions } = await supabaseAdmin!
             .from('upload_sessions')
@@ -42,15 +46,26 @@ export async function GET(req: Request) {
               athlete_email: athlete.email,
               total_content: 0,
               photos: 0,
-              videos: 0
+              videos: 0,
             };
           }
 
           // Get file counts by type
           const [totalResult, photosResult, videosResult] = await Promise.all([
-            supabaseAdmin!.from('upload_files').select('*', { count: 'exact', head: true }).in('session_id', sessionIds),
-            supabaseAdmin!.from('upload_files').select('*', { count: 'exact', head: true }).in('session_id', sessionIds).eq('file_type', 'image'),
-            supabaseAdmin!.from('upload_files').select('*', { count: 'exact', head: true }).in('session_id', sessionIds).eq('file_type', 'video')
+            supabaseAdmin!
+              .from('upload_files')
+              .select('*', { count: 'exact', head: true })
+              .in('session_id', sessionIds),
+            supabaseAdmin!
+              .from('upload_files')
+              .select('*', { count: 'exact', head: true })
+              .in('session_id', sessionIds)
+              .eq('file_type', 'image'),
+            supabaseAdmin!
+              .from('upload_files')
+              .select('*', { count: 'exact', head: true })
+              .in('session_id', sessionIds)
+              .eq('file_type', 'video'),
           ]);
 
           return {
@@ -59,7 +74,7 @@ export async function GET(req: Request) {
             athlete_email: athlete.email,
             total_content: totalResult.count || 0,
             photos: photosResult.count || 0,
-            videos: videosResult.count || 0
+            videos: videosResult.count || 0,
           };
         })
       );
@@ -67,14 +82,20 @@ export async function GET(req: Request) {
       return NextResponse.json({
         success: true,
         data: athleteStats,
-        type: 'athlete_breakdown'
+        type: 'athlete_breakdown',
       });
     } else {
       // Get global content stats
       const [totalResult, photosResult, videosResult] = await Promise.all([
         supabaseAdmin.from('upload_files').select('*', { count: 'exact', head: true }),
-        supabaseAdmin.from('upload_files').select('*', { count: 'exact', head: true }).eq('file_type', 'image'),
-        supabaseAdmin.from('upload_files').select('*', { count: 'exact', head: true }).eq('file_type', 'video')
+        supabaseAdmin
+          .from('upload_files')
+          .select('*', { count: 'exact', head: true })
+          .eq('file_type', 'image'),
+        supabaseAdmin
+          .from('upload_files')
+          .select('*', { count: 'exact', head: true })
+          .eq('file_type', 'video'),
       ]);
 
       return NextResponse.json({
@@ -82,16 +103,19 @@ export async function GET(req: Request) {
         data: {
           total_content: totalResult.count || 0,
           photos: photosResult.count || 0,
-          videos: videosResult.count || 0
+          videos: videosResult.count || 0,
         },
-        type: 'global_summary'
+        type: 'global_summary',
       });
     }
   } catch (error) {
     console.error('Analytics content error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
 }

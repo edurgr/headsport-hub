@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import { s3Bucket, s3Client } from '@/lib/s3';
+
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { s3Region, s3Endpoint } from '@/lib/s3';
+
+import { s3Bucket, s3Client } from '@/lib/s3';
+import { s3Endpoint, s3Region } from '@/lib/s3';
 
 export async function POST(req: Request) {
   try {
@@ -22,8 +24,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url, publicUrl });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 }
-
-

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import { supabaseClient } from '@/lib/supabase-client';
 
 export default function ForgotPasswordPage() {
@@ -14,9 +15,12 @@ export default function ForgotPasswordPage() {
     setMessage('');
     try {
       const redirectTo = `${window.location.origin}/auth/callback`;
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-        redirectTo,
-      });
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(
+        email.trim().toLowerCase(),
+        {
+          redirectTo,
+        }
+      );
       if (error) {
         setStatus('error');
         setMessage(error.message || 'Failed to send password reset email');
@@ -53,14 +57,16 @@ export default function ForgotPasswordPage() {
               type="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               placeholder="Enter your email"
             />
           </div>
 
           {message && (
-            <div className={`text-sm text-center ${status === 'error' ? 'text-red-600' : 'text-green-600'}`}>
+            <div
+              className={`text-sm text-center ${status === 'error' ? 'text-red-600' : 'text-green-600'}`}
+            >
               {message}
             </div>
           )}

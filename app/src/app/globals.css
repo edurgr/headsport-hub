@@ -1,15 +1,28 @@
-@import "tailwindcss";
-@import "./styles/theme.css";
+@import 'tailwindcss';
+@import './styles/theme.css';
 
 body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: var(--font-geist-sans), system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  font-family:
+    var(--font-geist-sans),
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Helvetica,
+    Arial,
+    'Apple Color Emoji',
+    'Segoe UI Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-*, *::before, *::after { box-sizing: border-box; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 /* Utility helpers aligning to tokens */
 .surface-card {
@@ -18,20 +31,27 @@ body {
   border-radius: var(--radius);
 }
 
-.elevated { box-shadow: 0 16px 40px rgba(0,0,0,0.10); }
+.elevated {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+}
 
 .glass {
-  background: rgba(255,255,255,0.7);
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
 }
 
 @media (prefers-color-scheme: dark) {
-  .glass { background: rgba(17,17,17,0.6); }
+  .glass {
+    background: rgba(17, 17, 17, 0.6);
+  }
 }
 
 /* Improve native control legibility on small screens */
 @media (max-width: 640px) {
-  html, body { overflow-x: hidden; }
+  html,
+  body {
+    overflow-x: hidden;
+  }
   select,
   select option,
   input,
@@ -43,5 +63,8 @@ body {
 }
 
 @media (orientation: landscape) and (max-width: 896px) {
-  html, body { overflow-x: hidden; }
+  html,
+  body {
+    overflow-x: hidden;
+  }
 }

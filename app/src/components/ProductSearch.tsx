@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
 import { Product } from '@/types';
+
 import ResponsiveSelect from './ResponsiveSelect';
 
 interface ProductSearchProps {
@@ -34,7 +36,10 @@ export default function ProductSearch({ onSelect, selectedProduct }: ProductSear
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/equipment/categories', { cache: 'no-store', credentials: 'include' });
+      const response = await fetch('/api/equipment/categories', {
+        cache: 'no-store',
+        credentials: 'include',
+      });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -42,12 +47,22 @@ export default function ProductSearch({ onSelect, selectedProduct }: ProductSear
       if (data.categories) {
         setCategories(data.categories);
         // Default to skis when available
-        setSelectedCategory(data.categories.includes('skis') ? 'skis' : data.categories[0] || 'all');
+        setSelectedCategory(
+          data.categories.includes('skis') ? 'skis' : data.categories[0] || 'all'
+        );
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
       // Fallback to minimal categories for this phase
-      setCategories(['skis', 'bindings', 'accessories', 'boots', 'goggles', 'helmet', 'snowboards']);
+      setCategories([
+        'skis',
+        'bindings',
+        'accessories',
+        'boots',
+        'goggles',
+        'helmet',
+        'snowboards',
+      ]);
       setSelectedCategory('skis');
     }
   };
@@ -69,7 +84,7 @@ export default function ProductSearch({ onSelect, selectedProduct }: ProductSear
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      
+
       if (data.items) {
         setFilteredProducts(data.items);
       }
@@ -105,19 +120,19 @@ export default function ProductSearch({ onSelect, selectedProduct }: ProductSear
 
   const getCategoryLabel = (category: string) => {
     const labels: { [key: string]: string } = {
-      'skis': 'Skis',
-      'bindings': 'Bindings',
-      'accessories': 'Accessories',
-      'boots': 'Boots',
-      'goggles': 'Goggles',
-      'helmet': 'Helmets',
-      'snowboards': 'Snowboards',
-      'bags': 'Bags',
-      'poles': 'Poles',
-      'skins': 'Skins',
+      skis: 'Skis',
+      bindings: 'Bindings',
+      accessories: 'Accessories',
+      boots: 'Boots',
+      goggles: 'Goggles',
+      helmet: 'Helmets',
+      snowboards: 'Snowboards',
+      bags: 'Bags',
+      poles: 'Poles',
+      skins: 'Skins',
       'snowboard boots': 'Snowboard Boots',
       'protection helmets': 'Protection Helmets',
-      'protection goggles': 'Protection Goggles'
+      'protection goggles': 'Protection Goggles',
     };
     return labels[category] || category;
   };
@@ -131,8 +146,11 @@ export default function ProductSearch({ onSelect, selectedProduct }: ProductSear
           <ResponsiveSelect
             ariaLabel="Category"
             value={selectedCategory}
-            onChange={(v) => handleCategoryChange({ target: { value: v } } as any)}
-            options={[{ value: 'all', label: 'All Categories' }, ...categories.map(c => ({ value: c, label: getCategoryLabel(c) }))]}
+            onChange={v => handleCategoryChange({ target: { value: v } } as any)}
+            options={[
+              { value: 'all', label: 'All Categories' },
+              ...categories.map(c => ({ value: c, label: getCategoryLabel(c) })),
+            ]}
             className="w-full px-3 h-11 sm:h-9 bg-white border border-[var(--border)] rounded-md"
           />
         </div>
@@ -160,8 +178,18 @@ export default function ProductSearch({ onSelect, selectedProduct }: ProductSear
           onChange={handleInputChange}
           onFocus={handleInputFocus}
         />
-        <svg className="w-5 h-5 text-[var(--muted)] absolute left-3 top-3 sm:top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        <svg
+          className="w-5 h-5 text-[var(--muted)] absolute left-3 top-3 sm:top-2.5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
         </svg>
       </div>
 
@@ -175,7 +203,7 @@ export default function ProductSearch({ onSelect, selectedProduct }: ProductSear
             </div>
           ) : filteredProducts.length > 0 ? (
             <div className="py-2">
-              {filteredProducts.map((product) => (
+              {filteredProducts.map(product => (
                 <div
                   key={product.id}
                   onClick={() => handleProductSelect(product)}
@@ -205,7 +233,9 @@ export default function ProductSearch({ onSelect, selectedProduct }: ProductSear
               <div className="font-medium">{selectedProduct.name}</div>
               <div className="text-sm text-[var(--muted)]">SKU: {selectedProduct.sku}</div>
               {selectedProduct.category && (
-                <div className="text-xs text-[var(--muted)] capitalize">{selectedProduct.category}</div>
+                <div className="text-xs text-[var(--muted)] capitalize">
+                  {selectedProduct.category}
+                </div>
               )}
             </div>
             <button

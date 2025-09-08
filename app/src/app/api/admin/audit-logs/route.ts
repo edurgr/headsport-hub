@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { verifyAdminAccess } from '@/lib/admin-auth-secure';
-import { checkRateLimit } from '@/lib/rate-limiter';
 import { validateRequest } from '@/lib/input-validator';
+import { checkRateLimit } from '@/lib/rate-limiter';
 
 export async function GET(req: NextRequest) {
   try {
@@ -9,10 +10,10 @@ export async function GET(req: NextRequest) {
     const rateLimitResult = checkRateLimit(req, true);
     if (!rateLimitResult.success) {
       return NextResponse.json(
-        { error: rateLimitResult.error }, 
-        { 
-          status: rateLimitResult.status, 
-          headers: rateLimitResult.headers as Record<string, string>
+        { error: rateLimitResult.error },
+        {
+          status: rateLimitResult.status,
+          headers: rateLimitResult.headers as Record<string, string>,
         }
       );
     }
@@ -51,7 +52,7 @@ export async function GET(req: NextRequest) {
         details: { period: '30', timestamp: new Date().toISOString() },
         ip_address: '127.0.0.1',
         user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       },
       {
         id: '2',
@@ -63,7 +64,7 @@ export async function GET(req: NextRequest) {
         details: { name: 'Test Product', category: 'ski' },
         ip_address: '127.0.0.1',
         user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-        created_at: new Date(Date.now() - 3600000).toISOString()
+        created_at: new Date(Date.now() - 3600000).toISOString(),
       },
       {
         id: '3',
@@ -75,7 +76,7 @@ export async function GET(req: NextRequest) {
         details: { login_method: 'email', success: true },
         ip_address: '192.168.1.100',
         user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        created_at: new Date(Date.now() - 7200000).toISOString()
+        created_at: new Date(Date.now() - 7200000).toISOString(),
       },
       {
         id: '4',
@@ -87,7 +88,7 @@ export async function GET(req: NextRequest) {
         details: { filename: 'test.jpg', file_size: 1024000, file_type: 'image' },
         ip_address: '192.168.1.101',
         user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0)',
-        created_at: new Date(Date.now() - 10800000).toISOString()
+        created_at: new Date(Date.now() - 10800000).toISOString(),
       },
       {
         id: '5',
@@ -99,37 +100,33 @@ export async function GET(req: NextRequest) {
         details: { action: 'approved', reason: 'passed_all_checks' },
         ip_address: '127.0.0.1',
         user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-        created_at: new Date(Date.now() - 14400000).toISOString()
-      }
+        created_at: new Date(Date.now() - 14400000).toISOString(),
+      },
     ];
 
     // Apply filters to mock data
     let filteredLogs = mockLogs;
-    
+
     if (action) {
-      filteredLogs = filteredLogs.filter(log => 
+      filteredLogs = filteredLogs.filter(log =>
         log.action.toLowerCase().includes(action.toLowerCase())
       );
     }
     if (resourceType) {
-      filteredLogs = filteredLogs.filter(log => 
+      filteredLogs = filteredLogs.filter(log =>
         log.resource_type.toLowerCase().includes(resourceType.toLowerCase())
       );
     }
     if (userId) {
-      filteredLogs = filteredLogs.filter(log => 
-        log.user_id.includes(userId) || log.user_email.includes(userId)
+      filteredLogs = filteredLogs.filter(
+        log => log.user_id.includes(userId) || log.user_email.includes(userId)
       );
     }
     if (startDate) {
-      filteredLogs = filteredLogs.filter(log => 
-        new Date(log.created_at) >= new Date(startDate)
-      );
+      filteredLogs = filteredLogs.filter(log => new Date(log.created_at) >= new Date(startDate));
     }
     if (endDate) {
-      filteredLogs = filteredLogs.filter(log => 
-        new Date(log.created_at) <= new Date(endDate)
-      );
+      filteredLogs = filteredLogs.filter(log => new Date(log.created_at) <= new Date(endDate));
     }
 
     // Apply pagination
@@ -142,9 +139,8 @@ export async function GET(req: NextRequest) {
       total: filteredLogs.length,
       page,
       limit,
-      totalPages: Math.ceil(filteredLogs.length / limit)
+      totalPages: Math.ceil(filteredLogs.length / limit),
     });
-
   } catch (error) {
     console.error('Error in audit logs API:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

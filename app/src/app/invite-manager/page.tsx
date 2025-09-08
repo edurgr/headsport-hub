@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useState } from 'react';
+
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 import { Invitation } from '@/types';
 
 export default function InviteManagerPage() {
@@ -12,7 +13,7 @@ export default function InviteManagerPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  
+
   // Form state
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<'manager' | 'athlete'>('athlete');
@@ -37,23 +38,26 @@ export default function InviteManagerPage() {
   };
 
   const checkExistingInvitation = (email: string) => {
-    const existing = invitations.find(inv => 
-      inv.email.toLowerCase() === email.toLowerCase() && 
-      inv.status === 'pending' && 
-      new Date(inv.expires_at) > new Date()
+    const existing = invitations.find(
+      inv =>
+        inv.email.toLowerCase() === email.toLowerCase() &&
+        inv.status === 'pending' &&
+        new Date(inv.expires_at) > new Date()
     );
-    
+
     if (existing) {
-      setError(`An active invitation already exists for ${email}. It expires on ${new Date(existing.expires_at).toLocaleDateString()}.`);
+      setError(
+        `An active invitation already exists for ${email}. It expires on ${new Date(existing.expires_at).toLocaleDateString()}.`
+      );
       return true;
     }
-    
+
     return false;
   };
 
   const handleCreateInvitation = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email.trim()) {
       setError('Please enter an email address');
       return;
@@ -68,21 +72,21 @@ export default function InviteManagerPage() {
       setIsCreating(true);
       setError(null);
       setSuccess(null);
-      
+
       await createInvitation(email.trim(), role, message.trim() || undefined);
-      
+
       setSuccess(`Invitation sent to ${email} for role: ${role}`);
       setEmail('');
       setMessage('');
-      
+
       // Refresh invitations list
       await fetchInvitations();
     } catch (err: any) {
       console.error('Invitation creation error:', err);
-      
+
       // Handle specific errors in a more user-friendly way
       let errorMessage = err.message || 'Failed to create invitation';
-      
+
       if (err.message?.includes('already exists and is still valid')) {
         errorMessage = err.message;
       } else if (err.message?.includes('has already accepted an invitation')) {
@@ -90,7 +94,7 @@ export default function InviteManagerPage() {
       } else if (err.message?.includes('duplicate key value')) {
         errorMessage = `An invitation for ${email} already exists. Please check the invitations list below.`;
       }
-      
+
       setError(errorMessage);
     } finally {
       setIsCreating(false);
@@ -119,7 +123,7 @@ export default function InviteManagerPage() {
 
       // Create a new invitation for the same email and role
       await createInvitation(invitation.email, invitation.role);
-      
+
       setSuccess(`Invitation renewed for ${invitation.email}`);
       await fetchInvitations();
     } catch (err: any) {
@@ -131,16 +135,16 @@ export default function InviteManagerPage() {
     if (invitation.status === 'accepted') {
       return { text: 'Accepted', color: 'bg-green-100 text-green-800 border-green-200' };
     }
-    
+
     if (invitation.status === 'expired') {
       return { text: 'Expired', color: 'bg-red-100 text-red-800 border-red-200' };
     }
-    
+
     // Check if it's pending but expired
     if (invitation.status === 'pending' && new Date(invitation.expires_at) < new Date()) {
       return { text: 'Expired', color: 'bg-red-100 text-red-800 border-red-200' };
     }
-    
+
     return { text: 'Pending', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
   };
 
@@ -183,14 +187,21 @@ export default function InviteManagerPage() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Invitation Manager</h1>
-              <p className="text-gray-600">Send invitations to new users and manage existing invitations</p>
+              <p className="text-gray-600">
+                Send invitations to new users and manage existing invitations
+              </p>
             </div>
             <a
               href="/profile-management"
               className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
               </svg>
               Back to Profile Management
             </a>
@@ -200,7 +211,7 @@ export default function InviteManagerPage() {
         {/* Create Invitation Form */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Send New Invitation</h2>
-          
+
           <form onSubmit={handleCreateInvitation} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
@@ -210,7 +221,7 @@ export default function InviteManagerPage() {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => {
+                  onChange={e => {
                     setEmail(e.target.value);
                     setError(null); // Clear error when changing email
                   }}
@@ -218,20 +229,19 @@ export default function InviteManagerPage() {
                   placeholder="user@example.com"
                   required
                 />
-                {email && invitations.find(inv => inv.email.toLowerCase() === email.toLowerCase()) && (
-                  <div className="mt-1 text-xs text-blue-600">
-                    ℹ️ An invitation for this email already exists
-                  </div>
-                )}
+                {email &&
+                  invitations.find(inv => inv.email.toLowerCase() === email.toLowerCase()) && (
+                    <div className="mt-1 text-xs text-blue-600">
+                      ℹ️ An invitation for this email already exists
+                    </div>
+                  )}
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Role
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                 <select
                   value={role}
-                  onChange={(e) => setRole(e.target.value as 'manager' | 'athlete')}
+                  onChange={e => setRole(e.target.value as 'manager' | 'athlete')}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   disabled={profile?.role === 'manager'}
                 >
@@ -242,29 +252,27 @@ export default function InviteManagerPage() {
                   <p className="text-xs text-gray-500 mt-1">Managers can only invite athletes</p>
                 )}
               </div>
-              
+
               <div className="flex items-end">
                 <button
                   type="submit"
                   disabled={isCreating}
                   className={`w-full py-2 px-4 rounded-md text-white font-medium ${
-                    isCreating 
-                      ? 'bg-gray-400 cursor-not-allowed' 
-                      : 'bg-blue-600 hover:bg-blue-700'
+                    isCreating ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
                   }`}
                 >
                   {isCreating ? 'Sending...' : 'Send Invitation'}
                 </button>
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Personal Message (Optional)
               </label>
               <textarea
                 value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                onChange={e => setMessage(e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Add a personal message to the invitation..."
                 rows={3}
@@ -277,7 +285,12 @@ export default function InviteManagerPage() {
             <div className="text-sm text-blue-800">
               <div className="flex items-center mb-2">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 <span className="font-medium">How Invitations Work</span>
               </div>
@@ -296,18 +309,28 @@ export default function InviteManagerPage() {
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
             <div className="flex items-center text-red-800">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
               </svg>
               {error}
             </div>
           </div>
         )}
-        
+
         {success && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
             <div className="flex items-center text-green-800">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
               {success}
             </div>
@@ -324,18 +347,30 @@ export default function InviteManagerPage() {
               </p>
               <div className="flex space-x-2 text-xs">
                 <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">
-                  {invitations.filter(inv => inv.status === 'pending' && new Date(inv.expires_at) > new Date()).length} Pending
+                  {
+                    invitations.filter(
+                      inv => inv.status === 'pending' && new Date(inv.expires_at) > new Date()
+                    ).length
+                  }{' '}
+                  Pending
                 </span>
                 <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full">
                   {invitations.filter(inv => inv.status === 'accepted').length} Accepted
                 </span>
                 <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full">
-                  {invitations.filter(inv => inv.status === 'expired' || (inv.status === 'pending' && new Date(inv.expires_at) < new Date())).length} Expired
+                  {
+                    invitations.filter(
+                      inv =>
+                        inv.status === 'expired' ||
+                        (inv.status === 'pending' && new Date(inv.expires_at) < new Date())
+                    ).length
+                  }{' '}
+                  Expired
                 </span>
               </div>
             </div>
           </div>
-          
+
           {isLoading ? (
             <div className="p-6 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
@@ -343,8 +378,18 @@ export default function InviteManagerPage() {
             </div>
           ) : invitations.length === 0 ? (
             <div className="p-6 text-center text-gray-500">
-              <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              <svg
+                className="w-12 h-12 mx-auto mb-4 text-gray-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
               </svg>
               <p className="text-lg font-medium">No invitations yet</p>
               <p className="text-sm">Send your first invitation using the form above</p>
@@ -375,26 +420,31 @@ export default function InviteManagerPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {invitations.map((invitation) => (
+                  {invitations.map(invitation => (
                     <tr key={invitation.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{invitation.email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getRoleColor(invitation.role)}`}>
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getRoleColor(invitation.role)}`}
+                        >
                           {invitation.role.charAt(0).toUpperCase() + invitation.role.slice(1)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getInvitationStatus(invitation).color}`}>
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getInvitationStatus(invitation).color}`}
+                        >
                           {getInvitationStatus(invitation).text}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {new Date(invitation.expires_at).toLocaleDateString()}
-                        {invitation.status === 'pending' && new Date(invitation.expires_at) < new Date() && (
-                          <div className="text-xs text-red-600 mt-1">Expired</div>
-                        )}
+                        {invitation.status === 'pending' &&
+                          new Date(invitation.expires_at) < new Date() && (
+                            <div className="text-xs text-red-600 mt-1">Expired</div>
+                          )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {new Date(invitation.created_at).toLocaleDateString()}
@@ -411,8 +461,18 @@ export default function InviteManagerPage() {
                                 className="text-blue-600 hover:text-blue-900"
                                 title="Copy invitation link"
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                  />
                                 </svg>
                               </button>
                               <button
@@ -420,8 +480,18 @@ export default function InviteManagerPage() {
                                 className="text-red-600 hover:text-red-900"
                                 title="Delete invitation"
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  />
                                 </svg>
                               </button>
                             </>
@@ -435,8 +505,18 @@ export default function InviteManagerPage() {
                               className="text-blue-600 hover:text-blue-900"
                               title="Renew expired invitation"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
                               </svg>
                             </button>
                           )}
@@ -455,16 +535,33 @@ export default function InviteManagerPage() {
           <div className="text-blue-800">
             <h3 className="text-lg font-medium mb-3 flex items-center">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               How Invitations Work
             </h3>
             <div className="text-sm space-y-2">
-              <p><strong>Pending:</strong> Invitation sent, waiting for user to accept</p>
-              <p><strong>Accepted:</strong> User has completed registration</p>
-              <p><strong>Expired:</strong> Invitation has expired (7 days)</p>
-              <p><strong>Role Assignment:</strong> Users cannot change their assigned role during registration</p>
-              <p><strong>Security:</strong> Each invitation has a unique token and expires automatically</p>
+              <p>
+                <strong>Pending:</strong> Invitation sent, waiting for user to accept
+              </p>
+              <p>
+                <strong>Accepted:</strong> User has completed registration
+              </p>
+              <p>
+                <strong>Expired:</strong> Invitation has expired (7 days)
+              </p>
+              <p>
+                <strong>Role Assignment:</strong> Users cannot change their assigned role during
+                registration
+              </p>
+              <p>
+                <strong>Security:</strong> Each invitation has a unique token and expires
+                automatically
+              </p>
             </div>
           </div>
         </div>

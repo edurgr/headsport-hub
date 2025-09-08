@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
@@ -11,7 +12,10 @@ export async function POST(request: NextRequest) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!supabaseUrl || !serviceKey) {
-      return NextResponse.json({ error: 'Server not configured for admin operations' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Server not configured for admin operations' },
+        { status: 500 }
+      );
     }
 
     const admin = createClient(supabaseUrl, serviceKey);
@@ -35,7 +39,10 @@ export async function POST(request: NextRequest) {
         if (error) break;
         const users = data?.users || [];
         const match = users.find((u: any) => (u.email || '').toLowerCase() === normalized);
-        if (match) { userId = match.id; break; }
+        if (match) {
+          userId = match.id;
+          break;
+        }
         if (users.length < perPage) break;
         page += 1;
       }
@@ -73,25 +80,43 @@ export async function POST(request: NextRequest) {
 
     // Delete invitations in either schema
     try {
-      const { data: inv1 } = await admin.from('invitations').select('id').ilike('email', normalized);
+      const { data: inv1 } = await admin
+        .from('invitations')
+        .select('id')
+        .ilike('email', normalized);
       if (inv1 && inv1.length > 0) {
-        const { error } = await admin.from('invitations').delete().in('id', inv1.map((r: any) => r.id));
+        const { error } = await admin
+          .from('invitations')
+          .delete()
+          .in(
+            'id',
+            inv1.map((r: any) => r.id)
+          );
         if (!error) result.invitations.deletedCount += inv1.length;
       }
     } catch {}
     try {
       const { data: inv2 } = await admin.from('invites').select('id').ilike('email', normalized);
       if (inv2 && inv2.length > 0) {
-        const { error } = await admin.from('invites').delete().in('id', inv2.map((r: any) => r.id));
+        const { error } = await admin
+          .from('invites')
+          .delete()
+          .in(
+            'id',
+            inv2.map((r: any) => r.id)
+          );
         if (!error) result.invitations.deletedCount += inv2.length;
       }
     } catch {}
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown' }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown',
+      },
+      { status: 500 }
+    );
   }
 }
-
-
-

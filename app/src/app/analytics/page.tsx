@@ -1,30 +1,32 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
-import { 
-  Users, 
-  FileImage, 
-  Video, 
-  ShoppingCart, 
-  Package,
+import { useCallback, useEffect, useState } from 'react';
+
+import {
   CheckCircle,
   Clock,
-  XCircle
+  FileImage,
+  Package,
+  ShoppingCart,
+  Users,
+  Video,
+  XCircle,
 } from 'lucide-react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ContentStats {
   total_content: number;
@@ -112,7 +114,7 @@ export default function AnalyticsPage() {
         fetchAthleteContentStats(),
         fetchAthleteOrderStats(),
         fetchProductStats(),
-        fetchAthleteProductStats()
+        fetchAthleteProductStats(),
       ]);
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -129,7 +131,9 @@ export default function AnalyticsPage() {
 
   const fetchGlobalContentStats = async () => {
     try {
-      const response = await fetch('/api/analytics/content-simple?group_by=global', { cache: 'no-store' });
+      const response = await fetch('/api/analytics/content-simple?group_by=global', {
+        cache: 'no-store',
+      });
       const data = await response.json();
       if (data.success) {
         setGlobalContentStats(data.data);
@@ -141,7 +145,9 @@ export default function AnalyticsPage() {
 
   const fetchGlobalOrderStats = async () => {
     try {
-      const response = await fetch('/api/analytics/orders-simple?group_by=global', { cache: 'no-store' });
+      const response = await fetch('/api/analytics/orders-simple?group_by=global', {
+        cache: 'no-store',
+      });
       const data = await response.json();
       if (data.success) {
         setGlobalOrderStats(data.data);
@@ -153,7 +159,9 @@ export default function AnalyticsPage() {
 
   const fetchAthleteContentStats = async () => {
     try {
-      const response = await fetch('/api/analytics/content-simple?group_by=athlete', { cache: 'no-store' });
+      const response = await fetch('/api/analytics/content-simple?group_by=athlete', {
+        cache: 'no-store',
+      });
       const data = await response.json();
       if (data.success) {
         setAthleteContentStats(data.data);
@@ -165,7 +173,9 @@ export default function AnalyticsPage() {
 
   const fetchAthleteOrderStats = async () => {
     try {
-      const response = await fetch('/api/analytics/orders-simple?group_by=athlete', { cache: 'no-store' });
+      const response = await fetch('/api/analytics/orders-simple?group_by=athlete', {
+        cache: 'no-store',
+      });
       const data = await response.json();
       if (data.success) {
         setAthleteOrderStats(data.data);
@@ -177,7 +187,9 @@ export default function AnalyticsPage() {
 
   const fetchProductStats = async () => {
     try {
-      const response = await fetch('/api/analytics/orders-simple?group_by=products', { cache: 'no-store' });
+      const response = await fetch('/api/analytics/orders-simple?group_by=products', {
+        cache: 'no-store',
+      });
       const data = await response.json();
       if (data.success) {
         setProductStats(data.data);
@@ -223,58 +235,63 @@ export default function AnalyticsPage() {
 
   const contentChartData = [
     { name: 'Photos', value: globalContentStats?.photos || 0, color: CHART_COLORS[0] },
-    { name: 'Videos', value: globalContentStats?.videos || 0, color: CHART_COLORS[1] }
+    { name: 'Videos', value: globalContentStats?.videos || 0, color: CHART_COLORS[1] },
   ];
 
   const orderStatusData = [
     { name: 'Pending', value: globalOrderStats?.pending_orders || 0, color: CHART_COLORS[3] },
     { name: 'Approved', value: globalOrderStats?.approved_orders || 0, color: CHART_COLORS[1] },
-    { name: 'Rejected', value: globalOrderStats?.rejected_orders || 0, color: CHART_COLORS[2] }
+    { name: 'Rejected', value: globalOrderStats?.rejected_orders || 0, color: CHART_COLORS[2] },
   ];
 
   const athleteContentChartData = athleteContentStats.map(athlete => ({
     name: athlete.athlete_name,
     photos: athlete.photos,
     videos: athlete.videos,
-    total: athlete.total_content
+    total: athlete.total_content,
   }));
 
   const athleteOrderChartData = athleteOrderStats.map(athlete => ({
     name: athlete.athlete_name,
     orders: athlete.total_orders,
-    items: athlete.total_items
+    items: athlete.total_items,
   }));
 
   const topProductsData = productStats.slice(0, 10).map(product => ({
     name: product.name.length > 15 ? product.name.substring(0, 15) + '...' : product.name,
     quantity: product.total_quantity,
     orders: product.order_count,
-    fullName: product.name
+    fullName: product.name,
   }));
 
   // Group products by category for pie chart
-  const categoryData = productStats.reduce((acc: Array<{name: string, quantity: number, orders: number, color: string}>, product) => {
-    const existing = acc.find(item => item.name === product.category);
-    if (existing) {
-      existing.quantity += product.total_quantity;
-      existing.orders += product.order_count;
-    } else {
-      acc.push({
-        name: product.category,
-        quantity: product.total_quantity,
-        orders: product.order_count,
-        color: CHART_COLORS[acc.length % CHART_COLORS.length]
-      });
-    }
-    return acc;
-  }, []);
+  const categoryData = productStats.reduce(
+    (acc: Array<{ name: string; quantity: number; orders: number; color: string }>, product) => {
+      const existing = acc.find(item => item.name === product.category);
+      if (existing) {
+        existing.quantity += product.total_quantity;
+        existing.orders += product.order_count;
+      } else {
+        acc.push({
+          name: product.category,
+          quantity: product.total_quantity,
+          orders: product.order_count,
+          color: CHART_COLORS[acc.length % CHART_COLORS.length],
+        });
+      }
+      return acc;
+    },
+    []
+  );
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-[hsl(var(--foreground))]">System Analytics</h1>
-          <p className="mt-2 text-[hsl(var(--muted))]">Data visualization for athlete content and orders</p>
+          <p className="mt-2 text-[hsl(var(--muted))]">
+            Data visualization for athlete content and orders
+          </p>
         </div>
 
         {/* Tabs */}
@@ -320,35 +337,58 @@ export default function AnalyticsPage() {
           <div className="space-y-8">
             {/* Global Content Stats */}
             <div className="card">
-              <h2 className="text-xl font-semibold text-[hsl(var(--foreground))] mb-6">Global Content Statistics</h2>
-              
+              <h2 className="text-xl font-semibold text-[hsl(var(--foreground))] mb-6">
+                Global Content Statistics
+              </h2>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="rounded-lg p-4" style={{ backgroundColor: 'hsl(var(--info) / 0.08)' }}>
+                <div
+                  className="rounded-lg p-4"
+                  style={{ backgroundColor: 'hsl(var(--info) / 0.08)' }}
+                >
                   <div className="flex items-center">
                     <FileImage className="h-8 w-8" style={{ color: 'hsl(var(--info))' }} />
                     <div className="ml-4">
-                      <p className="text-sm font-medium" style={{ color: 'hsl(var(--info))' }}>Total Photos</p>
-                      <p className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>{globalContentStats?.photos || 0}</p>
+                      <p className="text-sm font-medium" style={{ color: 'hsl(var(--info))' }}>
+                        Total Photos
+                      </p>
+                      <p className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>
+                        {globalContentStats?.photos || 0}
+                      </p>
                     </div>
                   </div>
                 </div>
-                
-                <div className="rounded-lg p-4" style={{ backgroundColor: 'hsl(var(--success) / 0.08)' }}>
+
+                <div
+                  className="rounded-lg p-4"
+                  style={{ backgroundColor: 'hsl(var(--success) / 0.08)' }}
+                >
                   <div className="flex items-center">
                     <Video className="h-8 w-8" style={{ color: 'hsl(var(--success))' }} />
                     <div className="ml-4">
-                      <p className="text-sm font-medium" style={{ color: 'hsl(var(--success))' }}>Total Videos</p>
-                      <p className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>{globalContentStats?.videos || 0}</p>
+                      <p className="text-sm font-medium" style={{ color: 'hsl(var(--success))' }}>
+                        Total Videos
+                      </p>
+                      <p className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>
+                        {globalContentStats?.videos || 0}
+                      </p>
                     </div>
                   </div>
                 </div>
-                
-                <div className="rounded-lg p-4" style={{ backgroundColor: 'hsl(var(--muted) / 0.1)' }}>
+
+                <div
+                  className="rounded-lg p-4"
+                  style={{ backgroundColor: 'hsl(var(--muted) / 0.1)' }}
+                >
                   <div className="flex items-center">
                     <Package className="h-8 w-8" style={{ color: 'hsl(var(--muted))' }} />
                     <div className="ml-4">
-                      <p className="text-sm font-medium" style={{ color: 'hsl(var(--muted))' }}>Total Content</p>
-                      <p className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>{globalContentStats?.total_content || 0}</p>
+                      <p className="text-sm font-medium" style={{ color: 'hsl(var(--muted))' }}>
+                        Total Content
+                      </p>
+                      <p className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>
+                        {globalContentStats?.total_content || 0}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -356,7 +396,9 @@ export default function AnalyticsPage() {
 
               <div className="grid grid-cols-1 gap-8">
                 <div className="relative z-0">
-                  <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-4">Content Distribution</h3>
+                  <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-4">
+                    Content Distribution
+                  </h3>
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
@@ -364,7 +406,9 @@ export default function AnalyticsPage() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
+                        label={({ name, percent }) =>
+                          `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`
+                        }
                         outerRadius={80}
                         fill={CHART_COLORS[4]}
                         dataKey="value"
@@ -379,9 +423,13 @@ export default function AnalyticsPage() {
                 </div>
 
                 <div className="relative z-10">
-                  <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-4">Content by Athlete</h3>
+                  <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-4">
+                    Content by Athlete
+                  </h3>
                   {athleteContentStats.length === 0 ? (
-                    <div className="text-center py-8 text-[hsl(var(--muted))]">No athlete content yet</div>
+                    <div className="text-center py-8 text-[hsl(var(--muted))]">
+                      No athlete content yet
+                    </div>
                   ) : (
                     <>
                       <div className="mb-3 flex flex-col sm:flex-row sm:items-center gap-2">
@@ -389,10 +437,15 @@ export default function AnalyticsPage() {
                           type="text"
                           placeholder="Search athlete by name or email..."
                           value={athleteSearch}
-                          onChange={(e) => { setAthleteSearch(e.target.value); setVisibleAthletes(12); }}
+                          onChange={e => {
+                            setAthleteSearch(e.target.value);
+                            setVisibleAthletes(12);
+                          }}
                           className="input sm:max-w-sm"
                         />
-                        <span className="text-xs text-[hsl(var(--muted))]">{athleteContentStats.length} athletes</span>
+                        <span className="text-xs text-[hsl(var(--muted))]">
+                          {athleteContentStats.length} athletes
+                        </span>
                       </div>
                       <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {athleteContentStats
@@ -400,50 +453,98 @@ export default function AnalyticsPage() {
                           .filter(a => {
                             if (!athleteSearch.trim()) return true;
                             const q = athleteSearch.toLowerCase();
-                            return a.athlete_name.toLowerCase().includes(q) || a.athlete_email.toLowerCase().includes(q);
+                            return (
+                              a.athlete_name.toLowerCase().includes(q) ||
+                              a.athlete_email.toLowerCase().includes(q)
+                            );
                           })
                           .sort((a, b) => (b.total_content || 0) - (a.total_content || 0))
                           .slice(0, visibleAthletes)
-                          .map((athlete) => (
-                          <div
-                            key={athlete.athlete_id}
-                            className="relative z-10 card p-4 pt-7 flex flex-col min-h-[132px] hover:shadow-md transition-shadow overflow-hidden"
-                          >
-                            <div className="absolute top-3 right-3 z-20">
-                              <span className="badge" style={{ backgroundColor: 'hsl(var(--border))', color: 'hsl(var(--foreground))' }}>
-                                Total {athlete.total_content}
-                              </span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                              <div className="w-full">
-                                <h4 className="text-sm font-semibold text-[hsl(var(--foreground))] truncate">{athlete.athlete_name}</h4>
-                                <p className="text-xs text-[hsl(var(--muted))] break-words whitespace-normal">{athlete.athlete_email}</p>
+                          .map(athlete => (
+                            <div
+                              key={athlete.athlete_id}
+                              className="relative z-10 card p-4 pt-7 flex flex-col min-h-[132px] hover:shadow-md transition-shadow overflow-hidden"
+                            >
+                              <div className="absolute top-3 right-3 z-20">
+                                <span
+                                  className="badge"
+                                  style={{
+                                    backgroundColor: 'hsl(var(--border))',
+                                    color: 'hsl(var(--foreground))',
+                                  }}
+                                >
+                                  Total {athlete.total_content}
+                                </span>
                               </div>
-                            </div>
+                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                                <div className="w-full">
+                                  <h4 className="text-sm font-semibold text-[hsl(var(--foreground))] truncate">
+                                    {athlete.athlete_name}
+                                  </h4>
+                                  <p className="text-xs text-[hsl(var(--muted))] break-words whitespace-normal">
+                                    {athlete.athlete_email}
+                                  </p>
+                                </div>
+                              </div>
 
-                            <div className="mt-3 grid grid-cols-2 gap-3">
-                              <div className="rounded-md p-3 flex items-center" style={{ backgroundColor: 'hsl(var(--info) / 0.08)' }}>
-                                <FileImage className="h-5 w-5" style={{ color: 'hsl(var(--info))' }} />
-                                <div className="ml-3">
-                                  <div className="text-[11px] font-medium leading-3" style={{ color: 'hsl(var(--info))' }}>Photos</div>
-                                  <div className="text-base font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{athlete.photos}</div>
+                              <div className="mt-3 grid grid-cols-2 gap-3">
+                                <div
+                                  className="rounded-md p-3 flex items-center"
+                                  style={{ backgroundColor: 'hsl(var(--info) / 0.08)' }}
+                                >
+                                  <FileImage
+                                    className="h-5 w-5"
+                                    style={{ color: 'hsl(var(--info))' }}
+                                  />
+                                  <div className="ml-3">
+                                    <div
+                                      className="text-[11px] font-medium leading-3"
+                                      style={{ color: 'hsl(var(--info))' }}
+                                    >
+                                      Photos
+                                    </div>
+                                    <div
+                                      className="text-base font-semibold"
+                                      style={{ color: 'hsl(var(--foreground))' }}
+                                    >
+                                      {athlete.photos}
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="rounded-md p-3 flex items-center" style={{ backgroundColor: 'hsl(var(--success) / 0.08)' }}>
-                                <Video className="h-5 w-5" style={{ color: 'hsl(var(--success))' }} />
-                                <div className="ml-3">
-                                  <div className="text-[11px] font-medium leading-3" style={{ color: 'hsl(var(--success))' }}>Videos</div>
-                                  <div className="text-base font-semibold" style={{ color: 'hsl(var(--foreground))' }}>{athlete.videos}</div>
+                                <div
+                                  className="rounded-md p-3 flex items-center"
+                                  style={{ backgroundColor: 'hsl(var(--success) / 0.08)' }}
+                                >
+                                  <Video
+                                    className="h-5 w-5"
+                                    style={{ color: 'hsl(var(--success))' }}
+                                  />
+                                  <div className="ml-3">
+                                    <div
+                                      className="text-[11px] font-medium leading-3"
+                                      style={{ color: 'hsl(var(--success))' }}
+                                    >
+                                      Videos
+                                    </div>
+                                    <div
+                                      className="text-base font-semibold"
+                                      style={{ color: 'hsl(var(--foreground))' }}
+                                    >
+                                      {athlete.videos}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
                       </div>
                       {athleteContentStats.filter(a => {
                         if (!athleteSearch.trim()) return true;
                         const q = athleteSearch.toLowerCase();
-                        return a.athlete_name.toLowerCase().includes(q) || a.athlete_email.toLowerCase().includes(q);
+                        return (
+                          a.athlete_name.toLowerCase().includes(q) ||
+                          a.athlete_email.toLowerCase().includes(q)
+                        );
                       }).length > visibleAthletes && (
                         <div className="mt-4 text-center">
                           <button
@@ -467,45 +568,75 @@ export default function AnalyticsPage() {
           <div className="space-y-8">
             {/* Global Order Stats */}
             <div className="card">
-              <h2 className="text-xl font-semibold text-[hsl(var(--foreground))] mb-6">Global Order Statistics</h2>
-              
+              <h2 className="text-xl font-semibold text-[hsl(var(--foreground))] mb-6">
+                Global Order Statistics
+              </h2>
+
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div className="rounded-lg p-4" style={{ backgroundColor: 'hsl(var(--warning) / 0.1)' }}>
+                <div
+                  className="rounded-lg p-4"
+                  style={{ backgroundColor: 'hsl(var(--warning) / 0.1)' }}
+                >
                   <div className="flex items-center">
                     <Clock className="h-8 w-8" style={{ color: 'hsl(var(--warning))' }} />
                     <div className="ml-4">
-                      <p className="text-sm font-medium" style={{ color: 'hsl(var(--warning))' }}>Pending</p>
-                      <p className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>{globalOrderStats?.pending_orders || 0}</p>
+                      <p className="text-sm font-medium" style={{ color: 'hsl(var(--warning))' }}>
+                        Pending
+                      </p>
+                      <p className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>
+                        {globalOrderStats?.pending_orders || 0}
+                      </p>
                     </div>
                   </div>
                 </div>
-                
-                <div className="rounded-lg p-4" style={{ backgroundColor: 'hsl(var(--success) / 0.08)' }}>
+
+                <div
+                  className="rounded-lg p-4"
+                  style={{ backgroundColor: 'hsl(var(--success) / 0.08)' }}
+                >
                   <div className="flex items-center">
                     <CheckCircle className="h-8 w-8" style={{ color: 'hsl(var(--success))' }} />
                     <div className="ml-4">
-                      <p className="text-sm font-medium" style={{ color: 'hsl(var(--success))' }}>Approved</p>
-                      <p className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>{globalOrderStats?.approved_orders || 0}</p>
+                      <p className="text-sm font-medium" style={{ color: 'hsl(var(--success))' }}>
+                        Approved
+                      </p>
+                      <p className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>
+                        {globalOrderStats?.approved_orders || 0}
+                      </p>
                     </div>
                   </div>
                 </div>
-                
-                <div className="rounded-lg p-4" style={{ backgroundColor: 'hsl(var(--error) / 0.08)' }}>
+
+                <div
+                  className="rounded-lg p-4"
+                  style={{ backgroundColor: 'hsl(var(--error) / 0.08)' }}
+                >
                   <div className="flex items-center">
                     <XCircle className="h-8 w-8" style={{ color: 'hsl(var(--error))' }} />
                     <div className="ml-4">
-                      <p className="text-sm font-medium" style={{ color: 'hsl(var(--error))' }}>Rejected</p>
-                      <p className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>{globalOrderStats?.rejected_orders || 0}</p>
+                      <p className="text-sm font-medium" style={{ color: 'hsl(var(--error))' }}>
+                        Rejected
+                      </p>
+                      <p className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>
+                        {globalOrderStats?.rejected_orders || 0}
+                      </p>
                     </div>
                   </div>
                 </div>
-                
-                <div className="rounded-lg p-4" style={{ backgroundColor: 'hsl(var(--info) / 0.08)' }}>
+
+                <div
+                  className="rounded-lg p-4"
+                  style={{ backgroundColor: 'hsl(var(--info) / 0.08)' }}
+                >
                   <div className="flex items-center">
                     <ShoppingCart className="h-8 w-8" style={{ color: 'hsl(var(--info))' }} />
                     <div className="ml-4">
-                      <p className="text-sm font-medium" style={{ color: 'hsl(var(--info))' }}>Total Items</p>
-                      <p className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>{globalOrderStats?.total_items || 0}</p>
+                      <p className="text-sm font-medium" style={{ color: 'hsl(var(--info))' }}>
+                        Total Items
+                      </p>
+                      <p className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>
+                        {globalOrderStats?.total_items || 0}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -513,7 +644,9 @@ export default function AnalyticsPage() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div>
-                  <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-4">Order Status</h3>
+                  <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-4">
+                    Order Status
+                  </h3>
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
@@ -521,7 +654,9 @@ export default function AnalyticsPage() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
+                        label={({ name, percent }) =>
+                          `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`
+                        }
                         outerRadius={80}
                         fill={CHART_COLORS[4]}
                         dataKey="value"
@@ -536,11 +671,20 @@ export default function AnalyticsPage() {
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-4">Orders by Athlete</h3>
+                  <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-4">
+                    Orders by Athlete
+                  </h3>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={athleteOrderChartData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} stroke="hsl(var(--muted))" tick={{ fill: 'hsl(var(--muted))' }} />
+                      <XAxis
+                        dataKey="name"
+                        angle={-45}
+                        textAnchor="end"
+                        height={100}
+                        stroke="hsl(var(--muted))"
+                        tick={{ fill: 'hsl(var(--muted))' }}
+                      />
                       <YAxis stroke="hsl(var(--muted))" tick={{ fill: 'hsl(var(--muted))' }} />
                       <Tooltip />
                       <Legend />
@@ -558,8 +702,10 @@ export default function AnalyticsPage() {
         {activeTab === 'products' && (
           <div className="space-y-8">
             <div className="card">
-              <h2 className="text-xl font-semibold text-[hsl(var(--foreground))] mb-6">Most Requested Products</h2>
-              
+              <h2 className="text-xl font-semibold text-[hsl(var(--foreground))] mb-6">
+                Most Requested Products
+              </h2>
+
               {loadingStats ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[hsl(var(--info))]"></div>
@@ -568,313 +714,504 @@ export default function AnalyticsPage() {
               ) : productStats.length === 0 ? (
                 <div className="text-center py-12">
                   <Package className="h-12 w-12 text-[hsl(var(--muted))] mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-2">No Product Data</h3>
+                  <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-2">
+                    No Product Data
+                  </h3>
                   <p className="text-[hsl(var(--muted))]">No products have been ordered yet.</p>
                 </div>
               ) : (
                 <>
-              <div className="mb-8">
-                <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-4">Products by Quantity</h3>
-                <ResponsiveContainer width="100%" height={400}>
-                  <PieChart>
-                    <Pie
-                      data={topProductsData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
-                      outerRadius={120}
-                      fill={CHART_COLORS[4]}
-                      dataKey="quantity"
-                    >
-                      {topProductsData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value, name) => [value, 'Quantity']}
-                      labelFormatter={(label, payload) => {
-                        if (payload && payload[0] && payload[0].payload) {
-                          return payload[0].payload.fullName;
-                        }
-                        return label;
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="mt-8">
-                <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-4">Products by Category</h3>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div>
-                    <h4 className="text-md font-medium text-[hsl(var(--muted))] mb-4">Quantity by Category</h4>
-                    <ResponsiveContainer width="100%" height={300}>
+                  <div className="mb-8">
+                    <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-4">
+                      Products by Quantity
+                    </h3>
+                    <ResponsiveContainer width="100%" height={400}>
                       <PieChart>
                         <Pie
-                          data={categoryData}
+                          data={topProductsData}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
-                          outerRadius={80}
+                          label={({ name, percent }) =>
+                            `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`
+                          }
+                          outerRadius={120}
                           fill={CHART_COLORS[4]}
                           dataKey="quantity"
                         >
-                          {categoryData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          {topProductsData.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={CHART_COLORS[index % CHART_COLORS.length]}
+                            />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value, name) => [value, 'Quantity']} />
+                        <Tooltip
+                          formatter={(value, name) => [value, 'Quantity']}
+                          labelFormatter={(label, payload) => {
+                            if (payload && payload[0] && payload[0].payload) {
+                              return payload[0].payload.fullName;
+                            }
+                            return label;
+                          }}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  
-                  <div>
-                    <h4 className="text-md font-medium text-[hsl(var(--muted))] mb-4">Orders by Category</h4>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={categoryData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
-                          outerRadius={80}
-                          fill={CHART_COLORS[4]}
-                          dataKey="orders"
-                        >
-                          {categoryData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value, name) => [value, 'Orders']} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </div>
 
-              <div className="mt-8">
-                <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-6">Products Received by Athletes</h3>
-                
-                {/* Overall Summary Counters */}
-                {athleteProductStats.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white rounded-lg shadow p-6 text-center">
-                      <div className="flex items-center justify-center mb-2">
-                        <Users className="w-6 h-6 mr-2" style={{ color: 'hsl(var(--info))' }} />
-                        <span className="text-sm font-medium" style={{ color: 'hsl(var(--info))' }}>ATHLETES</span>
-                      </div>
-                      <div className="text-3xl font-bold text-[hsl(var(--foreground))]">{athleteProductStats.length}</div>
-                      <div className="text-xs" style={{ color: 'hsl(var(--info))' }}>with products</div>
-                    </div>
-                    
-                    <div className="bg-white rounded-lg shadow p-6 text-center">
-                      <div className="flex items-center justify-center mb-2">
-                        <svg className="w-6 h-6 mr-2" style={{ color: 'hsl(var(--success))' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span className="text-sm font-medium" style={{ color: 'hsl(var(--success))' }}>TOTAL SKIS</span>
-                      </div>
-                      <div className="text-3xl font-bold text-[hsl(var(--foreground))]">
-                        {athleteProductStats.reduce((sum, athlete) => 
-                          sum + athlete.products
-                            .filter(product => product.category === 'skis')
-                            .reduce((productSum, product) => productSum + product.quantity, 0), 0)}
-                      </div>
-                      <div className="text-xs" style={{ color: 'hsl(var(--success))' }}>units delivered</div>
-                    </div>
-                    
-                    <div className="bg-white rounded-lg shadow p-6 text-center">
-                      <div className="flex items-center justify-center mb-2">
-                        <svg className="w-6 h-6 mr-2" style={{ color: 'hsl(var(--muted))' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        <span className="text-sm font-medium text-[hsl(var(--muted))]">TOTAL BINDINGS</span>
-                      </div>
-                      <div className="text-3xl font-bold text-[hsl(var(--foreground))]">
-                        {athleteProductStats.reduce((sum, athlete) => 
-                          sum + athlete.products
-                            .filter(product => product.category === 'bindings')
-                            .reduce((productSum, product) => productSum + product.quantity, 0), 0)}
-                      </div>
-                      <div className="text-xs text-[hsl(var(--muted))]">units delivered</div>
-                    </div>
-                  </div>
-                )}
-                
-                {athleteProductStats.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Package className="h-12 w-12 text-[hsl(var(--muted))] mx-auto mb-4" />
-                    <h4 className="text-lg font-medium text-[hsl(var(--foreground))] mb-2">No Products Delivered</h4>
-                    <p className="text-[hsl(var(--muted))]">No athletes have received products from approved orders yet.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {athleteProductStats.map((athlete) => (
-                      <div key={athlete.athlete_id} className="rounded-lg p-6" style={{ backgroundColor: 'hsl(var(--secondary))', border: '1px solid hsl(var(--border))' }}>
-                        <div className="flex items-center justify-between mb-4">
-                          <h4 className="text-lg font-semibold text-[hsl(var(--foreground))]">{athlete.athlete_name}</h4>
-                          <div className="flex space-x-4 text-sm text-[hsl(var(--muted))]">
-                            <span>Products: {athlete.total_products}</span>
-                            <span>Total Quantity: {athlete.total_quantity}</span>
-                          </div>
-                        </div>
-                        
-                        {/* Category Counters */}
-                        <div className="grid grid-cols-2 gap-4 mb-6">
-                          <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'hsl(var(--info) / 0.08)' }}>
-                            <div className="flex items-center justify-center mb-2">
-                              <svg className="w-6 h-6 mr-2" style={{ color: 'hsl(var(--info))' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              <span className="text-sm font-medium" style={{ color: 'hsl(var(--info))' }}>SKIS</span>
-                            </div>
-                            <div className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>
-                              {athlete.products
-                                .filter(product => product.category === 'skis')
-                                .reduce((sum, product) => sum + product.quantity, 0)}
-                            </div>
-                            <div className="text-xs" style={{ color: 'hsl(var(--info))' }}>
-                              {athlete.products.filter(product => product.category === 'skis').length} products
-                            </div>
-                          </div>
-                          
-                          <div className="rounded-lg p-4 text-center" style={{ backgroundColor: 'hsl(var(--success) / 0.08)' }}>
-                            <div className="flex items-center justify-center mb-2">
-                              <svg className="w-6 h-6 mr-2" style={{ color: 'hsl(var(--success))' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                              </svg>
-                              <span className="text-sm font-medium" style={{ color: 'hsl(var(--success))' }}>BINDINGS</span>
-                            </div>
-                            <div className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>
-                              {athlete.products
-                                .filter(product => product.category === 'bindings')
-                                .reduce((sum, product) => sum + product.quantity, 0)}
-                            </div>
-                            <div className="text-xs" style={{ color: 'hsl(var(--success))' }}>
-                              {athlete.products.filter(product => product.category === 'bindings').length} products
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                          <div>
-                            <h5 className="text-md font-medium text-[hsl(var(--muted))] mb-3">Products by Category</h5>
-                            <ResponsiveContainer width="100%" height={200}>
-                              <PieChart>
-                                <Pie
-                                  data={athlete.products.reduce((acc, product) => {
-                                    const existing = acc.find(item => item.name === product.category);
-                                    if (existing) {
-                                      existing.quantity += product.quantity;
-                                    } else {
-                                      acc.push({
-                                        name: product.category,
-                                        quantity: product.quantity,
-                                        color: CHART_COLORS[acc.length % CHART_COLORS.length]
-                                      });
-                                    }
-                                    return acc;
-                                  }, [] as Array<{name: string, quantity: number, color: string}>)}
-                                  cx="50%"
-                                  cy="50%"
-                                  labelLine={false}
-                                  label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
-                                  outerRadius={60}
-                                  fill={CHART_COLORS[4]}
-                                  dataKey="quantity"
-                                >
-                                  {athlete.products.reduce((acc, product) => {
-                                    const existing = acc.find(item => item.name === product.category);
-                                    if (existing) {
-                                      existing.quantity += product.quantity;
-                                    } else {
-                                      acc.push({
-                                        name: product.category,
-                                        quantity: product.quantity,
-                                        color: CHART_COLORS[acc.length % CHART_COLORS.length]
-                                      });
-                                    }
-                                    return acc;
-                                  }, [] as Array<{name: string, quantity: number, color: string}>).map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                  ))}
-                                </Pie>
-                                <Tooltip formatter={(value, name) => [value, 'Quantity']} />
-                              </PieChart>
-                            </ResponsiveContainer>
-                          </div>
-                          
-                          <div>
-                            <h5 className="text-md font-medium text-[hsl(var(--muted))] mb-3">Product Details</h5>
-                            <div className="space-y-2 max-h-48 overflow-y-auto">
-                              {athlete.products.map((product, index) => (
-                                <div key={index} className="flex justify-between items-center bg-white rounded p-2 text-sm">
-                                  <div>
-                                    <span className="font-medium text-[hsl(var(--foreground))]">{product.name}</span>
-                                    <span className="text-[hsl(var(--muted))] ml-2">({product.category})</span>
-                                  </div>
-                                  <span className="font-semibold" style={{ color: 'hsl(var(--info))' }}>{product.quantity}</span>
-                                </div>
+                  <div className="mt-8">
+                    <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-4">
+                      Products by Category
+                    </h3>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      <div>
+                        <h4 className="text-md font-medium text-[hsl(var(--muted))] mb-4">
+                          Quantity by Category
+                        </h4>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <PieChart>
+                            <Pie
+                              data={categoryData}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              label={({ name, percent }) =>
+                                `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`
+                              }
+                              outerRadius={80}
+                              fill={CHART_COLORS[4]}
+                              dataKey="quantity"
+                            >
+                              {categoryData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
                               ))}
-                            </div>
+                            </Pie>
+                            <Tooltip formatter={(value, name) => [value, 'Quantity']} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      <div>
+                        <h4 className="text-md font-medium text-[hsl(var(--muted))] mb-4">
+                          Orders by Category
+                        </h4>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <PieChart>
+                            <Pie
+                              data={categoryData}
+                              cx="50%"
+                              cy="50%"
+                              labelLine={false}
+                              label={({ name, percent }) =>
+                                `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`
+                              }
+                              outerRadius={80}
+                              fill={CHART_COLORS[4]}
+                              dataKey="orders"
+                            >
+                              {categoryData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(value, name) => [value, 'Orders']} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-8">
+                    <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-6">
+                      Products Received by Athletes
+                    </h3>
+
+                    {/* Overall Summary Counters */}
+                    {athleteProductStats.length > 0 && (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div className="bg-white rounded-lg shadow p-6 text-center">
+                          <div className="flex items-center justify-center mb-2">
+                            <Users className="w-6 h-6 mr-2" style={{ color: 'hsl(var(--info))' }} />
+                            <span
+                              className="text-sm font-medium"
+                              style={{ color: 'hsl(var(--info))' }}
+                            >
+                              ATHLETES
+                            </span>
+                          </div>
+                          <div className="text-3xl font-bold text-[hsl(var(--foreground))]">
+                            {athleteProductStats.length}
+                          </div>
+                          <div className="text-xs" style={{ color: 'hsl(var(--info))' }}>
+                            with products
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
 
-              <div className="mt-8">
-                <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-4">Product Details</h3>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y" style={{ borderColor: 'hsl(var(--border))' }}>
-                    <thead style={{ backgroundColor: 'hsl(var(--secondary))' }}>
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[hsl(var(--muted))] uppercase tracking-wider">
-                          Product
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[hsl(var(--muted))] uppercase tracking-wider">
-                          Category
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[hsl(var(--muted))] uppercase tracking-wider">
-                          SKU
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[hsl(var(--muted))] uppercase tracking-wider">
-                          Total Quantity
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[hsl(var(--muted))] uppercase tracking-wider">
-                          Number of Orders
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y" style={{ backgroundColor: 'hsl(var(--secondary))', borderColor: 'hsl(var(--border))' }}>
-                      {productStats.slice(0, 20).map((product, index) => (
-                        <tr key={index}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[hsl(var(--foreground))]">
-                            {product.name}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-[hsl(var(--muted))]">
-                            {product.category}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-[hsl(var(--muted))]">
-                            {product.sku}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-[hsl(var(--muted))]">
-                            {product.total_quantity}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-[hsl(var(--muted))]">
-                            {product.order_count}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                        <div className="bg-white rounded-lg shadow p-6 text-center">
+                          <div className="flex items-center justify-center mb-2">
+                            <svg
+                              className="w-6 h-6 mr-2"
+                              style={{ color: 'hsl(var(--success))' }}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            <span
+                              className="text-sm font-medium"
+                              style={{ color: 'hsl(var(--success))' }}
+                            >
+                              TOTAL SKIS
+                            </span>
+                          </div>
+                          <div className="text-3xl font-bold text-[hsl(var(--foreground))]">
+                            {athleteProductStats.reduce(
+                              (sum, athlete) =>
+                                sum +
+                                athlete.products
+                                  .filter(product => product.category === 'skis')
+                                  .reduce(
+                                    (productSum, product) => productSum + product.quantity,
+                                    0
+                                  ),
+                              0
+                            )}
+                          </div>
+                          <div className="text-xs" style={{ color: 'hsl(var(--success))' }}>
+                            units delivered
+                          </div>
+                        </div>
+
+                        <div className="bg-white rounded-lg shadow p-6 text-center">
+                          <div className="flex items-center justify-center mb-2">
+                            <svg
+                              className="w-6 h-6 mr-2"
+                              style={{ color: 'hsl(var(--muted))' }}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M13 10V3L4 14h7v7l9-11h-7z"
+                              />
+                            </svg>
+                            <span className="text-sm font-medium text-[hsl(var(--muted))]">
+                              TOTAL BINDINGS
+                            </span>
+                          </div>
+                          <div className="text-3xl font-bold text-[hsl(var(--foreground))]">
+                            {athleteProductStats.reduce(
+                              (sum, athlete) =>
+                                sum +
+                                athlete.products
+                                  .filter(product => product.category === 'bindings')
+                                  .reduce(
+                                    (productSum, product) => productSum + product.quantity,
+                                    0
+                                  ),
+                              0
+                            )}
+                          </div>
+                          <div className="text-xs text-[hsl(var(--muted))]">units delivered</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {athleteProductStats.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Package className="h-12 w-12 text-[hsl(var(--muted))] mx-auto mb-4" />
+                        <h4 className="text-lg font-medium text-[hsl(var(--foreground))] mb-2">
+                          No Products Delivered
+                        </h4>
+                        <p className="text-[hsl(var(--muted))]">
+                          No athletes have received products from approved orders yet.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {athleteProductStats.map(athlete => (
+                          <div
+                            key={athlete.athlete_id}
+                            className="rounded-lg p-6"
+                            style={{
+                              backgroundColor: 'hsl(var(--secondary))',
+                              border: '1px solid hsl(var(--border))',
+                            }}
+                          >
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="text-lg font-semibold text-[hsl(var(--foreground))]">
+                                {athlete.athlete_name}
+                              </h4>
+                              <div className="flex space-x-4 text-sm text-[hsl(var(--muted))]">
+                                <span>Products: {athlete.total_products}</span>
+                                <span>Total Quantity: {athlete.total_quantity}</span>
+                              </div>
+                            </div>
+
+                            {/* Category Counters */}
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                              <div
+                                className="rounded-lg p-4 text-center"
+                                style={{ backgroundColor: 'hsl(var(--info) / 0.08)' }}
+                              >
+                                <div className="flex items-center justify-center mb-2">
+                                  <svg
+                                    className="w-6 h-6 mr-2"
+                                    style={{ color: 'hsl(var(--info))' }}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                  </svg>
+                                  <span
+                                    className="text-sm font-medium"
+                                    style={{ color: 'hsl(var(--info))' }}
+                                  >
+                                    SKIS
+                                  </span>
+                                </div>
+                                <div
+                                  className="text-2xl font-bold"
+                                  style={{ color: 'hsl(var(--foreground))' }}
+                                >
+                                  {athlete.products
+                                    .filter(product => product.category === 'skis')
+                                    .reduce((sum, product) => sum + product.quantity, 0)}
+                                </div>
+                                <div className="text-xs" style={{ color: 'hsl(var(--info))' }}>
+                                  {
+                                    athlete.products.filter(product => product.category === 'skis')
+                                      .length
+                                  }{' '}
+                                  products
+                                </div>
+                              </div>
+
+                              <div
+                                className="rounded-lg p-4 text-center"
+                                style={{ backgroundColor: 'hsl(var(--success) / 0.08)' }}
+                              >
+                                <div className="flex items-center justify-center mb-2">
+                                  <svg
+                                    className="w-6 h-6 mr-2"
+                                    style={{ color: 'hsl(var(--success))' }}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                                    />
+                                  </svg>
+                                  <span
+                                    className="text-sm font-medium"
+                                    style={{ color: 'hsl(var(--success))' }}
+                                  >
+                                    BINDINGS
+                                  </span>
+                                </div>
+                                <div
+                                  className="text-2xl font-bold"
+                                  style={{ color: 'hsl(var(--foreground))' }}
+                                >
+                                  {athlete.products
+                                    .filter(product => product.category === 'bindings')
+                                    .reduce((sum, product) => sum + product.quantity, 0)}
+                                </div>
+                                <div className="text-xs" style={{ color: 'hsl(var(--success))' }}>
+                                  {
+                                    athlete.products.filter(
+                                      product => product.category === 'bindings'
+                                    ).length
+                                  }{' '}
+                                  products
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                              <div>
+                                <h5 className="text-md font-medium text-[hsl(var(--muted))] mb-3">
+                                  Products by Category
+                                </h5>
+                                <ResponsiveContainer width="100%" height={200}>
+                                  <PieChart>
+                                    <Pie
+                                      data={athlete.products.reduce(
+                                        (acc, product) => {
+                                          const existing = acc.find(
+                                            item => item.name === product.category
+                                          );
+                                          if (existing) {
+                                            existing.quantity += product.quantity;
+                                          } else {
+                                            acc.push({
+                                              name: product.category,
+                                              quantity: product.quantity,
+                                              color: CHART_COLORS[acc.length % CHART_COLORS.length],
+                                            });
+                                          }
+                                          return acc;
+                                        },
+                                        [] as Array<{
+                                          name: string;
+                                          quantity: number;
+                                          color: string;
+                                        }>
+                                      )}
+                                      cx="50%"
+                                      cy="50%"
+                                      labelLine={false}
+                                      label={({ name, percent }) =>
+                                        `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`
+                                      }
+                                      outerRadius={60}
+                                      fill={CHART_COLORS[4]}
+                                      dataKey="quantity"
+                                    >
+                                      {athlete.products
+                                        .reduce(
+                                          (acc, product) => {
+                                            const existing = acc.find(
+                                              item => item.name === product.category
+                                            );
+                                            if (existing) {
+                                              existing.quantity += product.quantity;
+                                            } else {
+                                              acc.push({
+                                                name: product.category,
+                                                quantity: product.quantity,
+                                                color:
+                                                  CHART_COLORS[acc.length % CHART_COLORS.length],
+                                              });
+                                            }
+                                            return acc;
+                                          },
+                                          [] as Array<{
+                                            name: string;
+                                            quantity: number;
+                                            color: string;
+                                          }>
+                                        )
+                                        .map((entry, index) => (
+                                          <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip formatter={(value, name) => [value, 'Quantity']} />
+                                  </PieChart>
+                                </ResponsiveContainer>
+                              </div>
+
+                              <div>
+                                <h5 className="text-md font-medium text-[hsl(var(--muted))] mb-3">
+                                  Product Details
+                                </h5>
+                                <div className="space-y-2 max-h-48 overflow-y-auto">
+                                  {athlete.products.map((product, index) => (
+                                    <div
+                                      key={index}
+                                      className="flex justify-between items-center bg-white rounded p-2 text-sm"
+                                    >
+                                      <div>
+                                        <span className="font-medium text-[hsl(var(--foreground))]">
+                                          {product.name}
+                                        </span>
+                                        <span className="text-[hsl(var(--muted))] ml-2">
+                                          ({product.category})
+                                        </span>
+                                      </div>
+                                      <span
+                                        className="font-semibold"
+                                        style={{ color: 'hsl(var(--info))' }}
+                                      >
+                                        {product.quantity}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-8">
+                    <h3 className="text-lg font-medium text-[hsl(var(--foreground))] mb-4">
+                      Product Details
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <table
+                        className="min-w-full divide-y"
+                        style={{ borderColor: 'hsl(var(--border))' }}
+                      >
+                        <thead style={{ backgroundColor: 'hsl(var(--secondary))' }}>
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-[hsl(var(--muted))] uppercase tracking-wider">
+                              Product
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-[hsl(var(--muted))] uppercase tracking-wider">
+                              Category
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-[hsl(var(--muted))] uppercase tracking-wider">
+                              SKU
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-[hsl(var(--muted))] uppercase tracking-wider">
+                              Total Quantity
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-[hsl(var(--muted))] uppercase tracking-wider">
+                              Number of Orders
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody
+                          className="divide-y"
+                          style={{
+                            backgroundColor: 'hsl(var(--secondary))',
+                            borderColor: 'hsl(var(--border))',
+                          }}
+                        >
+                          {productStats.slice(0, 20).map((product, index) => (
+                            <tr key={index}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[hsl(var(--foreground))]">
+                                {product.name}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-[hsl(var(--muted))]">
+                                {product.category}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-[hsl(var(--muted))]">
+                                {product.sku}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-[hsl(var(--muted))]">
+                                {product.total_quantity}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-[hsl(var(--muted))]">
+                                {product.order_count}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </>
               )}
             </div>

@@ -1,28 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
+
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: NextRequest) {
   try {
     const { email, password, name, token } = await req.json();
-    
-    if (!email || !password || !name || !token) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Email, password, name and token are required' 
-      }, { status: 400 });
-    }
 
+    if (!email || !password || !name || !token) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Email, password, name and token are required',
+        },
+        { status: 400 }
+      );
+    }
 
     // Usar el cliente de Supabase del servidor
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
+
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error('❌ Faltan variables de entorno de Supabase');
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Server configuration error' 
-      }, { status: 500 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Server configuration error',
+        },
+        { status: 500 }
+      );
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -60,22 +66,28 @@ export async function POST(req: NextRequest) {
 
     if (invitationError || !invite) {
       console.error('❌ Invitación inválida:', invitationError);
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Invalid or expired invitation' 
-      }, { status: 404 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid or expired invitation',
+        },
+        { status: 404 }
+      );
     }
 
     // Check if it has expired
     const now = new Date();
     const expiresAt = new Date(invite.expires_at);
-    
+
     if (expiresAt < now) {
       console.error('❌ Invitation expired');
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Invitation has expired' 
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invitation has expired',
+        },
+        { status: 400 }
+      );
     }
 
     // 2. Create user using admin API
@@ -84,18 +96,21 @@ export async function POST(req: NextRequest) {
       // We accept the password from the form, but will still send a password reset link
       password,
       email_confirm: true, // Confirm email automatically
-      user_metadata: { name }
+      user_metadata: { name },
     });
 
     if (userError) {
       console.error('❌ Error creating user:', userError);
-      
+
       // Handle rate limiting error specifically
       if (userError.message && userError.message.includes('36 seconds')) {
-        return NextResponse.json({ 
-          success: false, 
-          error: 'Rate limit reached. Please wait 36 seconds before trying again.' 
-        }, { status: 429 });
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Rate limit reached. Please wait 36 seconds before trying again.',
+          },
+          { status: 429 }
+        );
       }
 
       // If user already exists, respond with specific code to redirect to Login
@@ -104,10 +119,17 @@ export async function POST(req: NextRequest) {
         const { error: linkError } = await supabase.auth.admin.generateLink({
           type: 'recovery',
           email,
-          options: { redirectTo: `${baseUrl}/auth/callback?invite_token=${token}` }
+          options: { redirectTo: `${baseUrl}/auth/callback?invite_token=${token}` },
         });
         if (linkError) {
-          return NextResponse.json({ success: false, code: 'user_exists', error: 'User exists. Use Forgot password to continue.' }, { status: 409 });
+          return NextResponse.json(
+            {
+              success: false,
+              code: 'user_exists',
+              error: 'User exists. Use Forgot password to continue.',
+            },
+            { status: 409 }
+          );
         }
         return NextResponse.json({
           success: true,
@@ -117,9 +139,11 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      return NextResponse.json({ success: false, error: userError.message || 'Failed to create user' }, { status: 500 });
+      return NextResponse.json(
+        { success: false, error: userError.message || 'Failed to create user' },
+        { status: 500 }
+      );
     }
-
 
     // 3. Update/create profile (DB trigger already creates profile; here we update data and role)
     const { error: profileError } = await supabase
@@ -128,7 +152,7 @@ export async function POST(req: NextRequest) {
         email: email,
         name: name,
         role: invite.role_preset || invite.role,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', userData.user.id);
 
@@ -140,10 +164,7 @@ export async function POST(req: NextRequest) {
     // 4. Mark the invitation as used
     let acceptError: any = null;
     if ('used' in invite) {
-      const { error } = await supabase
-        .from('invites')
-        .update({ used: true })
-        .eq('id', invite.id);
+      const { error } = await supabase.from('invites').update({ used: true }).eq('id', invite.id);
       acceptError = error;
     } else {
       const { error } = await supabase
@@ -158,24 +179,24 @@ export async function POST(req: NextRequest) {
       // Don't fail if it can't be marked as accepted
     }
 
-
     return NextResponse.json({
       success: true,
       message: 'User registered successfully. You can now sign in with your password.',
       user: {
         id: userData.user.id,
         email: userData.user.email,
-        role: invite.role_preset || invite.role
+        role: invite.role_preset || invite.role,
       },
-      requiresEmailConfirmation: false
+      requiresEmailConfirmation: false,
     });
-
   } catch (error) {
     console.error('❌ Error durante el registro:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: 'Internal server error' 
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Internal server error',
+      },
+      { status: 500 }
+    );
   }
 }
-

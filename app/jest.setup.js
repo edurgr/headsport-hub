@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom'
+import '@testing-library/jest-dom';
 
 // Mock Next.js router
 jest.mock('next/router', () => ({
@@ -20,9 +20,9 @@ jest.mock('next/router', () => ({
         emit: jest.fn(),
       },
       isFallback: false,
-    }
+    };
   },
-}))
+}));
 
 // Mock Next.js navigation
 jest.mock('next/navigation', () => ({
@@ -34,24 +34,24 @@ jest.mock('next/navigation', () => ({
       back: jest.fn(),
       forward: jest.fn(),
       refresh: jest.fn(),
-    }
+    };
   },
   useSearchParams() {
-    return new URLSearchParams()
+    return new URLSearchParams();
   },
   usePathname() {
-    return '/'
+    return '/';
   },
-}))
+}));
 
 // Mock environment variables
-process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co'
-process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key'
-process.env.NEXT_PUBLIC_BRAND_NAME = 'HEAD Hub'
-process.env.NEXT_PUBLIC_LOGO_PATH = '/head-logo.svg'
+process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
+process.env.NEXT_PUBLIC_BRAND_NAME = 'HEAD Hub';
+process.env.NEXT_PUBLIC_LOGO_PATH = '/head-logo.svg';
 
 // Mock fetch globally for API tests
-global.fetch = jest.fn()
+global.fetch = jest.fn();
 
 // Mock window.location - avoid navigation errors
 if (typeof window !== 'undefined' && !window.location) {
@@ -73,4 +73,4 @@ global.console = {
   warn: jest.fn(),
   error: jest.fn(),
   log: jest.fn(),
-}
+};

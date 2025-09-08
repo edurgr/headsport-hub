@@ -16,11 +16,11 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function setupDatabase() {
   console.log('🚀 Configurando base de datos Supabase...');
-  
+
   try {
     // Verificar conexión
     const { data, error } = await supabase.from('profiles').select('count').limit(1);
-    
+
     if (error) {
       console.log('❌ Error conectando a Supabase:', error.message);
       console.log('💡 Asegúrate de que:');
@@ -29,10 +29,9 @@ async function setupDatabase() {
       console.log('   3. La base de datos está configurada');
       return;
     }
-    
+
     console.log('✅ Conexión a Supabase exitosa');
     console.log('🎉 Base de datos lista para usar');
-    
   } catch (err) {
     console.log('❌ Error:', err.message);
   }

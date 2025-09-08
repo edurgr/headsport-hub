@@ -1,7 +1,9 @@
 'use client';
 
-import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
+
+import { useAuth } from '@/contexts/AuthContext';
+
 import NotificationCenter from './NotificationCenter';
 
 export default function Header() {
@@ -17,7 +19,13 @@ export default function Header() {
       <div className="flex items-center justify-between h-14">
         <div className="flex items-center gap-3">
           <div className="relative w-8 h-8 rounded-md bg-white overflow-hidden flex items-center justify-center ring-1 ring-[var(--border)]">
-            <Image src={logoSrc} width={28} height={28} alt={brandName} style={{ width: 'auto', height: 'auto' }} />
+            <Image
+              src={logoSrc}
+              width={28}
+              height={28}
+              alt={brandName}
+              style={{ width: 'auto', height: 'auto' }}
+            />
           </div>
           <span className="hidden md:inline text-sm text-[var(--muted)]">{brandName}</span>
         </div>

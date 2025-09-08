@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function AcceptInvitePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -37,13 +38,13 @@ export default function AcceptInvitePage() {
       try {
         const response = await fetch(`/api/invitations/validate?token=${token}`);
         const data = await response.json();
-        
+
         if (data.valid) {
           setInvitationDetails({
             email: data.email,
             role: data.role,
             expiresAt: data.expiresAt,
-            invitedBy: data.invitedBy
+            invitedBy: data.invitedBy,
           });
           setEmail(data.email);
         } else {
@@ -62,7 +63,7 @@ export default function AcceptInvitePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!token) {
       setError('Invalid invitation token.');
       return;
@@ -71,7 +72,7 @@ export default function AcceptInvitePage() {
     setError(null);
     setInfo(null);
     setIsLoading(true);
-    
+
     try {
       if (password.length < 6) {
         setError('Password must be at least 6 characters long');
@@ -93,7 +94,7 @@ export default function AcceptInvitePage() {
           email,
           password,
           name,
-          token
+          token,
         }),
       });
 
@@ -102,8 +103,12 @@ export default function AcceptInvitePage() {
       if (!response.ok) {
         if (response.status === 429) {
           // Rate limiting
-          setError('⏰ Rate limit reached: Please wait 36 seconds before trying to create another account.');
-          setInfo('💡 Tip: If you just created another account, wait a moment before trying again.');
+          setError(
+            '⏰ Rate limit reached: Please wait 36 seconds before trying to create another account.'
+          );
+          setInfo(
+            '💡 Tip: If you just created another account, wait a moment before trying again.'
+          );
         } else if (response.status === 409 && data?.code === 'user_exists') {
           setError('An account with this email already exists. Sign in to accept the invitation.');
           // Redirect to login with invitation token to accept after login
@@ -153,16 +158,27 @@ export default function AcceptInvitePage() {
         <div className="w-full max-w-md bg-white rounded-lg shadow p-6">
           <div className="text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              <svg
+                className="w-8 h-8 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
               </svg>
             </div>
             <h1 className="text-2xl font-semibold text-gray-900 mb-2">Invalid Invitation</h1>
             <p className="text-gray-600 mb-6">
-              {error || 'No invitation token provided. Please check your invitation link or contact your administrator.'}
+              {error ||
+                'No invitation token provided. Please check your invitation link or contact your administrator.'}
             </p>
-            <Link 
-              href="/login" 
+            <Link
+              href="/login"
               className="inline-block px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
             >
               Go to Login
@@ -186,16 +202,31 @@ export default function AcceptInvitePage() {
             <div className="text-sm text-blue-800">
               <div className="flex items-center mb-2">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 <span className="font-medium">Invitation Details</span>
               </div>
               <div className="space-y-1 text-xs">
-                <p><strong>Email:</strong> {invitationDetails.email}</p>
-                <p><strong>Role:</strong> {invitationDetails.role.charAt(0).toUpperCase() + invitationDetails.role.slice(1)}</p>
-                <p><strong>Expires:</strong> {new Date(invitationDetails.expiresAt).toLocaleDateString()}</p>
+                <p>
+                  <strong>Email:</strong> {invitationDetails.email}
+                </p>
+                <p>
+                  <strong>Role:</strong>{' '}
+                  {invitationDetails.role.charAt(0).toUpperCase() + invitationDetails.role.slice(1)}
+                </p>
+                <p>
+                  <strong>Expires:</strong>{' '}
+                  {new Date(invitationDetails.expiresAt).toLocaleDateString()}
+                </p>
                 {invitationDetails.invitedBy && (
-                  <p><strong>Invited by:</strong> {invitationDetails.invitedBy}</p>
+                  <p>
+                    <strong>Invited by:</strong> {invitationDetails.invitedBy}
+                  </p>
                 )}
               </div>
             </div>
@@ -207,7 +238,7 @@ export default function AcceptInvitePage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
             <input
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={e => setName(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Your full name"
               type="text"
@@ -218,7 +249,7 @@ export default function AcceptInvitePage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="your.email@example.com"
               type="email"
@@ -230,20 +261,22 @@ export default function AcceptInvitePage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <input
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="••••••••"
               type="password"
               minLength={6}
               required
             />
-            <p className="text-xs text-gray-500 mt-1">Password must be at least 6 characters long</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Password must be at least 6 characters long
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
             <input
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={e => setConfirmPassword(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="••••••••"
               type="password"
@@ -257,7 +290,12 @@ export default function AcceptInvitePage() {
             <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
               <div className="flex items-center">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
                 </svg>
                 {error}
               </div>
@@ -267,7 +305,12 @@ export default function AcceptInvitePage() {
             <div className="text-sm text-green-700 bg-green-50 p-3 rounded-md border border-green-200">
               <div className="flex items-center">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
                 {info}
               </div>
@@ -290,7 +333,12 @@ export default function AcceptInvitePage() {
           <div className="text-sm text-blue-800">
             <div className="flex items-center mb-1">
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <span className="font-medium">About Invitations</span>
             </div>
