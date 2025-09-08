@@ -9,6 +9,10 @@ on:
 env:
   NODE_VERSION: '20'
 
+# defaults:
+#   run:
+#     working-directory: ./app
+
 jobs:
   lint-and-format:
     name: Lint & Format Check
@@ -23,7 +27,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
+          cache-dependency-path: './head-hub/package-lock.json'
 
       - name: Install dependencies
         run: npm ci
@@ -47,7 +51,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
+          cache-dependency-path: './head-hub/package-lock.json'
 
       - name: Install dependencies
         run: npm ci
@@ -68,7 +72,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
+          cache-dependency-path: './head-hub/package-lock.json'
 
       - name: Install dependencies
         run: npm ci
@@ -79,7 +83,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          file: coverage/lcov.info
+          file: ./app/coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
@@ -97,7 +101,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
+          cache-dependency-path: './head-hub/package-lock.json'
 
       - name: Install dependencies
         run: npm ci
@@ -128,7 +132,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
+          cache-dependency-path: './head-hub/package-lock.json'
 
       - name: Install dependencies
         run: npm ci
