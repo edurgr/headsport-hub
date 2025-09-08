@@ -64,7 +64,7 @@ nslookup tudominio.com 1.1.1.1
 
 El `docker-compose.prod.yml` incluye configuración automática:
 
-```yaml
+```
 traefik:
   command:
     - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
@@ -93,7 +93,7 @@ ACME_EMAIL=admin@tudominio.com
 
 El `docker-compose.prod.yml` incluye redirección automática:
 
-```yaml
+```
 labels:
   # Redirect HTTP to HTTPS
   - "traefik.http.routers.app-http.rule=Host(`${DOMAIN_NAME}`)"
@@ -120,7 +120,7 @@ headers: [
 
 ### Opción 1: Redirigir www → non-www (Recomendado)
 
-```yaml
+```
 # En docker-compose.prod.yml, agregar labels adicionales:
 - "traefik.http.routers.app-www.rule=Host(`www.${DOMAIN_NAME}`)"
 - "traefik.http.routers.app-www.entrypoints=websecure"
@@ -132,7 +132,7 @@ headers: [
 
 ### Opción 2: Redirigir non-www → www
 
-```yaml
+```
 # Cambiar la regla principal a:
 - "traefik.http.routers.app.rule=Host(`www.${DOMAIN_NAME}`)"
 # Y agregar redirección de non-www:
@@ -211,7 +211,7 @@ docker exec $(docker-compose -f docker-compose.prod.yml ps -q traefik) traefik r
 
 Para múltiples dominios (ej: tudominio.com, tuapp.com):
 
-```yaml
+```
 labels:
   - "traefik.http.routers.app.rule=Host(`tudominio.com`) || Host(`tuapp.com`)"
 ```
@@ -220,7 +220,7 @@ labels:
 
 Para subdominios (ej: api.tudominio.com):
 
-```yaml
+```
 labels:
   - "traefik.http.routers.api.rule=Host(`api.tudominio.com`)"
   - "traefik.http.routers.api.service=api-service"
@@ -231,7 +231,7 @@ labels:
 
 Para certificado wildcard (*.tudominio.com):
 
-```yaml
+```
 command:
   - "--certificatesresolvers.letsencrypt.acme.dnschallenge=true"
   - "--certificatesresolvers.letsencrypt.acme.dnschallenge.provider=cloudflare"
