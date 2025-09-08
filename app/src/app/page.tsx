@@ -506,13 +506,11 @@ function TeamSnapshot() {
       .then(j =>
         setRecent(s => ({
           ...s,
-          approvals: (j.orders || [])
-            .slice(0, 5)
-            .map((o: any) => ({
-              id: o.id,
-              created_at: o.approved_at || o.created_at,
-              athlete: o.athlete_name || o.athlete_email,
-            })),
+          approvals: (j.orders || []).slice(0, 5).map((o: any) => ({
+            id: o.id,
+            created_at: o.approved_at || o.created_at,
+            athlete: o.athlete_name || o.athlete_email,
+          })),
         }))
       )
       .catch(() => {});
@@ -521,13 +519,11 @@ function TeamSnapshot() {
       .then(j =>
         setRecent(s => ({
           ...s,
-          pending: (j.orders || [])
-            .slice(0, 5)
-            .map((o: any) => ({
-              id: o.id,
-              created_at: o.created_at,
-              athlete: o.athlete_name || o.athlete_email,
-            })),
+          pending: (j.orders || []).slice(0, 5).map((o: any) => ({
+            id: o.id,
+            created_at: o.created_at,
+            athlete: o.athlete_name || o.athlete_email,
+          })),
         }))
       )
       .catch(() => {});
