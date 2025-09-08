@@ -2,89 +2,21 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
-
-defaults:
-  run:
-    working-directory: app
-
-jobs:
-  build-test-lint:
-    runs-on: ubuntu-latest
-    env:
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
-      SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
-      SENDGRID_FROM_EMAIL: ${{ secrets.SENDGRID_FROM_EMAIL }}
-      FROM_NAME: ${{ secrets.FROM_NAME }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-
-      - name: Validate required env vars
-        shell: bash
-        run: |
-          required=( \
-            NEXT_PUBLIC_SUPABASE_URL \
-            NEXT_PUBLIC_SUPABASE_ANON_KEY \
-            SUPABASE_SERVICE_ROLE_KEY \
-            NEXT_PUBLIC_APP_URL \
-            SENDGRID_API_KEY \
-            SENDGRID_FROM_EMAIL \
-            FROM_NAME \
-          )
-          missing=()
-          for key in "${required[@]}"; do
-            if [ -z "${!key}" ]; then missing+=("$key"); fi
-          done
-          if [ ${#missing[@]} -gt 0 ]; then
-            echo "::error::Missing required secrets: ${missing[*]}"; exit 1;
-          fi
-
-      - name: Install deps
-        run: npm ci
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Tests
-        run: npm test -- --ci --watchAll=false
-
-      - name: Build
-        run: npm run build
-
-name: CI/CD Pipeline
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
+    branches: [ main, develop ]
 
 env:
   NODE_VERSION: '20'
+
+defaults:
+  run:
+    working-directory: ./app
 
 jobs:
   lint-and-format:
     name: Lint & Format Check
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./app
     
     steps:
       - name: Checkout code
@@ -109,9 +41,6 @@ jobs:
   typecheck:
     name: TypeScript Check
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./app
     
     steps:
       - name: Checkout code
@@ -133,9 +62,6 @@ jobs:
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./app
     
     steps:
       - name: Checkout code
@@ -165,9 +91,6 @@ jobs:
   build:
     name: Build Application
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./app
     
     steps:
       - name: Checkout code
@@ -188,15 +111,17 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          SENDGRID_FROM_EMAIL: ${{ secrets.SENDGRID_FROM_EMAIL }}
+          FROM_NAME: ${{ secrets.FROM_NAME }}
           NEXT_PUBLIC_BRAND_NAME: "HEAD Hub"
           NEXT_PUBLIC_LOGO_PATH: "/head-logo.svg"
 
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./app
     
     steps:
       - name: Checkout code
