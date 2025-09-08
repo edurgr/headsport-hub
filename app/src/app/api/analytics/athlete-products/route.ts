@@ -9,7 +9,7 @@ export async function GET() {
     if (!supabaseAdminClient) {
       return NextResponse.json(
         { error: 'Database connection required for analytics' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -33,7 +33,7 @@ export async function GET() {
 
     // Get products for each athlete from approved orders
     const athleteProductsData = await Promise.all(
-      athletes.map(async athlete => {
+      athletes.map(async (athlete) => {
         // Get approved orders for this athlete
         const { data: orders } = await supabaseAdminClient
           .from('orders')
@@ -52,7 +52,7 @@ export async function GET() {
           };
         }
 
-        const orderIds = orders.map(o => o.id);
+        const orderIds = orders.map((o) => o.id);
 
         // Get order items for approved orders
         const { data: orderItems } = await supabaseAdminClient
@@ -63,7 +63,7 @@ export async function GET() {
             product_name,
             product_category,
             product_sku
-          `
+          `,
           )
           .in('order_id', orderIds);
 
@@ -80,7 +80,7 @@ export async function GET() {
 
         // Group products by name and sum quantities
         const productMap = new Map();
-        orderItems.forEach(item => {
+        orderItems.forEach((item) => {
           const key = `${item.product_name}-${item.product_sku}`;
           if (productMap.has(key)) {
             productMap.get(key).quantity += item.quantity || 0;
@@ -105,11 +105,13 @@ export async function GET() {
           total_products: products.length,
           total_quantity: totalQuantity,
         };
-      })
+      }),
     );
 
     // Filter out athletes with no products
-    const athletesWithProducts = athleteProductsData.filter(athlete => athlete.total_products > 0);
+    const athletesWithProducts = athleteProductsData.filter(
+      (athlete) => athlete.total_products > 0,
+    );
 
     return NextResponse.json({
       success: true,
@@ -123,7 +125,7 @@ export async function GET() {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

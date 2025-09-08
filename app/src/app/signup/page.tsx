@@ -41,7 +41,7 @@ export default function SignupPage() {
       const { requiresEmailConfirmation } = await signUpWithEmail(
         email,
         password,
-        name || undefined
+        name || undefined,
       );
       if (requiresEmailConfirmation) {
         setInfo('Check your email to confirm the new administrator account.');
@@ -116,7 +116,7 @@ export default function SignupPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
             <input
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Administrator name"
               type="text"
@@ -127,7 +127,7 @@ export default function SignupPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="admin@example.com"
               type="email"
@@ -138,7 +138,7 @@ export default function SignupPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <input
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="••••••••"
               type="password"

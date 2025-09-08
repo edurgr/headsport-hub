@@ -63,7 +63,7 @@ export class BackupService {
   static async createBackup(
     type: BackupType,
     tablesIncluded?: string[],
-    createdBy?: string
+    createdBy?: string,
   ): Promise<string> {
     const supabase = await supabaseServer();
 
@@ -87,7 +87,7 @@ export class BackupService {
     status: BackupStatus,
     filePath?: string,
     fileSize?: number,
-    errorMessage?: string
+    errorMessage?: string,
   ): Promise<void> {
     const supabase = await supabaseServer();
 
@@ -109,7 +109,7 @@ export class BackupService {
   static async getBackupOperations(
     limit: number = 50,
     offset: number = 0,
-    status?: BackupStatus
+    status?: BackupStatus,
   ): Promise<{ operations: BackupOperation[]; total: number }> {
     const supabase = await supabaseServer();
 
@@ -178,7 +178,7 @@ export class BackupService {
 
   // Create backup schedule
   static async createBackupSchedule(
-    schedule: Omit<BackupSchedule, 'id' | 'created_at' | 'updated_at'>
+    schedule: Omit<BackupSchedule, 'id' | 'created_at' | 'updated_at'>,
   ): Promise<void> {
     const supabase = await supabaseServer();
 
@@ -197,7 +197,7 @@ export class BackupService {
   // Update backup schedule
   static async updateBackupSchedule(
     scheduleId: string,
-    updates: Partial<Omit<BackupSchedule, 'id' | 'created_at' | 'updated_at'>>
+    updates: Partial<Omit<BackupSchedule, 'id' | 'created_at' | 'updated_at'>>,
   ): Promise<void> {
     const supabase = await supabaseServer();
 
@@ -248,7 +248,7 @@ export class BackupService {
 
   // Update backup settings
   static async updateBackupSettings(
-    settings: Partial<Omit<BackupSettings, 'id' | 'created_at' | 'updated_at'>>
+    settings: Partial<Omit<BackupSettings, 'id' | 'created_at' | 'updated_at'>>,
   ): Promise<void> {
     const supabase = await supabaseServer();
 
@@ -286,7 +286,7 @@ export class BackupService {
   static async performBackup(
     backupId: string,
     type: BackupType,
-    tablesIncluded?: string[]
+    tablesIncluded?: string[],
   ): Promise<void> {
     try {
       // Update status to in_progress
@@ -313,7 +313,7 @@ export class BackupService {
       const filePath = `/backups/${fileName}`;
 
       // Simulate backup process
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Update status to completed
       await this.updateBackupStatus(
@@ -321,7 +321,7 @@ export class BackupService {
         'completed',
         filePath,
         1024 * 1024, // 1MB simulated size
-        undefined
+        undefined,
       );
 
       // Notify admins
@@ -331,7 +331,7 @@ export class BackupService {
         `Backup ${type} completed successfully at ${new Date().toLocaleString()}`,
         { backup_id: backupId, backup_type: type, timestamp: new Date().toISOString() },
         undefined,
-        'low'
+        'low',
       );
     } catch (error) {
       console.error('Backup failed:', error);
@@ -342,7 +342,7 @@ export class BackupService {
         'failed',
         undefined,
         undefined,
-        error instanceof Error ? error.message : 'Unknown error'
+        error instanceof Error ? error.message : 'Unknown error',
       );
 
       // Notify admins of failure
@@ -356,7 +356,7 @@ export class BackupService {
           error_message: error instanceof Error ? error.message : 'Unknown error',
         },
         undefined,
-        'critical'
+        'critical',
       );
 
       throw error;
@@ -367,7 +367,7 @@ export class BackupService {
   static async scheduleBackup(
     type: BackupType,
     cronExpression: string,
-    tablesIncluded?: string[]
+    tablesIncluded?: string[],
   ): Promise<void> {
     // This would integrate with your cron job system
     // For now, we'll just create a schedule record

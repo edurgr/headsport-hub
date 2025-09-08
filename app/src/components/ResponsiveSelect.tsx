@@ -32,8 +32,8 @@ export default function ResponsiveSelect({
   }, []);
 
   const selectedLabel = useMemo(
-    () => options.find(o => o.value === value)?.label || '',
-    [options, value]
+    () => options.find((o) => o.value === value)?.label || '',
+    [options, value],
   );
 
   if (!isMobile) {
@@ -41,11 +41,11 @@ export default function ResponsiveSelect({
       <select
         aria-label={ariaLabel}
         value={value}
-        onChange={e => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         className={className || 'w-full px-3 h-9 border rounded'}
       >
         {placeholder ? <option value="">{placeholder}</option> : null}
-        {options.map(o => (
+        {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
           </option>
@@ -89,7 +89,7 @@ export default function ResponsiveSelect({
               </button>
             </div>
             <ul className="py-1">
-              {options.map(o => (
+              {options.map((o) => (
                 <li key={o.value}>
                   <button
                     className={`w-full text-left px-4 py-3 text-lg ${o.value === value ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50'}`}

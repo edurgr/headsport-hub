@@ -40,7 +40,7 @@ export function mapUiRowToOrderItem(row: {
   'product_article' | 'product_category' | 'quantity' | 'unit_price' | 'total_price'
 > {
   const { product_article, product_category } = mapLegacyProductToArticleCategory(
-    row.product || {}
+    row.product || {},
   );
   const unit =
     typeof row.unit_price === 'number' ? row.unit_price.toFixed(2) : row.unit_price || '0.00';

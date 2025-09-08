@@ -60,7 +60,7 @@ async function checkDatabase() {
     console.log('🎉 ¡Todas las tablas críticas existen!');
   } else {
     console.log('❌ Tablas faltantes:');
-    missingTables.forEach(table => console.log(`   - ${table}`));
+    missingTables.forEach((table) => console.log(`   - ${table}`));
 
     console.log('\n🛠️  SOLUCIÓN:');
     console.log('1. Ve a tu proyecto de Supabase');

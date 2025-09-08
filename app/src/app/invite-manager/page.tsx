@@ -39,15 +39,15 @@ export default function InviteManagerPage() {
 
   const checkExistingInvitation = (email: string) => {
     const existing = invitations.find(
-      inv =>
+      (inv) =>
         inv.email.toLowerCase() === email.toLowerCase() &&
         inv.status === 'pending' &&
-        new Date(inv.expires_at) > new Date()
+        new Date(inv.expires_at) > new Date(),
     );
 
     if (existing) {
       setError(
-        `An active invitation already exists for ${email}. It expires on ${new Date(existing.expires_at).toLocaleDateString()}.`
+        `An active invitation already exists for ${email}. It expires on ${new Date(existing.expires_at).toLocaleDateString()}.`,
       );
       return true;
     }
@@ -118,7 +118,7 @@ export default function InviteManagerPage() {
   const handleRenewInvitation = async (invitationId: string) => {
     try {
       // Find the current invitation
-      const invitation = invitations.find(inv => inv.id === invitationId);
+      const invitation = invitations.find((inv) => inv.id === invitationId);
       if (!invitation) return;
 
       // Create a new invitation for the same email and role
@@ -221,7 +221,7 @@ export default function InviteManagerPage() {
                 <input
                   type="email"
                   value={email}
-                  onChange={e => {
+                  onChange={(e) => {
                     setEmail(e.target.value);
                     setError(null); // Clear error when changing email
                   }}
@@ -230,7 +230,7 @@ export default function InviteManagerPage() {
                   required
                 />
                 {email &&
-                  invitations.find(inv => inv.email.toLowerCase() === email.toLowerCase()) && (
+                  invitations.find((inv) => inv.email.toLowerCase() === email.toLowerCase()) && (
                     <div className="mt-1 text-xs text-blue-600">
                       ℹ️ An invitation for this email already exists
                     </div>
@@ -241,7 +241,7 @@ export default function InviteManagerPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                 <select
                   value={role}
-                  onChange={e => setRole(e.target.value as 'manager' | 'athlete')}
+                  onChange={(e) => setRole(e.target.value as 'manager' | 'athlete')}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   disabled={profile?.role === 'manager'}
                 >
@@ -272,7 +272,7 @@ export default function InviteManagerPage() {
               </label>
               <textarea
                 value={message}
-                onChange={e => setMessage(e.target.value)}
+                onChange={(e) => setMessage(e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Add a personal message to the invitation..."
                 rows={3}
@@ -349,20 +349,20 @@ export default function InviteManagerPage() {
                 <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">
                   {
                     invitations.filter(
-                      inv => inv.status === 'pending' && new Date(inv.expires_at) > new Date()
+                      (inv) => inv.status === 'pending' && new Date(inv.expires_at) > new Date(),
                     ).length
                   }{' '}
                   Pending
                 </span>
                 <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full">
-                  {invitations.filter(inv => inv.status === 'accepted').length} Accepted
+                  {invitations.filter((inv) => inv.status === 'accepted').length} Accepted
                 </span>
                 <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full">
                   {
                     invitations.filter(
-                      inv =>
+                      (inv) =>
                         inv.status === 'expired' ||
-                        (inv.status === 'pending' && new Date(inv.expires_at) < new Date())
+                        (inv.status === 'pending' && new Date(inv.expires_at) < new Date()),
                     ).length
                   }{' '}
                   Expired
@@ -420,7 +420,7 @@ export default function InviteManagerPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {invitations.map(invitation => (
+                  {invitations.map((invitation) => (
                     <tr key={invitation.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{invitation.email}</div>

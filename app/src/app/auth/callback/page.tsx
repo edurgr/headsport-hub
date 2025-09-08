@@ -63,7 +63,7 @@ export default function AuthCallbackPage() {
     // Set up a listener for PASSWORD_RECOVERY as a fallback
     const {
       data: { subscription },
-    } = supabaseClient.auth.onAuthStateChange(event => {
+    } = supabaseClient.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsRecovery(true);
         setStatus('success');
@@ -222,7 +222,7 @@ export default function AuthCallbackPage() {
                 <input
                   type="password"
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   minLength={6}
                   required
@@ -236,7 +236,7 @@ export default function AuthCallbackPage() {
                 <input
                   type="password"
                   value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   minLength={6}
                   required

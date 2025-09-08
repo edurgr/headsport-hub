@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
         {
           status: rateLimitResult.status,
           headers: rateLimitResult.headers as Record<string, string>,
-        }
+        },
       );
     }
 
@@ -266,7 +266,7 @@ async function getProductStats(supabase: any) {
       'ski',
       'snowboard',
     ];
-    allCategories.forEach(cat => {
+    allCategories.forEach((cat) => {
       if (!productsByCategory[cat]) {
         productsByCategory[cat] = 0;
       }
@@ -318,7 +318,7 @@ async function getRecentActivity(supabase: any) {
           user_name: profile?.name || 'Unknown User',
           user_email: profile?.email || order.athlete_email,
         };
-      })
+      }),
     );
 
     // Recent users
@@ -341,7 +341,7 @@ async function getRecentActivity(supabase: any) {
         upload_sessions!upload_files_session_id_fkey(
           profiles!upload_sessions_user_id_fkey(name, email)
         )
-      `
+      `,
       )
       .order('created_at', { ascending: false })
       .limit(5);

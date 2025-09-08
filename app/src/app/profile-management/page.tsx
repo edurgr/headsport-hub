@@ -64,24 +64,24 @@ export default function ProfileManagementPage() {
     // For managers: only show athletes and their own profile (no admins)
     // For admins: show all profiles
     if (profile?.role === 'manager') {
-      filtered = filtered.filter(p => p.role === 'athlete' || p.id === profile.id);
+      filtered = filtered.filter((p) => p.role === 'athlete' || p.id === profile.id);
     }
     // Admins can see all profiles, no additional filtering needed
 
     // Filter by role
     if (roleFilter !== 'all') {
-      filtered = filtered.filter(profile => profile.role === roleFilter);
+      filtered = filtered.filter((profile) => profile.role === roleFilter);
     }
 
     // Filter by search term
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(
-        profile =>
+        (profile) =>
           profile.name?.toLowerCase().includes(searchLower) ||
           profile.email.toLowerCase().includes(searchLower) ||
           profile.organization?.toLowerCase().includes(searchLower) ||
-          profile.phone?.toLowerCase().includes(searchLower)
+          profile.phone?.toLowerCase().includes(searchLower),
       );
     }
 
@@ -143,7 +143,7 @@ export default function ProfileManagementPage() {
       const { data: sessionData } = await supabaseClient.auth.getSession();
       const token = sessionData.session?.access_token;
       const entries = await Promise.all(
-        list.map(async p => {
+        list.map(async (p) => {
           const params = new URLSearchParams();
           params.set('limit', '6');
           params.set('user_id', p.id);
@@ -154,7 +154,7 @@ export default function ProfileManagementPage() {
           });
           const json = await res.json();
           return [p.id, res.ok ? json.items || [] : []] as const;
-        })
+        }),
       );
       const map: Record<string, any[]> = {};
       for (const [id, items] of entries) map[id] = items;
@@ -199,7 +199,7 @@ export default function ProfileManagementPage() {
       const { requiresEmailConfirmation } = await signUpWithEmail(
         adminEmail,
         adminPassword,
-        adminName || undefined
+        adminName || undefined,
       );
       if (requiresEmailConfirmation) {
         setAdminInfo('Check the email inbox to confirm the new administrator account.');
@@ -297,7 +297,7 @@ export default function ProfileManagementPage() {
                 : editingAthlete.role === 'admin'
                   ? 'Administrator'
                   : 'User'
-          } profile updated successfully`
+          } profile updated successfully`,
         );
         await fetchProfiles(); // Refresh the profiles list
         setTimeout(() => {
@@ -580,7 +580,7 @@ export default function ProfileManagementPage() {
                   ) : null}
                 </div>
               ) : (
-                filteredProfiles.map(p => (
+                filteredProfiles.map((p) => (
                   <div
                     key={p.id}
                     className="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
@@ -708,7 +708,7 @@ export default function ProfileManagementPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                   <input
                     value={adminName}
-                    onChange={e => setAdminName(e.target.value)}
+                    onChange={(e) => setAdminName(e.target.value)}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Administrator name"
                     type="text"
@@ -719,7 +719,7 @@ export default function ProfileManagementPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                   <input
                     value={adminEmail}
-                    onChange={e => setAdminEmail(e.target.value)}
+                    onChange={(e) => setAdminEmail(e.target.value)}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="admin@example.com"
                     type="email"
@@ -730,7 +730,7 @@ export default function ProfileManagementPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
                   <input
                     value={adminPassword}
-                    onChange={e => setAdminPassword(e.target.value)}
+                    onChange={(e) => setAdminPassword(e.target.value)}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="••••••••"
                     type="password"
@@ -828,7 +828,7 @@ export default function ProfileManagementPage() {
                       <input
                         type="text"
                         value={editForm.name}
-                        onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
                       />
@@ -838,7 +838,7 @@ export default function ProfileManagementPage() {
                       <input
                         type="email"
                         value={editForm.email}
-                        onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
                       />
@@ -848,7 +848,7 @@ export default function ProfileManagementPage() {
                       <input
                         type="tel"
                         value={editForm.phone}
-                        onChange={e => setEditForm({ ...editForm, phone: e.target.value })}
+                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
@@ -859,7 +859,7 @@ export default function ProfileManagementPage() {
                       <input
                         type="text"
                         value={editForm.organization}
-                        onChange={e => setEditForm({ ...editForm, organization: e.target.value })}
+                        onChange={(e) => setEditForm({ ...editForm, organization: e.target.value })}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
@@ -879,7 +879,7 @@ export default function ProfileManagementPage() {
                           <input
                             type="number"
                             value={editForm.expectedContentUploads}
-                            onChange={e =>
+                            onChange={(e) =>
                               setEditForm({ ...editForm, expectedContentUploads: e.target.value })
                             }
                             className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -894,7 +894,7 @@ export default function ProfileManagementPage() {
                             type="number"
                             step="0.01"
                             value={editForm.costPerAthlete}
-                            onChange={e =>
+                            onChange={(e) =>
                               setEditForm({ ...editForm, costPerAthlete: e.target.value })
                             }
                             className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -907,7 +907,7 @@ export default function ProfileManagementPage() {
                           </label>
                           <select
                             value={editForm.competitionPerformance}
-                            onChange={e =>
+                            onChange={(e) =>
                               setEditForm({ ...editForm, competitionPerformance: e.target.value })
                             }
                             className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -927,7 +927,7 @@ export default function ProfileManagementPage() {
                           <input
                             type="text"
                             value={editForm.festivalAchievements}
-                            onChange={e =>
+                            onChange={(e) =>
                               setEditForm({ ...editForm, festivalAchievements: e.target.value })
                             }
                             className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -942,7 +942,7 @@ export default function ProfileManagementPage() {
                         <input
                           type="text"
                           value={editForm.awards}
-                          onChange={e => setEditForm({ ...editForm, awards: e.target.value })}
+                          onChange={(e) => setEditForm({ ...editForm, awards: e.target.value })}
                           className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="e.g., Best Newcomer 2023, Rising Star Award"
                         />
@@ -953,7 +953,7 @@ export default function ProfileManagementPage() {
                         </label>
                         <textarea
                           value={editForm.notes}
-                          onChange={e => setEditForm({ ...editForm, notes: e.target.value })}
+                          onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                           rows={3}
                           className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Additional notes about the athlete..."

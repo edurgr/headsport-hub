@@ -51,7 +51,7 @@ export class NotificationService {
     data?: Record<string, any>,
     actionUrl?: string,
     priority: NotificationPriority = 'medium',
-    expiresAt?: Date
+    expiresAt?: Date,
   ): Promise<string> {
     const supabase = await supabaseServer();
 
@@ -80,7 +80,7 @@ export class NotificationService {
     type: NotificationType,
     templateData?: Record<string, any>,
     actionUrl?: string,
-    expiresAt?: Date
+    expiresAt?: Date,
   ): Promise<string> {
     const supabase = await supabaseServer();
 
@@ -107,7 +107,7 @@ export class NotificationService {
     message: string,
     data?: Record<string, any>,
     actionUrl?: string,
-    priority: NotificationPriority = 'medium'
+    priority: NotificationPriority = 'medium',
   ): Promise<number> {
     const supabase = await supabaseServer();
 
@@ -133,7 +133,7 @@ export class NotificationService {
     userId: string,
     status?: NotificationStatus,
     limit: number = 50,
-    offset: number = 0
+    offset: number = 0,
   ): Promise<{ notifications: Notification[]; total: number }> {
     const supabase = await supabaseServer();
 
@@ -272,7 +272,7 @@ export class NotificationService {
   // Update notification template
   static async updateTemplate(
     templateId: string,
-    updates: Partial<NotificationTemplate>
+    updates: Partial<NotificationTemplate>,
   ): Promise<void> {
     const supabase = await supabaseServer();
 
@@ -298,7 +298,7 @@ export class AdminNotifications {
     orderId: string,
     userId: string,
     userName: string,
-    totalAmount: number
+    totalAmount: number,
   ): Promise<void> {
     await NotificationService.notifyAllAdmins(
       'order_pending',
@@ -306,7 +306,7 @@ export class AdminNotifications {
       `Order #${orderId} from ${userName} is pending your approval. Total: $${totalAmount}`,
       { order_id: orderId, user_id: userId, user_name: userName, total_amount: totalAmount },
       `/orders/pending`,
-      'high'
+      'high',
     );
   }
 
@@ -315,7 +315,7 @@ export class AdminNotifications {
     userId: string,
     userName: string,
     userEmail: string,
-    userRole: string
+    userRole: string,
   ): Promise<void> {
     await NotificationService.notifyAllAdmins(
       'user_registered',
@@ -323,7 +323,7 @@ export class AdminNotifications {
       `New user ${userName} (${userEmail}) has registered with role ${userRole}`,
       { user_id: userId, user_name: userName, user_email: userEmail, user_role: userRole },
       `/profile-management`,
-      'medium'
+      'medium',
     );
   }
 
@@ -331,7 +331,7 @@ export class AdminNotifications {
   static async notifyContentUploaded(
     userId: string,
     userName: string,
-    contentTitle: string
+    contentTitle: string,
   ): Promise<void> {
     await NotificationService.notifyAllAdmins(
       'content_uploaded',
@@ -339,14 +339,14 @@ export class AdminNotifications {
       `User ${userName} has uploaded new content: ${contentTitle}`,
       { user_id: userId, user_name: userName, content_title: contentTitle },
       `/content`,
-      'low'
+      'low',
     );
   }
 
   // Notify system alerts
   static async notifySystemAlert(
     message: string,
-    priority: NotificationPriority = 'high'
+    priority: NotificationPriority = 'high',
   ): Promise<void> {
     await NotificationService.notifyAllAdmins(
       'system_alert',
@@ -354,7 +354,7 @@ export class AdminNotifications {
       message,
       { alert_message: message },
       undefined,
-      priority
+      priority,
     );
   }
 
@@ -366,7 +366,7 @@ export class AdminNotifications {
       `Security alert: ${details}`,
       { alert_details: details },
       undefined,
-      'critical'
+      'critical',
     );
   }
 }

@@ -20,7 +20,7 @@ export class AppError extends Error {
     message: string,
     statusCode: number = 500,
     code: string = 'INTERNAL_ERROR',
-    context?: ErrorContext
+    context?: ErrorContext,
   ) {
     super(message);
     this.statusCode = statusCode;
@@ -94,7 +94,7 @@ export function handleApiError(error: unknown, context?: ErrorContext): NextResp
           requestId,
         },
       },
-      { status: error.statusCode }
+      { status: error.statusCode },
     );
   }
 
@@ -119,7 +119,7 @@ export function handleApiError(error: unknown, context?: ErrorContext): NextResp
           requestId,
         },
       },
-      { status: statusCode }
+      { status: statusCode },
     );
   }
 
@@ -139,7 +139,7 @@ export function handleApiError(error: unknown, context?: ErrorContext): NextResp
           requestId,
         },
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -158,7 +158,7 @@ export function handleApiError(error: unknown, context?: ErrorContext): NextResp
         requestId,
       },
     },
-    { status: 500 }
+    { status: 500 },
   );
 }
 
@@ -201,7 +201,7 @@ export function getErrorContext(request: Request): ErrorContext {
  * Wrapper for API route handlers with error handling
  */
 export function withErrorHandler(
-  handler: (request: Request, context?: any) => Promise<NextResponse>
+  handler: (request: Request, context?: any) => Promise<NextResponse>,
 ) {
   return async (request: Request, context?: any): Promise<NextResponse> => {
     try {

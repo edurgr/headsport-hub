@@ -78,7 +78,7 @@ class Logger {
       this.formatMessage(LogLevel.ERROR, message, {
         ...context,
         error: errorInfo,
-      })
+      }),
     );
   }
 
@@ -105,7 +105,7 @@ class Logger {
     action: string,
     resource: string,
     userId?: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): LogContext {
     return {
       action,
@@ -130,7 +130,7 @@ export const logDataEvent = (
   action: string,
   resource: string,
   userId?: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, any>,
 ) =>
   logger.info(`Data: ${action} ${resource}`, logger.dataEvent(action, resource, userId, metadata));
 

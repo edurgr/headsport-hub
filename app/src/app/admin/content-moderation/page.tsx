@@ -63,7 +63,7 @@ export default function ContentModerationPage() {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [showModerationModal, setShowModerationModal] = useState(false);
   const [moderationAction, setModerationAction] = useState<'approve' | 'reject' | 'flag'>(
-    'approve'
+    'approve',
   );
   const [moderationReason, setModerationReason] = useState('');
   const [moderationNotes, setModerationNotes] = useState('');
@@ -108,7 +108,7 @@ export default function ContentModerationPage() {
     fileId: string,
     action: 'approve' | 'reject' | 'flag',
     reason?: string,
-    notes?: string
+    notes?: string,
   ) => {
     try {
       const response = await authenticatedFetch('/api/admin/content-moderation', {
@@ -219,7 +219,7 @@ export default function ContentModerationPage() {
                 { id: 'stats', label: 'Statistics', icon: FileImage },
                 { id: 'rules', label: 'Rules', icon: Settings },
                 { id: 'history', label: 'History', icon: History },
-              ].map(tab => {
+              ].map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <button
@@ -326,18 +326,18 @@ export default function ContentModerationPage() {
                 </div>
               ) : (
                 <div className="divide-y" style={{ borderColor: 'hsl(var(--border))' }}>
-                  {queueItems.map(item => (
+                  {queueItems.map((item) => (
                     <div key={item.id} className="p-6 hover:opacity-95">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start space-x-4">
                           <input
                             type="checkbox"
                             checked={selectedItems.includes(item.file_id)}
-                            onChange={e => {
+                            onChange={(e) => {
                               if (e.target.checked) {
                                 setSelectedItems([...selectedItems, item.file_id]);
                               } else {
-                                setSelectedItems(selectedItems.filter(id => id !== item.file_id));
+                                setSelectedItems(selectedItems.filter((id) => id !== item.file_id));
                               }
                             }}
                             className="mt-1 h-4 w-4 border rounded"
@@ -563,7 +563,7 @@ export default function ContentModerationPage() {
                     <input
                       type="text"
                       value={moderationReason}
-                      onChange={e => setModerationReason(e.target.value)}
+                      onChange={(e) => setModerationReason(e.target.value)}
                       className="input"
                       placeholder="Enter reason for moderation action"
                     />
@@ -575,7 +575,7 @@ export default function ContentModerationPage() {
                     </label>
                     <textarea
                       value={moderationNotes}
-                      onChange={e => setModerationNotes(e.target.value)}
+                      onChange={(e) => setModerationNotes(e.target.value)}
                       className="input"
                       rows={3}
                       placeholder="Additional notes"

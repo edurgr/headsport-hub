@@ -85,7 +85,7 @@ export async function GET(req: Request) {
         country,
         created_at,
         updated_at
-      `
+      `,
       )
       .order('created_at', { ascending: false });
 
@@ -126,7 +126,7 @@ export async function GET(req: Request) {
         {
           error: 'Failed to get profile count: ' + countError.message,
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -135,7 +135,7 @@ export async function GET(req: Request) {
         {
           error: 'Failed to fetch profiles: ' + profilesError.message,
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -174,7 +174,7 @@ export async function GET(req: Request) {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

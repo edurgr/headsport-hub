@@ -33,7 +33,7 @@ async function createAdminUser() {
 
     if (existingAdmins && existingAdmins.length > 0) {
       console.log('✅ Admin users already exist:');
-      existingAdmins.forEach(admin => {
+      existingAdmins.forEach((admin) => {
         console.log(`   - ${admin.email} (${admin.id})`);
       });
       return;

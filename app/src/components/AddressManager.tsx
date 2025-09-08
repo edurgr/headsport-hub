@@ -71,8 +71,8 @@ export default function AddressManager({
         if (useDatabase) {
           await updateAddress(editingAddress.id, formData as Partial<Omit<Address, 'id'>>);
         } else {
-          const updatedAddresses = addresses.map(addr =>
-            addr.id === editingAddress.id ? ({ ...formData, id: addr.id } as Address) : addr
+          const updatedAddresses = addresses.map((addr) =>
+            addr.id === editingAddress.id ? ({ ...formData, id: addr.id } as Address) : addr,
           );
           onAddressesChange?.(updatedAddresses);
         }
@@ -89,7 +89,7 @@ export default function AddressManager({
 
           // If this is the first address or marked as preferred, make it preferred
           if (addresses.length === 0 || newAddress.isPreferred) {
-            const updatedAddresses = addresses.map(addr => ({ ...addr, isPreferred: false }));
+            const updatedAddresses = addresses.map((addr) => ({ ...addr, isPreferred: false }));
             updatedAddresses.push(newAddress);
             onAddressesChange?.(updatedAddresses);
           } else {
@@ -127,7 +127,7 @@ export default function AddressManager({
       if (useDatabase) {
         await deleteAddress(addressId);
       } else {
-        const updatedAddresses = addresses.filter(addr => addr.id !== addressId);
+        const updatedAddresses = addresses.filter((addr) => addr.id !== addressId);
         onAddressesChange?.(updatedAddresses);
       }
     } catch (error) {
@@ -141,7 +141,7 @@ export default function AddressManager({
       if (useDatabase) {
         await setPreferredAddress(addressId);
       } else {
-        const updatedAddresses = addresses.map(addr => ({
+        const updatedAddresses = addresses.map((addr) => ({
           ...addr,
           isPreferred: addr.id === addressId,
         }));
@@ -201,7 +201,7 @@ export default function AddressManager({
       {addresses.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-lg font-semibold">Your Addresses</h3>
-          {addresses.map(address => (
+          {addresses.map((address) => (
             <div
               key={address.id}
               className={`p-4 surface-card transition-shadow ${
@@ -288,7 +288,7 @@ export default function AddressManager({
                   type="text"
                   required
                   value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="input"
                   placeholder="e.g., Home, Office, Vacation"
                 />
@@ -300,7 +300,7 @@ export default function AddressManager({
                   type="text"
                   required
                   value={formData.addressLine1}
-                  onChange={e => setFormData({ ...formData, addressLine1: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, addressLine1: e.target.value })}
                   className="input"
                   placeholder="Street address"
                 />
@@ -311,7 +311,7 @@ export default function AddressManager({
                 <input
                   type="text"
                   value={formData.addressLine2 || ''}
-                  onChange={e => setFormData({ ...formData, addressLine2: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, addressLine2: e.target.value })}
                   className="input"
                   placeholder="Apartment, suite, etc. (optional)"
                 />
@@ -323,7 +323,7 @@ export default function AddressManager({
                   type="text"
                   required
                   value={formData.city}
-                  onChange={e => setFormData({ ...formData, city: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                   className="input"
                   placeholder="City"
                 />
@@ -335,7 +335,7 @@ export default function AddressManager({
                   type="text"
                   required
                   value={formData.state}
-                  onChange={e => setFormData({ ...formData, state: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                   className="input"
                   placeholder="State or Province"
                 />
@@ -347,7 +347,7 @@ export default function AddressManager({
                   type="text"
                   required
                   value={formData.postalCode}
-                  onChange={e => setFormData({ ...formData, postalCode: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
                   className="input"
                   placeholder="Postal Code"
                 />
@@ -365,7 +365,7 @@ export default function AddressManager({
                   <ResponsiveSelect
                     ariaLabel="Country"
                     value={formData.country || ''}
-                    onChange={v => setFormData({ ...formData, country: v })}
+                    onChange={(v) => setFormData({ ...formData, country: v })}
                     className="w-full px-3 h-11 sm:h-9 rounded-md bg-transparent"
                     options={[
                       { value: 'Austria', label: 'Austria' },
@@ -385,7 +385,7 @@ export default function AddressManager({
                 <input
                   type="text"
                   value={formData.phone || ''}
-                  onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="input"
                   placeholder="Phone number (optional)"
                 />
@@ -397,7 +397,7 @@ export default function AddressManager({
                 type="checkbox"
                 id="isPreferred"
                 checked={formData.isPreferred}
-                onChange={e => setFormData({ ...formData, isPreferred: e.target.checked })}
+                onChange={(e) => setFormData({ ...formData, isPreferred: e.target.checked })}
                 className="w-4 h-4 text-[hsl(var(--foreground))] border-[hsl(var(--border))] rounded focus:ring-[hsl(var(--foreground))]"
               />
               <label htmlFor="isPreferred" className="text-sm">

@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
           success: false,
           error: 'Email, password, name and token are required',
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
           success: false,
           error: 'Server configuration error',
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
           success: false,
           error: 'Invalid or expired invitation',
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
           success: false,
           error: 'Invitation has expired',
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
             success: false,
             error: 'Rate limit reached. Please wait 36 seconds before trying again.',
           },
-          { status: 429 }
+          { status: 429 },
         );
       }
 
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
               code: 'user_exists',
               error: 'User exists. Use Forgot password to continue.',
             },
-            { status: 409 }
+            { status: 409 },
           );
         }
         return NextResponse.json({
@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json(
         { success: false, error: userError.message || 'Failed to create user' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -196,7 +196,7 @@ export async function POST(req: NextRequest) {
         success: false,
         error: 'Internal server error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

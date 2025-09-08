@@ -209,7 +209,7 @@ export default function AdminDashboard() {
             <div className="flex items-center space-x-4">
               <select
                 value={selectedPeriod}
-                onChange={e => setSelectedPeriod(e.target.value)}
+                onChange={(e) => setSelectedPeriod(e.target.value)}
                 className="input px-3 py-2"
               >
                 <option value="7">Last 7 days</option>

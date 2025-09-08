@@ -133,7 +133,7 @@ export async function GET(req: Request) {
             photos: photosResult.count || 0,
             videos: videosResult.count || 0,
           };
-        })
+        }),
       );
 
       return NextResponse.json({
@@ -172,7 +172,7 @@ export async function GET(req: Request) {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

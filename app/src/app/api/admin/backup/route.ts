@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       const result = await BackupService.getBackupOperations(
         limit,
         (page - 1) * limit,
-        status as any
+        status as any,
       );
 
       return NextResponse.json(result);
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
       // );
 
       // Start backup process asynchronously
-      BackupService.performBackup(backupId, type, tables_included).catch(error => {
+      BackupService.performBackup(backupId, type, tables_included).catch((error) => {
         console.error('Backup process failed:', error);
       });
 
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
       if (!name || !type || !cron_expression) {
         return NextResponse.json(
           { error: 'Name, type, and cron expression are required' },
-          { status: 400 }
+          { status: 400 },
         );
       }
 

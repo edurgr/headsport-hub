@@ -18,7 +18,7 @@ const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
   console.error(
-    'Missing Supabase env. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.'
+    'Missing Supabase env. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.',
   );
   process.exit(1);
 }
@@ -27,7 +27,7 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
 function parseCsv(content) {
   const lines = content.split(/\r?\n/).filter(Boolean);
-  const header = lines[0].split(',').map(h => h.trim());
+  const header = lines[0].split(',').map((h) => h.trim());
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
     const row = [];
@@ -155,7 +155,7 @@ async function importSkis(csvPath) {
       const length_list = r['length'] || '';
       const { radius_value, radius_length } = extractRadius(r['radius']);
       const { sidecut_top, sidecut_mid, sidecut_tail, sidecut_length } = extractSidecut(
-        r['sidecut']
+        r['sidecut'],
       );
 
       const payload = {

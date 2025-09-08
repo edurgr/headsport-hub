@@ -17,7 +17,7 @@ export async function GET(req: Request) {
     if (!supabaseUrl || !serviceKey) {
       return NextResponse.json(
         { error: 'Server not configured for admin operations' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -93,7 +93,7 @@ export async function GET(req: Request) {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -28,7 +28,7 @@ export async function GET() {
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Content-Type': 'application/json',
           },
-        }
+        },
       );
     } else {
       return NextResponse.json(
@@ -43,7 +43,7 @@ export async function GET() {
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Content-Type': 'application/json',
           },
-        }
+        },
       );
     }
   } catch (error) {
@@ -59,7 +59,7 @@ export async function GET() {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Content-Type': 'application/json',
         },
-      }
+      },
     );
   }
 }

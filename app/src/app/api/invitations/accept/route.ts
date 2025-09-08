@@ -12,7 +12,7 @@ export async function POST(req: Request) {
           success: false,
           error: 'Token is required',
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
           success: false,
           error: 'Server configuration error',
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
           success: false,
           error: 'Invalid or expired invitation',
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -68,7 +68,7 @@ export async function POST(req: Request) {
           success: false,
           error: 'Failed to update invitation',
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
         success: false,
         error: 'Internal server error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

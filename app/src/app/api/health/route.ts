@@ -122,7 +122,7 @@ export async function GET() {
     }
 
     // Overall health status
-    const overallStatus = checks.every(check => check.status === 'healthy')
+    const overallStatus = checks.every((check) => check.status === 'healthy')
       ? 'healthy'
       : 'unhealthy';
 
@@ -170,7 +170,7 @@ export async function GET() {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Content-Type': 'application/json',
         },
-      }
+      },
     );
   }
 }

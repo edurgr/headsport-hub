@@ -20,7 +20,7 @@ const adminConfig: RateLimitConfig = {
 
 export function rateLimit(
   req: NextRequest,
-  config: RateLimitConfig = defaultConfig
+  config: RateLimitConfig = defaultConfig,
 ): { allowed: boolean; remaining: number; resetTime: number } {
   const ip = getClientIP(req);
   const now = Date.now();

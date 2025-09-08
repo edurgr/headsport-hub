@@ -18,20 +18,20 @@ interface AuthContextType {
   signUpWithEmail: (
     email: string,
     password: string,
-    name?: string
+    name?: string,
   ) => Promise<{ requiresEmailConfirmation: boolean }>;
   signUpWithInvitation: (
     email: string,
     password: string,
     name: string,
-    invitationToken: string
+    invitationToken: string,
   ) => Promise<{ requiresEmailConfirmation: boolean }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   createInvitation: (
     email: string,
     role: 'manager' | 'athlete',
-    personalMessage?: string
+    personalMessage?: string,
   ) => Promise<void>;
   getInvitations: () => Promise<Invitation[]>;
   deleteInvitation: (invitationId: string) => Promise<void>;
@@ -193,7 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         'AuthContext: Supabase signIn successful. Session:',
         data.session ? 'Exists' : 'null',
         'User:',
-        data.user ? data.user.id : 'null'
+        data.user ? data.user.id : 'null',
       );
       setSession(data.session ?? null);
       setUser(data.user ?? null);
@@ -225,7 +225,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Only allow registration if there are no administrators or if current user is admin
       if (existingAdmins && existingAdmins.length > 0 && (!profile || profile.role !== 'admin')) {
         throw new Error(
-          'Registration is restricted. Only administrators can create new accounts. Please contact your system administrator for an invitation.'
+          'Registration is restricted. Only administrators can create new accounts. Please contact your system administrator for an invitation.',
         );
       }
 
@@ -273,7 +273,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string,
     password: string,
     name: string,
-    invitationToken: string
+    invitationToken: string,
   ) {
     try {
       // Verify invitation using validation API
@@ -283,7 +283,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!validationResponse.ok || !validationData.valid) {
         throw new Error(
           validationData.error ||
-            'Invalid or expired invitation. Please contact your administrator for a new invitation.'
+            'Invalid or expired invitation. Please contact your administrator for a new invitation.',
         );
       }
 
@@ -304,7 +304,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Handle rate limiting error specifically
         if (error.message && error.message.includes('36 seconds')) {
           throw new Error(
-            'Please wait 36 seconds before trying to create another account. This is a Supabase security limit.'
+            'Please wait 36 seconds before trying to create another account. This is a Supabase security limit.',
           );
         }
 
@@ -351,7 +351,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     userId: string,
     email: string,
     name?: string,
-    role: 'admin' | 'manager' | 'athlete' = 'athlete'
+    role: 'admin' | 'manager' | 'athlete' = 'athlete',
   ) {
     try {
       const { error } = await supabaseClient.from('profiles').insert({
@@ -377,7 +377,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function createInvitation(
     email: string,
     role: 'manager' | 'athlete',
-    personalMessage?: string
+    personalMessage?: string,
   ): Promise<void> {
     if (!profile || profile.role !== 'admin') {
       throw new Error('Only administrators can create invitations');
@@ -402,7 +402,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // If pending, check if it hasn't expired
           if (new Date(existingInvitation.expires_at) > new Date()) {
             throw new Error(
-              `An invitation for ${email} already exists and is still valid. It expires on ${new Date(existingInvitation.expires_at).toLocaleDateString()}.`
+              `An invitation for ${email} already exists and is still valid. It expires on ${new Date(existingInvitation.expires_at).toLocaleDateString()}.`,
             );
           } else {
             // If expired, update the existing invitation
@@ -494,7 +494,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string,
     role: string,
     token: string,
-    personalMessage?: string
+    personalMessage?: string,
   ) {
     try {
       // Call API route to send email
@@ -533,7 +533,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to send invitation email:', error);
       throw new Error(
-        `Failed to send invitation email: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to send invitation email: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }

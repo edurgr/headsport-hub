@@ -7,7 +7,7 @@ import { emailService } from '@/lib/email-service';
 // Configure Supabase client with service role key for administrative operations
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
 export async function POST(request: NextRequest) {
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     if (adminError || adminUser?.role !== 'admin') {
       return NextResponse.json(
         { error: 'Unauthorized: Only administrators can send invitations' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
         error: 'Failed to send invitation email',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

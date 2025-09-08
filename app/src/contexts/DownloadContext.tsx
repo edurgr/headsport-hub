@@ -44,11 +44,11 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         setIsActive(true);
       },
       step: (inc = 1) => {
-        setCurrent(prev => Math.max(0, prev + inc));
+        setCurrent((prev) => Math.max(0, prev + inc));
         setIsActive(true);
       },
       end: () => {
-        setCurrent(prev => (total > 0 ? total : prev));
+        setCurrent((prev) => (total > 0 ? total : prev));
         setTimeout(() => {
           setIsActive(false);
           setLabel('');
@@ -57,7 +57,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         }, 600);
       },
     }),
-    [isActive, label, progressPct, total, current]
+    [isActive, label, progressPct, total, current],
   );
 
   return <DownloadContext.Provider value={api}>{children}</DownloadContext.Provider>;

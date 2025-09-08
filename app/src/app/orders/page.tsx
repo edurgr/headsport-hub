@@ -56,7 +56,7 @@ export default function OrdersPage() {
             shippingAddress: o.shipping_address || {},
             approvedBy: o.approved_by_email || '',
             approvedAt: o.approved_at || '',
-          }))
+          })),
         );
       } else {
         setOrders([]);
@@ -67,18 +67,18 @@ export default function OrdersPage() {
   }
 
   function addRow() {
-    setRows(r => [
+    setRows((r) => [
       ...r,
       { product: null, length_cm: '', quantity: 1, boot_size: '', binding_color: '' },
     ]);
   }
 
   function setRow(i: number, patch: Partial<OrderRow>) {
-    setRows(rows => rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+    setRows((rows) => rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
   }
 
   function removeRow(i: number) {
-    setRows(rows => rows.filter((_, idx) => idx !== i));
+    setRows((rows) => rows.filter((_, idx) => idx !== i));
   }
 
   async function submit() {
@@ -225,7 +225,7 @@ export default function OrdersPage() {
                 </div>
               </div>
               <div className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>
-                {orders.filter(o => o.status === 'pending_approval').length}
+                {orders.filter((o) => o.status === 'pending_approval').length}
               </div>
               <div className="text-sm" style={{ color: 'hsl(var(--warning))' }}>
                 Pending Approval
@@ -264,7 +264,7 @@ export default function OrdersPage() {
                 </div>
               </div>
               <div className="text-2xl font-bold" style={{ color: 'hsl(var(--foreground))' }}>
-                {orders.filter(o => o.status === 'approved').length}
+                {orders.filter((o) => o.status === 'approved').length}
               </div>
               <div className="text-sm" style={{ color: 'hsl(var(--success))' }}>
                 Approved
@@ -293,7 +293,7 @@ export default function OrdersPage() {
                 <div className="flex gap-2">
                   <select
                     value={filter}
-                    onChange={e => setFilter(e.target.value as any)}
+                    onChange={(e) => setFilter(e.target.value as any)}
                     className="px-3 py-2 rounded text-sm"
                     style={{
                       backgroundColor: 'hsl(var(--secondary))',
@@ -340,8 +340,8 @@ export default function OrdersPage() {
                             it.boot_size || '',
                             it.binding_color || '',
                           ]
-                            .map(v => `"${String(v).replace(/"/g, '""')}"`)
-                            .join(',')
+                            .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+                            .join(','),
                         );
                       });
                     });
@@ -366,7 +366,7 @@ export default function OrdersPage() {
 
           {/* Order Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            {orders.map(order => (
+            {orders.map((order) => (
               <div
                 key={order.id}
                 className="p-4 sm:p-6 rounded-lg border overflow-hidden"
@@ -603,7 +603,7 @@ export default function OrdersPage() {
                               order.shippingAddress?.phone || '',
                             ]
                               .map((v: any) => `"${String(v).replace(/"/g, '""')}"`)
-                              .join(',')
+                              .join(','),
                           );
                           // Blank line
                           rows.push('');
@@ -620,7 +620,7 @@ export default function OrdersPage() {
                                 it.binding_color || '',
                               ]
                                 .map((v: any) => `"${String(v).replace(/"/g, '""')}"`)
-                                .join(',')
+                                .join(','),
                             );
                           });
                           const blob = new Blob([rows.join('\n')], {
@@ -775,7 +775,9 @@ export default function OrdersPage() {
                                     type="number"
                                     min={1}
                                     value={row.quantity}
-                                    onChange={e => setRow(i, { quantity: Number(e.target.value) })}
+                                    onChange={(e) =>
+                                      setRow(i, { quantity: Number(e.target.value) })
+                                    }
                                     className="w-full px-3 h-11 sm:h-9 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
                                   />
                                 </div>
@@ -790,14 +792,14 @@ export default function OrdersPage() {
                                       <ResponsiveSelect
                                         ariaLabel="Length (cm)"
                                         value={row.length_cm || ''}
-                                        onChange={v => setRow(i, { length_cm: v })}
+                                        onChange={(v) => setRow(i, { length_cm: v })}
                                         options={[
                                           { value: '', label: 'Select length' },
                                           ...((row.product as any).available_lengths || []).map(
                                             (len: number) => ({
                                               value: String(len),
                                               label: String(len),
-                                            })
+                                            }),
                                           ),
                                         ]}
                                         className="w-full px-3 h-11 sm:h-9 bg-white border border-gray-300 rounded-lg"
@@ -806,7 +808,7 @@ export default function OrdersPage() {
                                       <input
                                         type="number"
                                         value={row.length_cm}
-                                        onChange={e => setRow(i, { length_cm: e.target.value })}
+                                        onChange={(e) => setRow(i, { length_cm: e.target.value })}
                                         placeholder="Enter length"
                                         className="w-full px-3 h-11 sm:h-9 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
                                       />
@@ -822,7 +824,7 @@ export default function OrdersPage() {
                                     <input
                                       type="text"
                                       value={row.boot_size}
-                                      onChange={e => setRow(i, { boot_size: e.target.value })}
+                                      onChange={(e) => setRow(i, { boot_size: e.target.value })}
                                       placeholder="Enter boot size"
                                       className="w-full px-3 h-11 sm:h-9 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
                                     />
@@ -837,7 +839,7 @@ export default function OrdersPage() {
                                     <input
                                       type="text"
                                       value={row.binding_color || ''}
-                                      onChange={e => setRow(i, { binding_color: e.target.value })}
+                                      onChange={(e) => setRow(i, { binding_color: e.target.value })}
                                       placeholder="Enter color"
                                       className="w-full px-3 h-11 sm:h-9 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
                                     />
@@ -905,7 +907,7 @@ export default function OrdersPage() {
                     Shipping Address
                   </h3>
                   <AddressManager
-                    onSelectAddress={address => {
+                    onSelectAddress={(address) => {
                       setSelectedShippingAddress(address);
                     }}
                     selectMode={true}

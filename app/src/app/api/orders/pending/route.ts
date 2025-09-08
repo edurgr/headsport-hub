@@ -16,7 +16,7 @@ export async function GET() {
     if (ordersError) {
       return NextResponse.json(
         { error: 'Failed to fetch orders: ' + ordersError.message },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -32,7 +32,7 @@ export async function GET() {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

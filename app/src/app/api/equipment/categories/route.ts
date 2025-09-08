@@ -18,6 +18,6 @@ export async function GET() {
   ];
   return NextResponse.json(
     { categories, total: categories.length },
-    { headers: { 'Cache-Control': 'no-store' } }
+    { headers: { 'Cache-Control': 'no-store' } },
   );
 }

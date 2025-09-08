@@ -50,7 +50,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Verificar si es una ruta protegida
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
 
   if (!isProtectedRoute) {
     return NextResponse.next();
@@ -79,7 +79,7 @@ export function middleware(request: NextRequest) {
   // This is better done in the frontend with the ProtectedRoute component
   // but here we can do a basic verification
 
-  if (adminOnlyRoutes.some(route => pathname.startsWith(route))) {
+  if (adminOnlyRoutes.some((route) => pathname.startsWith(route))) {
     // Verify if user is admin (this would require decoding the JWT)
     // For now, we allow access and verification is done in the frontend
   }

@@ -118,7 +118,7 @@ export async function POST(req: Request) {
     if (validationErrors.length > 0) {
       console.log('❌ Order items validation failed:', validationErrors);
       return addSecurityHeaders(
-        createSecureErrorResponse(`Validation failed: ${validationErrors.join(', ')}`, 400)
+        createSecureErrorResponse(`Validation failed: ${validationErrors.join(', ')}`, 400),
       );
     }
     console.log('✅ All order items validation passed');
@@ -155,7 +155,7 @@ export async function POST(req: Request) {
     if (orderError) {
       return NextResponse.json(
         { error: 'Failed to create HEAD Hub order: ' + orderError.message },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -181,7 +181,7 @@ export async function POST(req: Request) {
       await sb.from('orders').delete().eq('id', order.id);
       return NextResponse.json(
         { error: 'Failed to create HEAD Hub order items: ' + itemsError.message },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -219,7 +219,7 @@ export async function POST(req: Request) {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

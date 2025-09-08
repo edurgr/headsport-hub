@@ -48,7 +48,7 @@ export default function ProductSearch({ onSelect, selectedProduct }: ProductSear
         setCategories(data.categories);
         // Default to skis when available
         setSelectedCategory(
-          data.categories.includes('skis') ? 'skis' : data.categories[0] || 'all'
+          data.categories.includes('skis') ? 'skis' : data.categories[0] || 'all',
         );
       }
     } catch (error) {
@@ -146,10 +146,10 @@ export default function ProductSearch({ onSelect, selectedProduct }: ProductSear
           <ResponsiveSelect
             ariaLabel="Category"
             value={selectedCategory}
-            onChange={v => handleCategoryChange({ target: { value: v } } as any)}
+            onChange={(v) => handleCategoryChange({ target: { value: v } } as any)}
             options={[
               { value: 'all', label: 'All Categories' },
-              ...categories.map(c => ({ value: c, label: getCategoryLabel(c) })),
+              ...categories.map((c) => ({ value: c, label: getCategoryLabel(c) })),
             ]}
             className="w-full px-3 h-11 sm:h-9 bg-white border border-[var(--border)] rounded-md"
           />
@@ -203,7 +203,7 @@ export default function ProductSearch({ onSelect, selectedProduct }: ProductSear
             </div>
           ) : filteredProducts.length > 0 ? (
             <div className="py-2">
-              {filteredProducts.map(product => (
+              {filteredProducts.map((product) => (
                 <div
                   key={product.id}
                   onClick={() => handleProductSelect(product)}

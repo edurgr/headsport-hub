@@ -43,7 +43,7 @@ export default function NotificationCenter() {
       if (response.ok) {
         setNotifications(data.notifications || []);
         setUnreadCount(
-          data.notifications?.filter((n: Notification) => n.status === 'unread').length || 0
+          data.notifications?.filter((n: Notification) => n.status === 'unread').length || 0,
         );
       }
     } catch (error) {
@@ -60,14 +60,14 @@ export default function NotificationCenter() {
       });
 
       if (response.ok) {
-        setNotifications(prev =>
-          prev.map(n =>
+        setNotifications((prev) =>
+          prev.map((n) =>
             n.id === notificationId
               ? { ...n, status: 'read' as const, read_at: new Date().toISOString() }
-              : n
-          )
+              : n,
+          ),
         );
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        setUnreadCount((prev) => Math.max(0, prev - 1));
       }
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -84,8 +84,8 @@ export default function NotificationCenter() {
       });
 
       if (response.ok) {
-        setNotifications(prev =>
-          prev.map(n => ({ ...n, status: 'read' as const, read_at: new Date().toISOString() }))
+        setNotifications((prev) =>
+          prev.map((n) => ({ ...n, status: 'read' as const, read_at: new Date().toISOString() })),
         );
         setUnreadCount(0);
       }
@@ -105,8 +105,8 @@ export default function NotificationCenter() {
       });
 
       if (response.ok) {
-        setNotifications(prev => prev.filter(n => n.id !== notificationId));
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+        setUnreadCount((prev) => Math.max(0, prev - 1));
       }
     } catch (error) {
       console.error('Error archiving notification:', error);
@@ -253,7 +253,7 @@ export default function NotificationCenter() {
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
-                {notifications.map(notification => (
+                {notifications.map((notification) => (
                   <div
                     key={notification.id}
                     className={`p-4 hover:bg-gray-50 cursor-pointer ${
@@ -288,7 +288,7 @@ export default function NotificationCenter() {
                               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                             )}
                             <button
-                              onClick={e => {
+                              onClick={(e) => {
                                 e.stopPropagation();
                                 archiveNotification(notification.id);
                               }}

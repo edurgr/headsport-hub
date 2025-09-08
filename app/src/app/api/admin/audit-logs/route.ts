@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
         {
           status: rateLimitResult.status,
           headers: rateLimitResult.headers as Record<string, string>,
-        }
+        },
       );
     }
 
@@ -108,25 +108,25 @@ export async function GET(req: NextRequest) {
     let filteredLogs = mockLogs;
 
     if (action) {
-      filteredLogs = filteredLogs.filter(log =>
-        log.action.toLowerCase().includes(action.toLowerCase())
+      filteredLogs = filteredLogs.filter((log) =>
+        log.action.toLowerCase().includes(action.toLowerCase()),
       );
     }
     if (resourceType) {
-      filteredLogs = filteredLogs.filter(log =>
-        log.resource_type.toLowerCase().includes(resourceType.toLowerCase())
+      filteredLogs = filteredLogs.filter((log) =>
+        log.resource_type.toLowerCase().includes(resourceType.toLowerCase()),
       );
     }
     if (userId) {
       filteredLogs = filteredLogs.filter(
-        log => log.user_id.includes(userId) || log.user_email.includes(userId)
+        (log) => log.user_id.includes(userId) || log.user_email.includes(userId),
       );
     }
     if (startDate) {
-      filteredLogs = filteredLogs.filter(log => new Date(log.created_at) >= new Date(startDate));
+      filteredLogs = filteredLogs.filter((log) => new Date(log.created_at) >= new Date(startDate));
     }
     if (endDate) {
-      filteredLogs = filteredLogs.filter(log => new Date(log.created_at) <= new Date(endDate));
+      filteredLogs = filteredLogs.filter((log) => new Date(log.created_at) <= new Date(endDate));
     }
 
     // Apply pagination

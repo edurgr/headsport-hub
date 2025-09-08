@@ -52,7 +52,7 @@ export async function PATCH(req: Request) {
       console.error('Error updating profile:', error);
       return NextResponse.json(
         { error: 'Failed to update profile: ' + error.message },
-        { status: 500 }
+        { status: 500 },
       );
     }
 

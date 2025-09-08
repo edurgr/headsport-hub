@@ -22,7 +22,7 @@ export default function ProfilePage() {
   const [scale, setScale] = useState<number>(1); // user zoom factor
   const [baseScale, setBaseScale] = useState<number>(1); // fit-to-cover base scale
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(
-    null
+    null,
   );
   const imgRef = useRef<HTMLImageElement | null>(null);
   const cropBoxRef = useRef<HTMLDivElement | null>(null);
@@ -237,7 +237,7 @@ export default function ProfilePage() {
                   id="profile-photo"
                   className="hidden"
                   accept="image/*"
-                  onChange={async e => {
+                  onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
                     const url = URL.createObjectURL(file);
@@ -253,7 +253,7 @@ export default function ProfilePage() {
                       const c = cropBoxRef.current?.clientWidth || 256;
                       const cover = Math.max(
                         c / Math.max(1, probe.naturalWidth),
-                        c / Math.max(1, probe.naturalHeight)
+                        c / Math.max(1, probe.naturalHeight),
                       );
                       setBaseScale(cover);
                     } catch {}
@@ -334,7 +334,7 @@ export default function ProfilePage() {
                   <input
                     type="text"
                     value={formData.name}
-                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Enter your full name"
                     required
@@ -347,7 +347,7 @@ export default function ProfilePage() {
                   <input
                     type="text"
                     value={formData.organization}
-                    onChange={e => setFormData({ ...formData, organization: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Organization name"
                   />
@@ -358,7 +358,7 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       value={formData.phone}
-                      onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Phone number"
                     />
@@ -368,7 +368,7 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       value={formData.country}
-                      onChange={e => setFormData({ ...formData, country: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Country"
                     />
@@ -379,7 +379,7 @@ export default function ProfilePage() {
                   <input
                     type="text"
                     value={formData.address}
-                    onChange={e => setFormData({ ...formData, address: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Street and number"
                   />
@@ -390,7 +390,7 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       value={formData.city}
-                      onChange={e => setFormData({ ...formData, city: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="City"
                     />
@@ -400,7 +400,7 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       value={formData.state}
-                      onChange={e => setFormData({ ...formData, state: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="State / Region"
                     />
@@ -412,7 +412,7 @@ export default function ProfilePage() {
                     <input
                       type="text"
                       value={formData.postal_code}
-                      onChange={e => setFormData({ ...formData, postal_code: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="ZIP / Postal Code"
                     />
@@ -525,7 +525,7 @@ export default function ProfilePage() {
                       style={{
                         transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${baseScale * scale})`,
                       }}
-                      onMouseDown={e => {
+                      onMouseDown={(e) => {
                         setDragging(true);
                         dragRef.current = {
                           startX: e.clientX,
@@ -534,7 +534,7 @@ export default function ProfilePage() {
                           origY: offset.y,
                         };
                       }}
-                      onMouseMove={e => {
+                      onMouseMove={(e) => {
                         if (!dragging || !dragRef.current) return;
                         const dx = e.clientX - dragRef.current.startX;
                         const dy = e.clientY - dragRef.current.startY;
@@ -548,7 +548,7 @@ export default function ProfilePage() {
                         setDragging(false);
                         dragRef.current = null;
                       }}
-                      onTouchStart={e => {
+                      onTouchStart={(e) => {
                         const t = e.touches[0];
                         setDragging(true);
                         dragRef.current = {
@@ -558,7 +558,7 @@ export default function ProfilePage() {
                           origY: offset.y,
                         };
                       }}
-                      onTouchMove={e => {
+                      onTouchMove={(e) => {
                         if (!dragging || !dragRef.current) return;
                         const t = e.touches[0];
                         const dx = t.clientX - dragRef.current.startX;
@@ -599,7 +599,7 @@ export default function ProfilePage() {
                   max={3}
                   step={0.01}
                   value={scale}
-                  onChange={e => setScale(Number(e.target.value))}
+                  onChange={(e) => setScale(Number(e.target.value))}
                   className="w-full"
                 />
               </div>
@@ -639,10 +639,10 @@ export default function ProfilePage() {
                   ctx.drawImage(
                     natural,
                     -natural.width / 2 + offset.x / totalScale,
-                    -natural.height / 2 + offset.y / totalScale
+                    -natural.height / 2 + offset.y / totalScale,
                   );
-                  const blob: Blob | null = await new Promise(res =>
-                    canvas.toBlob(res, 'image/jpeg', 0.9)
+                  const blob: Blob | null = await new Promise((res) =>
+                    canvas.toBlob(res, 'image/jpeg', 0.9),
                   );
                   if (!blob) return;
                   const bucket = (process.env.NEXT_PUBLIC_UPLOADS_BUCKET as string) || 'content';

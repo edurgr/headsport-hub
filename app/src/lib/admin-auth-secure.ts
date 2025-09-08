@@ -68,7 +68,7 @@ export async function verifyAdminAccess(req: NextRequest): Promise<
       const cookieStore = await cookies();
       console.log(
         'Available cookies:',
-        cookieStore.getAll().map(c => c.name)
+        cookieStore.getAll().map((c) => c.name),
       );
       return {
         success: false,

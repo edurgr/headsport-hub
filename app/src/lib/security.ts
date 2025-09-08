@@ -172,7 +172,7 @@ export function createSecureErrorResponse(message: string, status: number = 400)
       error: isProduction ? 'Request failed' : message,
       ...(isProduction ? {} : { details: message }),
     },
-    { status }
+    { status },
   );
 }
 
@@ -249,14 +249,14 @@ export const schemas = {
  */
 export function validateRequest<T>(
   schema: z.ZodSchema<T>,
-  data: unknown
+  data: unknown,
 ): { success: true; data: T } | { success: false; error: string } {
   try {
     const result = schema.parse(data);
     return { success: true, data: result };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false, error: error.issues.map(e => e.message).join(', ') };
+      return { success: false, error: error.issues.map((e) => e.message).join(', ') };
     }
     return { success: false, error: 'Validation failed' };
   }

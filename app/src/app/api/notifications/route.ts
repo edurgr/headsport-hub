@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       user.id,
       status as any,
       limit,
-      offset
+      offset,
     );
 
     return NextResponse.json(result);

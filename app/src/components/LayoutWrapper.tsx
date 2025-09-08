@@ -26,7 +26,7 @@ export default function LayoutWrapper({ children }: LayoutWrapperProps) {
     '/forgot-password',
   ];
 
-  const isPublicPage = publicPages.some(page => pathname?.startsWith(page));
+  const isPublicPage = publicPages.some((page) => pathname?.startsWith(page));
 
   if (isPublicPage) {
     return (

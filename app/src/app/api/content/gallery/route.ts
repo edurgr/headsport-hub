@@ -261,7 +261,7 @@ export async function GET(req: NextRequest) {
         };
 
         return item;
-      })
+      }),
     );
 
     return NextResponse.json({ items });

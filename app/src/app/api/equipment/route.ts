@@ -39,7 +39,7 @@ export async function GET(req: Request) {
   }
 
   // Execute all queries in parallel for better performance
-  const queries = sources.map(async src => {
+  const queries = sources.map(async (src) => {
     let query = sb
       .from(src.table)
       .select('*')

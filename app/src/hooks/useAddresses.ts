@@ -30,7 +30,7 @@ export function useAddresses(userId?: string) {
         throw fetchError;
       }
 
-      const formattedAddresses: Address[] = (data || []).map(addr => ({
+      const formattedAddresses: Address[] = (data || []).map((addr) => ({
         id: addr.id,
         name: addr.name,
         addressLine1: addr.address_line1,

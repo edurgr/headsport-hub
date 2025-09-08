@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     if (!supabaseAdmin) {
       return NextResponse.json(
         { error: 'Database connection required for analytics' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
       }
 
       const athleteStats = await Promise.all(
-        (athletes || []).map(async athlete => {
+        (athletes || []).map(async (athlete) => {
           // Get sessions for this athlete
           const { data: sessions } = await supabaseAdmin!
             .from('upload_sessions')
@@ -76,7 +76,7 @@ export async function GET(req: Request) {
             photos: photosResult.count || 0,
             videos: videosResult.count || 0,
           };
-        })
+        }),
       );
 
       return NextResponse.json({
@@ -115,7 +115,7 @@ export async function GET(req: Request) {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -148,7 +148,7 @@ export async function GET(req: Request) {
         .in('order_id', orderIds);
       orderStats.total_items = (orderItems || []).reduce(
         (sum: number, item: any) => sum + (item.quantity || 0),
-        0
+        0,
       );
     }
 
@@ -171,7 +171,7 @@ export async function GET(req: Request) {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

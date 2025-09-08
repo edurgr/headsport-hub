@@ -51,15 +51,15 @@ export default function ContentPage() {
   }>({ type: 'all' });
 
   const openViewer = (list: GalleryItem[], startId: string) => {
-    const idx = list.findIndex(it => it.id === startId);
+    const idx = list.findIndex((it) => it.id === startId);
     setViewerItems(list);
     setViewerIndex(idx >= 0 ? idx : 0);
     setViewerOpen(true);
   };
 
   const closeViewer = () => setViewerOpen(false);
-  const prevViewer = () => setViewerIndex(i => (i - 1 + viewerItems.length) % viewerItems.length);
-  const nextViewer = () => setViewerIndex(i => (i + 1) % viewerItems.length);
+  const prevViewer = () => setViewerIndex((i) => (i - 1 + viewerItems.length) % viewerItems.length);
+  const nextViewer = () => setViewerIndex((i) => (i + 1) % viewerItems.length);
 
   async function downloadFromSignedUrls(entries: { url: string; filename: string }[]) {
     const total = entries.length || 1;
@@ -118,19 +118,19 @@ export default function ContentPage() {
             .limit(50);
           if (error) throw error;
 
-          const sessionIds = Array.from(new Set((files || []).map(f => f.session_id)));
+          const sessionIds = Array.from(new Set((files || []).map((f) => f.session_id)));
           const { data: sessions } = await supabaseClient
             .from('upload_sessions')
             .select('id,user_id,title,created_at')
             .in('id', sessionIds);
 
           const sessionMap = new Map<string, any>();
-          (sessions || []).forEach(s => sessionMap.set(s.id, s));
+          (sessions || []).forEach((s) => sessionMap.set(s.id, s));
 
           const bucket = process.env.NEXT_PUBLIC_UPLOADS_BUCKET || 'user-uploads';
 
           const itemsLocal: GalleryItem[] = await Promise.all(
-            (files || []).map(async f => {
+            (files || []).map(async (f) => {
               const session = sessionMap.get(f.session_id);
               const authorName = session ? '' : '';
               let url: string | null = null;
@@ -165,7 +165,7 @@ export default function ContentPage() {
                 session_title: session?.title || null,
                 author_id: session?.user_id || user?.id || null,
               } as GalleryItem;
-            })
+            }),
           );
 
           setItems(itemsLocal);
@@ -217,7 +217,7 @@ export default function ContentPage() {
       if (thumbFile) thumbnail_base64 = await toBase64(thumbFile);
       const tags = editTags
         .split(',')
-        .map(t => t.trim())
+        .map((t) => t.trim())
         .filter(Boolean);
       const res = await fetch('/api/content/files', {
         method: 'PATCH',
@@ -256,16 +256,16 @@ export default function ContentPage() {
             .select('*')
             .order('created_at', { ascending: false })
             .limit(50);
-          const sessionIds = Array.from(new Set((files || []).map(f => f.session_id)));
+          const sessionIds = Array.from(new Set((files || []).map((f) => f.session_id)));
           const { data: sessions } = await supabaseClient
             .from('upload_sessions')
             .select('id,user_id,title,created_at')
             .in('id', sessionIds);
           const sessionMap = new Map<string, any>();
-          (sessions || []).forEach(s => sessionMap.set(s.id, s));
+          (sessions || []).forEach((s) => sessionMap.set(s.id, s));
           const bucket = process.env.NEXT_PUBLIC_UPLOADS_BUCKET || 'user-uploads';
           const itemsLocal: GalleryItem[] = await Promise.all(
-            (files || []).map(async f => {
+            (files || []).map(async (f) => {
               const session = sessionMap.get(f.session_id);
               let url: string | null = null;
               let thumbnail_url: string | null = null;
@@ -296,7 +296,7 @@ export default function ContentPage() {
                 author: '',
                 session_title: session?.title || null,
               } as GalleryItem;
-            })
+            }),
           );
           setItems(itemsLocal);
         } else {
@@ -437,7 +437,7 @@ export default function ContentPage() {
           <div className="flex items-center gap-3">
             <h1 className="text-2xl sm:text-3xl font-bold text-[hsl(var(--foreground))]">
               {role !== 'athlete' && activeAuthorId
-                ? `Content — ${items.find(i => i.author_id === activeAuthorId)?.author || 'Unknown'}`
+                ? `Content — ${items.find((i) => i.author_id === activeAuthorId)?.author || 'Unknown'}`
                 : 'Content'}
             </h1>
 
@@ -484,7 +484,7 @@ export default function ContentPage() {
                   const j = await resp.json();
                   if (j.urls && Array.isArray(j.urls)) {
                     await downloadFromSignedUrls(
-                      j.urls.map((u: any) => ({ url: u.url, filename: u.filename }))
+                      j.urls.map((u: any) => ({ url: u.url, filename: u.filename })),
                     );
                   }
                 }}
@@ -547,7 +547,7 @@ export default function ContentPage() {
                 const groupList = Array.from(groups.values());
                 return (
                   <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                    {groupList.map(g => (
+                    {groupList.map((g) => (
                       <div key={g.author_id} className="card overflow-hidden">
                         <div
                           className="aspect-video flex items-center justify-center relative"
@@ -645,7 +645,7 @@ export default function ContentPage() {
                                 const j = await resp.json();
                                 if (j.urls && Array.isArray(j.urls)) {
                                   await downloadFromSignedUrls(
-                                    j.urls.map((u: any) => ({ url: u.url, filename: u.filename }))
+                                    j.urls.map((u: any) => ({ url: u.url, filename: u.filename })),
                                   );
                                 }
                                 download.end();
@@ -663,148 +663,147 @@ export default function ContentPage() {
               })()
             ) : viewMode === 'grid' ? (
               <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 w-full max-w-full overflow-x-hidden">
-                {(activeAuthorId ? items.filter(it => it.author_id === activeAuthorId) : items).map(
-                  it => (
-                    <div key={it.id} className="card overflow-hidden">
-                      <div
-                        className="aspect-video flex items-center justify-center relative"
-                        style={{ backgroundColor: 'hsl(var(--secondary))' }}
-                      >
-                        {(() => {
-                          console.log(
-                            'Rendering item:',
-                            it.filename,
-                            'thumbnail_url:',
-                            it.thumbnail_url,
-                            'url:',
-                            it.url,
-                            'file_type:',
-                            it.file_type
-                          );
-                          if (it.file_type === 'image' && (it.thumbnail_url || it.url)) {
-                            return (
-                              <Image
-                                src={it.thumbnail_url || it.url || ''}
-                                alt={it.filename}
-                                fill
-                                className="object-cover"
-                                sizes="(max-width: 768px) 50vw, 33vw"
-                              />
-                            );
-                          } else if (it.file_type === 'video' && it.url) {
-                            // Inline playable video in the card - ALWAYS use original file URL for playback
-                            return (
-                              <video
-                                controls
-                                playsInline
-                                preload="metadata"
-                                src={it.url}
-                                poster={it.thumbnail_url || undefined}
-                                className="w-full h-full object-cover"
-                              />
-                            );
-                          } else {
-                            return (
-                              <div className="text-[hsl(var(--muted))] text-sm">No preview</div>
-                            );
-                          }
-                        })()}
-                      </div>
-                      <div className="p-4">
-                        <div className="flex items-center justify-between mb-1">
-                          <h3
-                            className="text-sm font-semibold text-[hsl(var(--foreground))] truncate"
-                            title={it.filename}
-                          >
-                            {it.filename}
-                          </h3>
-                          <span className="text-xs text-[hsl(var(--muted))]">
-                            {it.file_size ? (it.file_size / 1024 / 1024).toFixed(1) : '—'} MB
-                          </span>
-                        </div>
-                        <div className="text-xs text-[hsl(var(--muted))] flex items-center justify-between">
-                          <span>{it.author || 'Unknown'}</span>
-                          <span>{new Date(it.created_at).toLocaleDateString()}</span>
-                        </div>
-                        {it.session_title && (
-                          <div className="text-xs text-[hsl(var(--muted))] mt-1 truncate">
-                            Session: {it.session_title}
-                          </div>
-                        )}
-                        {/* Rating on cards */}
-                        <div className="mt-2">
-                          <div className="flex items-center gap-1">
-                            {[1, 2, 3, 4, 5].map(star => (
-                              <button
-                                key={star}
-                                onClick={async () => {
-                                  await fetch('/api/content/files', {
-                                    method: 'PATCH',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ id: it.id, rating: star }),
-                                  });
-                                  setItems(prev =>
-                                    prev.map(p =>
-                                      p.id === it.id
-                                        ? {
-                                            ...p,
-                                            metadata: { ...(p.metadata || {}), rating: star },
-                                          }
-                                        : p
-                                    )
-                                  );
-                                }}
-                                className={`text-sm ${((it.metadata as any)?.rating || 0) >= star ? 'text-[hsl(var(--warning))]' : 'text-[hsl(var(--border))]'} hover:text-[hsl(var(--warning))]`}
-                                aria-label={`Rate ${star}`}
-                              >
-                                ★
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="mt-3 flex items-center gap-2 text-sm">
-                          <button
-                            onClick={() =>
-                              openViewer(
-                                activeAuthorId
-                                  ? items.filter(x => x.author_id === activeAuthorId)
-                                  : items,
-                                it.id
-                              )
-                            }
-                            className="px-2 py-1 rounded hover:opacity-80"
-                            style={{
-                              backgroundColor: 'hsl(var(--secondary))',
-                              border: '1px solid hsl(var(--border))',
-                            }}
-                          >
-                            View
-                          </button>
-                          <label className="inline-flex items-center gap-1 text-xs text-[hsl(var(--muted))]">
-                            <input
-                              type="checkbox"
-                              checked={!!selected[it.id]}
-                              onChange={e =>
-                                setSelected(s => ({ ...s, [it.id]: e.target.checked }))
-                              }
+                {(activeAuthorId
+                  ? items.filter((it) => it.author_id === activeAuthorId)
+                  : items
+                ).map((it) => (
+                  <div key={it.id} className="card overflow-hidden">
+                    <div
+                      className="aspect-video flex items-center justify-center relative"
+                      style={{ backgroundColor: 'hsl(var(--secondary))' }}
+                    >
+                      {(() => {
+                        console.log(
+                          'Rendering item:',
+                          it.filename,
+                          'thumbnail_url:',
+                          it.thumbnail_url,
+                          'url:',
+                          it.url,
+                          'file_type:',
+                          it.file_type,
+                        );
+                        if (it.file_type === 'image' && (it.thumbnail_url || it.url)) {
+                          return (
+                            <Image
+                              src={it.thumbnail_url || it.url || ''}
+                              alt={it.filename}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 768px) 50vw, 33vw"
                             />
-                            Select
-                          </label>
-                          <button
-                            onClick={() => openEdit(it)}
-                            className="px-2 py-1 rounded hover:opacity-80"
-                            style={{
-                              backgroundColor: 'hsl(var(--secondary))',
-                              border: '1px solid hsl(var(--border))',
-                            }}
-                          >
-                            Edit
-                          </button>
+                          );
+                        } else if (it.file_type === 'video' && it.url) {
+                          // Inline playable video in the card - ALWAYS use original file URL for playback
+                          return (
+                            <video
+                              controls
+                              playsInline
+                              preload="metadata"
+                              src={it.url}
+                              poster={it.thumbnail_url || undefined}
+                              className="w-full h-full object-cover"
+                            />
+                          );
+                        } else {
+                          return <div className="text-[hsl(var(--muted))] text-sm">No preview</div>;
+                        }
+                      })()}
+                    </div>
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <h3
+                          className="text-sm font-semibold text-[hsl(var(--foreground))] truncate"
+                          title={it.filename}
+                        >
+                          {it.filename}
+                        </h3>
+                        <span className="text-xs text-[hsl(var(--muted))]">
+                          {it.file_size ? (it.file_size / 1024 / 1024).toFixed(1) : '—'} MB
+                        </span>
+                      </div>
+                      <div className="text-xs text-[hsl(var(--muted))] flex items-center justify-between">
+                        <span>{it.author || 'Unknown'}</span>
+                        <span>{new Date(it.created_at).toLocaleDateString()}</span>
+                      </div>
+                      {it.session_title && (
+                        <div className="text-xs text-[hsl(var(--muted))] mt-1 truncate">
+                          Session: {it.session_title}
                         </div>
+                      )}
+                      {/* Rating on cards */}
+                      <div className="mt-2">
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              onClick={async () => {
+                                await fetch('/api/content/files', {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ id: it.id, rating: star }),
+                                });
+                                setItems((prev) =>
+                                  prev.map((p) =>
+                                    p.id === it.id
+                                      ? {
+                                          ...p,
+                                          metadata: { ...(p.metadata || {}), rating: star },
+                                        }
+                                      : p,
+                                  ),
+                                );
+                              }}
+                              className={`text-sm ${((it.metadata as any)?.rating || 0) >= star ? 'text-[hsl(var(--warning))]' : 'text-[hsl(var(--border))]'} hover:text-[hsl(var(--warning))]`}
+                              aria-label={`Rate ${star}`}
+                            >
+                              ★
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center gap-2 text-sm">
+                        <button
+                          onClick={() =>
+                            openViewer(
+                              activeAuthorId
+                                ? items.filter((x) => x.author_id === activeAuthorId)
+                                : items,
+                              it.id,
+                            )
+                          }
+                          className="px-2 py-1 rounded hover:opacity-80"
+                          style={{
+                            backgroundColor: 'hsl(var(--secondary))',
+                            border: '1px solid hsl(var(--border))',
+                          }}
+                        >
+                          View
+                        </button>
+                        <label className="inline-flex items-center gap-1 text-xs text-[hsl(var(--muted))]">
+                          <input
+                            type="checkbox"
+                            checked={!!selected[it.id]}
+                            onChange={(e) =>
+                              setSelected((s) => ({ ...s, [it.id]: e.target.checked }))
+                            }
+                          />
+                          Select
+                        </label>
+                        <button
+                          onClick={() => openEdit(it)}
+                          className="px-2 py-1 rounded hover:opacity-80"
+                          style={{
+                            backgroundColor: 'hsl(var(--secondary))',
+                            border: '1px solid hsl(var(--border))',
+                          }}
+                        >
+                          Edit
+                        </button>
                       </div>
                     </div>
-                  )
-                )}
+                  </div>
+                ))}
               </div>
             ) : (
               <div
@@ -822,7 +821,7 @@ export default function ContentPage() {
                   >
                     <div>
                       <span className="text-[hsl(var(--muted))] font-semibold">Athlete:</span>{' '}
-                      {items.find(i => i.author_id === activeAuthorId)?.author || 'Unknown'}
+                      {items.find((i) => i.author_id === activeAuthorId)?.author || 'Unknown'}
                     </div>
                     <div>
                       <button
@@ -842,7 +841,7 @@ export default function ContentPage() {
                       <ResponsiveSelect
                         ariaLabel="Filter type"
                         value={tableFilter.type}
-                        onChange={v => setTableFilter({ type: v as any })}
+                        onChange={(v) => setTableFilter({ type: v as any })}
                         options={[
                           { value: 'all', label: 'All' },
                           { value: 'image', label: 'Images' },
@@ -860,7 +859,7 @@ export default function ContentPage() {
                       <ResponsiveSelect
                         ariaLabel="Sort key"
                         value={tableSort.key}
-                        onChange={v => setTableSort(s => ({ ...s, key: v as any }))}
+                        onChange={(v) => setTableSort((s) => ({ ...s, key: v as any }))}
                         options={[
                           { value: 'created_at', label: 'Date' },
                           { value: 'filename', label: 'Name' },
@@ -895,12 +894,12 @@ export default function ContentPage() {
                     <tbody>
                       {(() => {
                         const base = activeAuthorId
-                          ? items.filter(it => it.author_id === activeAuthorId)
+                          ? items.filter((it) => it.author_id === activeAuthorId)
                           : items;
                         const filtered =
                           tableFilter.type === 'all'
                             ? base
-                            : base.filter(it => it.file_type === tableFilter.type);
+                            : base.filter((it) => it.file_type === tableFilter.type);
                         const sorted = [...filtered].sort((a, b) => {
                           const dir = -1; // fixed: descending
                           switch (tableSort.key) {
@@ -926,7 +925,7 @@ export default function ContentPage() {
                           }
                         });
                         return sorted;
-                      })().map(it => (
+                      })().map((it) => (
                         <tr key={it.id} className="border-t">
                           <td className="px-4 py-2">
                             {it.file_type === 'image' && it.url ? (
@@ -957,7 +956,7 @@ export default function ContentPage() {
                           </td>
                           <td className="px-4 py-2">
                             <div className="flex items-center gap-1">
-                              {[1, 2, 3, 4, 5].map(star => (
+                              {[1, 2, 3, 4, 5].map((star) => (
                                 <button
                                   key={star}
                                   onClick={async () => {
@@ -967,15 +966,15 @@ export default function ContentPage() {
                                       body: JSON.stringify({ id: it.id, rating: star }),
                                     });
                                     // Optimistic update
-                                    setItems(prev =>
-                                      prev.map(p =>
+                                    setItems((prev) =>
+                                      prev.map((p) =>
                                         p.id === it.id
                                           ? {
                                               ...p,
                                               metadata: { ...(p.metadata || {}), rating: star },
                                             }
-                                          : p
-                                      )
+                                          : p,
+                                      ),
                                     );
                                   }}
                                   className={
@@ -1067,7 +1066,7 @@ export default function ContentPage() {
                   </label>
                   <input
                     value={editTitle}
-                    onChange={e => setEditTitle(e.target.value)}
+                    onChange={(e) => setEditTitle(e.target.value)}
                     className="input"
                     placeholder="Optional title"
                   />
@@ -1078,7 +1077,7 @@ export default function ContentPage() {
                   </label>
                   <input
                     value={editTags}
-                    onChange={e => setEditTags(e.target.value)}
+                    onChange={(e) => setEditTags(e.target.value)}
                     className="input"
                     placeholder="e.g. training, carving"
                   />
@@ -1089,7 +1088,7 @@ export default function ContentPage() {
                   </label>
                   <textarea
                     value={editDescription}
-                    onChange={e => setEditDescription(e.target.value)}
+                    onChange={(e) => setEditDescription(e.target.value)}
                     rows={3}
                     className="textarea"
                     placeholder="Short description"
@@ -1136,7 +1135,7 @@ export default function ContentPage() {
                 {(() => {
                   const athleteName =
                     role !== 'athlete' && activeAuthorId
-                      ? items.find(i => i.author_id === activeAuthorId)?.author || 'Unknown'
+                      ? items.find((i) => i.author_id === activeAuthorId)?.author || 'Unknown'
                       : viewerItems[viewerIndex]?.author || '';
                   return athleteName ? `Content — ${athleteName}` : 'Content';
                 })()}

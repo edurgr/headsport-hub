@@ -69,7 +69,7 @@ export default function Home() {
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
           <div className="grid md:grid-cols-4 gap-6 mb-8">
-            {[1, 2, 3, 4].map(i => (
+            {[1, 2, 3, 4].map((i) => (
               <div key={i} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <div className="w-12 h-12 bg-gray-200 rounded-lg mb-4"></div>
                 <div className="h-6 bg-gray-200 rounded mb-2"></div>
@@ -88,7 +88,7 @@ export default function Home() {
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
           <div className="grid md:grid-cols-4 gap-6 mb-8">
-            {[1, 2, 3, 4].map(i => (
+            {[1, 2, 3, 4].map((i) => (
               <div key={i} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <div className="w-12 h-12 bg-gray-200 rounded-lg mb-4"></div>
                 <div className="h-6 bg-gray-200 rounded mb-2"></div>
@@ -148,7 +148,7 @@ export default function Home() {
                   className="input rounded-t-md"
                   placeholder="Email address"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div>
@@ -164,7 +164,7 @@ export default function Home() {
                   className="input rounded-b-md"
                   placeholder="Password"
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
             </div>
@@ -397,23 +397,23 @@ function ContentSummary({ userId }: { userId: string }) {
     fetch(`/api/content/gallery?limit=5&user_id=${encodeURIComponent(userId)}`, {
       cache: 'no-store',
     })
-      .then(r => (r.ok ? r.json() : Promise.reject(r)))
-      .then(j =>
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
+      .then((j) =>
         setItems(
           (j.items || []).map((x: any) => ({
             id: x.id,
             filename: x.filename,
             created_at: x.created_at,
             thumbnail_url: x.thumbnail_url,
-          }))
-        )
+          })),
+        ),
       )
       .catch(() => setItems([]));
   }, [userId]);
   if (items.length === 0) return <p className="text-sm text-gray-500">No recent uploads.</p>;
   return (
     <div className="grid grid-cols-5 gap-3">
-      {items.map(i => (
+      {items.map((i) => (
         <div key={i.id} className="text-center">
           <div className="w-16 h-16 mx-auto rounded overflow-hidden bg-gray-100 flex items-center justify-center">
             {i.thumbnail_url ? (
@@ -440,20 +440,20 @@ function OrdersSummary({ email }: { email: string }) {
   useEffect(() => {
     if (!email) return;
     fetch(`/api/orders?scope=mine&athleteEmail=${encodeURIComponent(email)}`, { cache: 'no-store' })
-      .then(r => (r.ok ? r.json() : Promise.reject(r)))
-      .then(j =>
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
+      .then((j) =>
         setOrders(
           (j.orders || [])
             .slice(0, 5)
-            .map((o: any) => ({ id: o.id, created_at: o.created_at, status: o.status }))
-        )
+            .map((o: any) => ({ id: o.id, created_at: o.created_at, status: o.status })),
+        ),
       )
       .catch(() => setOrders([]));
   }, [email]);
   if (orders.length === 0) return <p className="text-sm text-gray-500">No recent orders.</p>;
   return (
     <ul className="text-sm text-gray-700 space-y-1">
-      {orders.map(o => (
+      {orders.map((o) => (
         <li key={o.id} className="flex items-center gap-2">
           <span
             className={`px-2 py-0.5 text-[10px] rounded-full ${o.status === 'approved' ? 'badge-success' : o.status === 'pending_approval' ? 'badge-warning' : 'badge-error'}`}
@@ -481,50 +481,50 @@ function TeamSnapshot() {
   useEffect(() => {
     // Athletes total
     fetch('/api/profiles/list?role=athlete&limit=1', { cache: 'no-store' })
-      .then(r => (r.ok ? r.json() : Promise.reject(r)))
-      .then(j => setTotals(t => ({ ...t, athletes: j.pagination?.total || 0 })))
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
+      .then((j) => setTotals((t) => ({ ...t, athletes: j.pagination?.total || 0 })))
       .catch(() => {});
     // Pending orders
     fetch('/api/orders?scope=pending', { cache: 'no-store' })
-      .then(r => (r.ok ? r.json() : Promise.reject(r)))
-      .then(j => setTotals(t => ({ ...t, pending: (j.orders || []).length })))
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
+      .then((j) => setTotals((t) => ({ ...t, pending: (j.orders || []).length })))
       .catch(() => {});
     // Latest uploads (count last 24h approx by filtering client-side)
     fetch('/api/content/gallery?limit=20', { cache: 'no-store' })
-      .then(r => (r.ok ? r.json() : Promise.reject(r)))
-      .then(j => {
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
+      .then((j) => {
         const now = Date.now();
         const uploads24h = (j.items || []).filter(
-          (x: any) => now - Date.parse(x.created_at) < 24 * 3600 * 1000
+          (x: any) => now - Date.parse(x.created_at) < 24 * 3600 * 1000,
         ).length;
-        setTotals(t => ({ ...t, uploads: uploads24h }));
+        setTotals((t) => ({ ...t, uploads: uploads24h }));
       })
       .catch(() => {});
     // Recent approvals and pending queue
     fetch('/api/orders?scope=approved', { cache: 'no-store' })
-      .then(r => (r.ok ? r.json() : Promise.reject(r)))
-      .then(j =>
-        setRecent(s => ({
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
+      .then((j) =>
+        setRecent((s) => ({
           ...s,
           approvals: (j.orders || []).slice(0, 5).map((o: any) => ({
             id: o.id,
             created_at: o.approved_at || o.created_at,
             athlete: o.athlete_name || o.athlete_email,
           })),
-        }))
+        })),
       )
       .catch(() => {});
     fetch('/api/orders?scope=pending', { cache: 'no-store' })
-      .then(r => (r.ok ? r.json() : Promise.reject(r)))
-      .then(j =>
-        setRecent(s => ({
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
+      .then((j) =>
+        setRecent((s) => ({
           ...s,
           pending: (j.orders || []).slice(0, 5).map((o: any) => ({
             id: o.id,
             created_at: o.created_at,
             athlete: o.athlete_name || o.athlete_email,
           })),
-        }))
+        })),
       )
       .catch(() => {});
   }, []);
@@ -552,7 +552,7 @@ function TeamSnapshot() {
             <p className="text-sm text-gray-500">No approvals yet.</p>
           ) : (
             <ul className="text-sm text-gray-700 space-y-1">
-              {recent.approvals.map(a => (
+              {recent.approvals.map((a) => (
                 <li key={a.id}>
                   • {a.athlete} — {new Date(a.created_at).toLocaleDateString()}
                 </li>
@@ -566,7 +566,7 @@ function TeamSnapshot() {
             <p className="text-sm text-gray-500">No pending orders.</p>
           ) : (
             <ul className="text-sm text-gray-700 space-y-1">
-              {recent.pending.map(p => (
+              {recent.pending.map((p) => (
                 <li key={p.id}>
                   • {p.athlete} — {new Date(p.created_at).toLocaleDateString()}
                 </li>

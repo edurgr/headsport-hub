@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
         {
           status: rateLimitResult.status,
           headers: rateLimitResult.headers as Record<string, string>,
-        }
+        },
       );
     }
 
@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
             ...item,
             table_name: cat,
             category: cat,
-          }))
+          })),
         );
       }
     }
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
         {
           status: rateLimitResult.status,
           headers: rateLimitResult.headers as Record<string, string>,
-        }
+        },
       );
     }
 
@@ -194,7 +194,7 @@ export async function PUT(req: NextRequest) {
     if (!category || !productId || !productData) {
       return NextResponse.json(
         { error: 'Category, product ID and product data required' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 

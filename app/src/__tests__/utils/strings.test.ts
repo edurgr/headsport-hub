@@ -29,12 +29,12 @@ describe('String utilities', () => {
 
     const invalidEmails = ['invalid-email', '@domain.com', 'test@', ''];
 
-    validEmails.forEach(email => {
+    validEmails.forEach((email) => {
       expect(emailRegex.test(email)).toBe(true);
       expect(isValidEmail(email)).toBe(true);
     });
 
-    invalidEmails.forEach(email => {
+    invalidEmails.forEach((email) => {
       expect(emailRegex.test(email)).toBe(false);
       expect(isValidEmail(email)).toBe(false);
     });

@@ -59,7 +59,7 @@ export async function POST(req: Request) {
     if (error || !updated)
       return NextResponse.json(
         { error: 'Failed to update order: ' + (error?.message || '') },
-        { status: 500 }
+        { status: 500 },
       );
 
     // Optional email sending is controlled by env toggle
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
 
       const envRecipients = (process.env.NEXT_PUBLIC_ORDER_NOTIFICATION_EMAILS || '')
         .split(',')
-        .map(s => s.trim())
+        .map((s) => s.trim())
         .filter(Boolean);
       // Primary: approver email; Fallback: env recipients (if approver email not available)
       const recipients = approverEmail ? [approverEmail] : envRecipients;

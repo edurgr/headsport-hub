@@ -34,13 +34,13 @@ export async function GET(req: Request) {
     if (error) {
       return NextResponse.json(
         { error: 'Failed to fetch orders: ' + error.message },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     // Enrich with athlete phone from profiles (single query)
     const emails = Array.from(
-      new Set((orders || []).map((o: any) => o.athlete_email).filter(Boolean))
+      new Set((orders || []).map((o: any) => o.athlete_email).filter(Boolean)),
     );
     const phoneByEmail: Record<string, string> = {};
     if (emails.length > 0) {
@@ -65,7 +65,7 @@ export async function GET(req: Request) {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

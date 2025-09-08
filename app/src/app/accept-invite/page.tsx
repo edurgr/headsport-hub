@@ -104,10 +104,10 @@ export default function AcceptInvitePage() {
         if (response.status === 429) {
           // Rate limiting
           setError(
-            '⏰ Rate limit reached: Please wait 36 seconds before trying to create another account.'
+            '⏰ Rate limit reached: Please wait 36 seconds before trying to create another account.',
           );
           setInfo(
-            '💡 Tip: If you just created another account, wait a moment before trying again.'
+            '💡 Tip: If you just created another account, wait a moment before trying again.',
           );
         } else if (response.status === 409 && data?.code === 'user_exists') {
           setError('An account with this email already exists. Sign in to accept the invitation.');
@@ -238,7 +238,7 @@ export default function AcceptInvitePage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
             <input
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Your full name"
               type="text"
@@ -249,7 +249,7 @@ export default function AcceptInvitePage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="your.email@example.com"
               type="email"
@@ -261,7 +261,7 @@ export default function AcceptInvitePage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <input
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="••••••••"
               type="password"
@@ -276,7 +276,7 @@ export default function AcceptInvitePage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
             <input
               value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="••••••••"
               type="password"

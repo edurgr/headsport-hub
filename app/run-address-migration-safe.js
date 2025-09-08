@@ -239,7 +239,7 @@ async function runMigration() {
     console.log('   3. Test the address functionality in your app');
     console.log('');
     console.log(
-      '🔗 Supabase SQL Editor: https://supabase.com/dashboard/project/[your-project]/sql'
+      '🔗 Supabase SQL Editor: https://supabase.com/dashboard/project/[your-project]/sql',
     );
   } catch (error) {
     console.error('❌ Migration failed:', error.message);

@@ -100,7 +100,7 @@ export class ContentModerationService {
   static async getModerationQueue(
     limit: number = 50,
     offset: number = 0,
-    priority?: number
+    priority?: number,
   ): Promise<{ items: ModerationQueueItem[]; total: number }> {
     const supabase = this.getSupabaseAdmin();
 
@@ -152,7 +152,7 @@ export class ContentModerationService {
               name,
               email
             )
-          `
+          `,
           )
           .eq('id', file.session_id) // Use session_id from the file
           .single();
@@ -204,7 +204,7 @@ export class ContentModerationService {
     action: ModerationAction,
     performedBy: string,
     reason?: string,
-    notes?: string
+    notes?: string,
   ): Promise<void> {
     const supabase = this.getSupabaseAdmin();
 
@@ -253,7 +253,7 @@ export class ContentModerationService {
             user_id,
             profiles!upload_sessions_user_id_fkey(name, email)
           )
-        `
+        `,
         )
         .eq('id', fileId)
         .single();
@@ -265,7 +265,7 @@ export class ContentModerationService {
           'Content Rejected',
           `Your content "${(fileData as any).filename}" was rejected. Reason: ${reason || 'No reason provided'}`,
           { file_id: fileId, reason },
-          '/content'
+          '/content',
         );
       }
     }
@@ -300,7 +300,7 @@ export class ContentModerationService {
       // Calculate stats from files data
       const totalFiles = filesData?.length || 0;
       const pendingFiles =
-        filesData?.filter(file => !file.moderation_status || file.moderation_status === 'pending')
+        filesData?.filter((file) => !file.moderation_status || file.moderation_status === 'pending')
           .length || 0;
       // const approvedFiles = filesData?.filter(file =>
       //   file.moderation_status === 'approved'
@@ -309,12 +309,12 @@ export class ContentModerationService {
       //   file.moderation_status === 'rejected'
       // ).length || 0;
       const flaggedFiles =
-        filesData?.filter(file => file.moderation_status === 'flagged').length || 0;
+        filesData?.filter((file) => file.moderation_status === 'flagged').length || 0;
       // const highPriority = pendingFiles; // All pending files are high priority
 
       const totalProcessed = historyData?.length || 0;
-      const approved = historyData?.filter(item => item.action === 'approve').length || 0;
-      const rejected = historyData?.filter(item => item.action === 'reject').length || 0;
+      const approved = historyData?.filter((item) => item.action === 'approve').length || 0;
+      const rejected = historyData?.filter((item) => item.action === 'reject').length || 0;
 
       return {
         total_files: totalFiles + totalProcessed,
@@ -373,7 +373,7 @@ export class ContentModerationService {
 
   // Create moderation rule
   static async createModerationRule(
-    rule: Omit<ModerationRule, 'id' | 'created_at' | 'updated_at'>
+    rule: Omit<ModerationRule, 'id' | 'created_at' | 'updated_at'>,
   ): Promise<void> {
     const supabase = await supabaseServer();
 
@@ -392,7 +392,7 @@ export class ContentModerationService {
   // Update moderation rule
   static async updateModerationRule(
     ruleId: string,
-    updates: Partial<Omit<ModerationRule, 'id' | 'created_at' | 'updated_at'>>
+    updates: Partial<Omit<ModerationRule, 'id' | 'created_at' | 'updated_at'>>,
   ): Promise<void> {
     const supabase = await supabaseServer();
 
@@ -426,7 +426,7 @@ export class ContentModerationService {
   static async getModerationHistory(
     fileId?: string,
     _limit = 50,
-    _offset = 0
+    _offset = 0,
   ): Promise<{ history: ModerationHistory[]; total: number }> {
     // Return empty history since moderation_history table doesn't exist
     return {
@@ -456,7 +456,7 @@ export class ContentModerationService {
     fileId: string,
     priority: number = 1,
     autoFlagged: boolean = false,
-    flaggedReasons?: string[]
+    flaggedReasons?: string[],
   ): Promise<string | null> {
     const supabase = await supabaseServer();
 
@@ -499,7 +499,7 @@ export class ContentModerationService {
     action: ModerationAction,
     performedBy: string,
     reason?: string,
-    notes?: string
+    notes?: string,
   ): Promise<void> {
     // const supabase = await supabaseServer();
 
@@ -513,7 +513,7 @@ export class ContentModerationService {
   static async getPendingContentForUser(
     userId: string,
     limit: number = 50,
-    offset: number = 0
+    offset: number = 0,
   ): Promise<{ files: any[]; total: number }> {
     const supabase = await supabaseServer();
 
@@ -527,7 +527,7 @@ export class ContentModerationService {
           profiles!upload_sessions_user_id_fkey(name, email)
         )
       `,
-        { count: 'exact' }
+        { count: 'exact' },
       )
       .eq('upload_sessions.user_id', userId)
       .eq('moderation_status', 'pending')

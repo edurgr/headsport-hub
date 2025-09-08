@@ -3,7 +3,7 @@ export async function sendEmail(
   to: string,
   subject: string,
   html: string,
-  text?: string
+  text?: string,
 ): Promise<boolean> {
   // Try Postmark first
   if (process.env.POSTMARK_TOKEN) {
@@ -62,7 +62,7 @@ export async function sendEmail(
               },
             }),
           }),
-        }
+        },
       );
 
       if (sesResponse.ok) {
@@ -91,7 +91,7 @@ export async function sendInvitationEmail(
   email: string,
   rolePreset: string,
   inviteUrl: string,
-  message?: string
+  message?: string,
 ): Promise<boolean> {
   const subject = `You've been invited to HEAD Hub`;
   const html = `
@@ -136,7 +136,7 @@ export async function sendOrderConfirmationEmail(
     length_cm?: string;
     quantity: number;
     boot_size?: string;
-  }>
+  }>,
 ): Promise<boolean> {
   const subject = `Order Confirmation - ${orderId}`;
   const html = `
@@ -151,12 +151,12 @@ export async function sendOrderConfirmationEmail(
         <ul>
           ${items
             .map(
-              item => `
+              (item) => `
             <li>${item.product.name} (${item.product.sku}) - Qty: ${item.quantity}
               ${item.length_cm ? ` - Length: ${item.length_cm}cm` : ''}
               ${item.boot_size ? ` - Size: ${item.boot_size}` : ''}
             </li>
-          `
+          `,
             )
             .join('')}
         </ul>

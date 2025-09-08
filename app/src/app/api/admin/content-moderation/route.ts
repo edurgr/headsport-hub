@@ -26,11 +26,11 @@ export async function GET(req: Request) {
 
       const filesById: Record<string, any> = {};
       if (queueItems.length > 0) {
-        const fileIds = Array.from(new Set(queueItems.map(q => q.file_id)));
+        const fileIds = Array.from(new Set(queueItems.map((q) => q.file_id)));
         const { data: files } = await (sb as any)
           .from('upload_files')
           .select(
-            'id, filename, file_type, file_size, created_at, upload_sessions(id, profiles(name,email))'
+            'id, filename, file_type, file_size, created_at, upload_sessions(id, profiles(name,email))',
           )
           .in('id', fileIds);
         for (const f of files || []) filesById[f.id] = f;
@@ -41,7 +41,7 @@ export async function GET(req: Request) {
         const { data: pendingFiles } = await (sb as any)
           .from('upload_files')
           .select(
-            'id, filename, file_type, file_size, created_at, upload_sessions(id, profiles(name,email))'
+            'id, filename, file_type, file_size, created_at, upload_sessions(id, profiles(name,email))',
           )
           .eq('moderation_status', 'pending')
           .order('created_at', { ascending: false })
@@ -121,7 +121,7 @@ export async function GET(req: Request) {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -210,7 +210,7 @@ export async function POST(req: Request) {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

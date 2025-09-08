@@ -99,7 +99,7 @@ export async function GET(req: Request) {
       .select('id')
       .eq('user_id', targetAthleteId);
 
-    const sessionIds = (sessions || []).map(s => s.id);
+    const sessionIds = (sessions || []).map((s) => s.id);
 
     let contentStats = {
       total_content: 0,
@@ -140,14 +140,14 @@ export async function GET(req: Request) {
 
     const orderStats = {
       total_orders: orders?.length || 0,
-      pending_orders: orders?.filter(o => o.status === 'pending_approval').length || 0,
-      approved_orders: orders?.filter(o => o.status === 'approved').length || 0,
-      rejected_orders: orders?.filter(o => o.status === 'rejected').length || 0,
+      pending_orders: orders?.filter((o) => o.status === 'pending_approval').length || 0,
+      approved_orders: orders?.filter((o) => o.status === 'approved').length || 0,
+      rejected_orders: orders?.filter((o) => o.status === 'rejected').length || 0,
       total_items: 0,
     };
 
     // Get total items ordered
-    const orderIds = (orders || []).map(o => o.id);
+    const orderIds = (orders || []).map((o) => o.id);
     if (orderIds.length > 0) {
       const { data: orderItems } = await supabaseAdminClient
         .from('order_items')
@@ -155,7 +155,7 @@ export async function GET(req: Request) {
         .in('order_id', orderIds);
       orderStats.total_items = (orderItems || []).reduce(
         (sum, item) => sum + (item.quantity || 0),
-        0
+        0,
       );
     }
 
@@ -173,7 +173,7 @@ export async function GET(req: Request) {
           orders: orderStats,
         },
       },
-      { headers: { 'Cache-Control': 'no-store' } }
+      { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch (error) {
     console.error('My stats error:', error);
@@ -182,7 +182,7 @@ export async function GET(req: Request) {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

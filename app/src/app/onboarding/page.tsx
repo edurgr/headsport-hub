@@ -94,7 +94,7 @@ export default function OnboardingPage() {
               type="text"
               required
               value={formData.name}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Your name"
             />
@@ -105,7 +105,7 @@ export default function OnboardingPage() {
             <input
               type="text"
               value={formData.organization}
-              onChange={e => setFormData({ ...formData, organization: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Company / Team (optional)"
             />
@@ -116,7 +116,7 @@ export default function OnboardingPage() {
             <input
               type="text"
               value={formData.phone}
-              onChange={e => setFormData({ ...formData, phone: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Phone number"
             />
@@ -127,7 +127,7 @@ export default function OnboardingPage() {
             <input
               type="text"
               value={formData.country}
-              onChange={e => setFormData({ ...formData, country: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, country: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Country"
             />
@@ -138,7 +138,7 @@ export default function OnboardingPage() {
             <input
               type="text"
               value={formData.address}
-              onChange={e => setFormData({ ...formData, address: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Street and number"
             />
@@ -149,7 +149,7 @@ export default function OnboardingPage() {
             <input
               type="text"
               value={formData.city}
-              onChange={e => setFormData({ ...formData, city: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="City"
             />
@@ -160,7 +160,7 @@ export default function OnboardingPage() {
             <input
               type="text"
               value={formData.state}
-              onChange={e => setFormData({ ...formData, state: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, state: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="State / Region"
             />
@@ -171,7 +171,7 @@ export default function OnboardingPage() {
             <input
               type="text"
               value={formData.postal_code}
-              onChange={e => setFormData({ ...formData, postal_code: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="ZIP / Postal Code"
             />

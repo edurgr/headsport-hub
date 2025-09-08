@@ -45,7 +45,7 @@ export async function POST(req: Request) {
 
     if (existingProfile) {
       return addSecurityHeaders(
-        createSecureErrorResponse('Profile with this email already exists', 409)
+        createSecureErrorResponse('Profile with this email already exists', 409),
       );
     }
 
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
       {
         email,
         email_confirm: true,
-      }
+      },
     );
 
     if (createUserError) {
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
           {
             error: 'Failed to create or find existing user: ' + createUserError.message,
           },
-          { status: 500 }
+          { status: 500 },
         );
       }
       userId = existingByEmail.id;
@@ -106,7 +106,7 @@ export async function POST(req: Request) {
     if (updateError) {
       return NextResponse.json(
         { error: 'Failed to update profile: ' + updateError.message },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -124,7 +124,7 @@ export async function POST(req: Request) {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

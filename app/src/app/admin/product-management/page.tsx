@@ -71,7 +71,7 @@ export default function ProductManagementPage() {
         if (response.ok) {
           const nextItems: Product[] = data.products || [];
           if (pageParam > 1) {
-            setProducts(prev => [...prev, ...nextItems]);
+            setProducts((prev) => [...prev, ...nextItems]);
           } else {
             setProducts(nextItems);
           }
@@ -88,7 +88,7 @@ export default function ProductManagementPage() {
         setLoadingMore(false);
       }
     },
-    [authenticatedFetch, categoryFilter, searchTerm]
+    [authenticatedFetch, categoryFilter, searchTerm],
   );
 
   useEffect(() => {
@@ -113,7 +113,7 @@ export default function ProductManagementPage() {
     if (!loadMoreRef.current) return;
     const el = loadMoreRef.current;
     const observer = new IntersectionObserver(
-      entries => {
+      (entries) => {
         const first = entries[0];
         if (first.isIntersecting && hasMore && !loading && !loadingMore) {
           const next = page + 1;
@@ -121,7 +121,7 @@ export default function ProductManagementPage() {
           fetchProducts(next);
         }
       },
-      { root: null, rootMargin: '200px', threshold: 0.1 }
+      { root: null, rootMargin: '200px', threshold: 0.1 },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -273,7 +273,7 @@ export default function ProductManagementPage() {
               <input
                 type="text"
                 value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="input"
                 placeholder="Search by name or article..."
               />
@@ -285,10 +285,10 @@ export default function ProductManagementPage() {
               </label>
               <select
                 value={categoryFilter}
-                onChange={e => setCategoryFilter(e.target.value)}
+                onChange={(e) => setCategoryFilter(e.target.value)}
                 className="input"
               >
-                {categories.map(cat => (
+                {categories.map((cat) => (
                   <option key={cat.value} value={cat.value}>
                     {cat.label}
                   </option>
@@ -404,7 +404,7 @@ export default function ProductManagementPage() {
                     borderColor: 'hsl(var(--border))',
                   }}
                 >
-                  {products.map(product => (
+                  {products.map((product) => (
                     <tr key={`${product.table_name}-${product.id}`} className="hover:opacity-95">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-[hsl(var(--foreground))]">
@@ -542,7 +542,7 @@ export default function ProductManagementPage() {
               setEditingProduct(null);
             }}
             onSave={editingProduct ? handleUpdateProduct : handleCreateProduct}
-            categories={categories.filter(cat => cat.value !== 'all')}
+            categories={categories.filter((cat) => cat.value !== 'all')}
           />
         )}
       </div>
@@ -574,7 +574,7 @@ function ProductModal({ product, onClose, onSave, categories }: ProductModalProp
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     }));
@@ -627,7 +627,7 @@ function ProductModal({ product, onClose, onSave, categories }: ProductModalProp
                   required
                   className="input mt-1"
                 >
-                  {categories.map(cat => (
+                  {categories.map((cat) => (
                     <option key={cat.value} value={cat.value}>
                       {cat.label}
                     </option>

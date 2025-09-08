@@ -130,8 +130,8 @@ export const searchDemoProducts = (query: string) => {
   const lowercaseQuery = query.toLowerCase();
 
   return allProducts.filter(
-    product =>
+    (product) =>
       product.name.toLowerCase().includes(lowercaseQuery) ||
-      product.article.toLowerCase().includes(lowercaseQuery)
+      product.article.toLowerCase().includes(lowercaseQuery),
   );
 };

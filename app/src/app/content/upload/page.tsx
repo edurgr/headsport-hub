@@ -43,13 +43,13 @@ export default function UploadPage() {
   async function xhrUploadSignedUrl(
     url: string,
     file: File,
-    onProgress: (loaded: number, total: number, deltaBytes: number, dt: number) => void
+    onProgress: (loaded: number, total: number, deltaBytes: number, dt: number) => void,
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       let lastLoaded = 0;
       let lastTime = performance.now();
-      xhr.upload.onprogress = e => {
+      xhr.upload.onprogress = (e) => {
         const now = performance.now();
         const dt = Math.max(0.001, (now - lastTime) / 1000);
         lastTime = now;
@@ -196,7 +196,7 @@ export default function UploadPage() {
         const file = fileArray[i];
         try {
           setUploadStatus(`Uploading ${file.name}...`);
-          setPerFileStatus(prev => {
+          setPerFileStatus((prev) => {
             const next = [...prev];
             next[i] = 'uploading';
             return next;
@@ -339,7 +339,7 @@ export default function UploadPage() {
           uploadedBytesRef.current += file.size || 0;
           setUploadProgress((uploadedCount / fileArray.length) * 100);
           setUploadStatus(`Uploaded ${uploadedCount}/${fileArray.length} files`);
-          setPerFileStatus(prev => {
+          setPerFileStatus((prev) => {
             const next = [...prev];
             next[i] = 'done';
             return next;
@@ -347,9 +347,9 @@ export default function UploadPage() {
         } catch (fileError) {
           console.error(`Error uploading ${file.name}:`, fileError);
           setUploadStatus(
-            `Error uploading ${file.name}: ${fileError instanceof Error ? fileError.message : 'Unknown error'}`
+            `Error uploading ${file.name}: ${fileError instanceof Error ? fileError.message : 'Unknown error'}`,
           );
-          setPerFileStatus(prev => {
+          setPerFileStatus((prev) => {
             const next = [...prev];
             next[i] = 'error';
             return next;
@@ -422,8 +422,8 @@ export default function UploadPage() {
         const ctx = canvas.getContext('2d');
         if (!ctx) return null;
         ctx.drawImage(img, 0, 0, w, h);
-        const blob: Blob | null = await new Promise(resolve =>
-          canvas.toBlob(resolve, 'image/jpeg', 0.8)
+        const blob: Blob | null = await new Promise((resolve) =>
+          canvas.toBlob(resolve, 'image/jpeg', 0.8),
         );
         console.log('Image thumbnail generated, size:', blob?.size);
         return blob;
@@ -439,7 +439,7 @@ export default function UploadPage() {
         });
         // Seek to 1s or 0.1 if shorter
         const target = Math.min(1, Math.max(0.1, (video.duration || 1) * 0.1));
-        await new Promise<void>(resolve => {
+        await new Promise<void>((resolve) => {
           const handler = () => {
             video.removeEventListener('seeked', handler);
             resolve();
@@ -462,8 +462,8 @@ export default function UploadPage() {
         const ctx = canvas.getContext('2d');
         if (!ctx) return null;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const blob: Blob | null = await new Promise(resolve =>
-          canvas.toBlob(resolve, 'image/jpeg', 0.8)
+        const blob: Blob | null = await new Promise((resolve) =>
+          canvas.toBlob(resolve, 'image/jpeg', 0.8),
         );
         URL.revokeObjectURL(video.src);
         console.log('Video thumbnail generated, size:', blob?.size);
@@ -482,9 +482,9 @@ export default function UploadPage() {
       const dt = new DataTransfer();
       const fileArray = Array.from(files);
       fileArray.splice(index, 1);
-      fileArray.forEach(file => dt.items.add(file));
+      fileArray.forEach((file) => dt.items.add(file));
       setFiles(dt.files);
-      setPerFileStatus(prev => {
+      setPerFileStatus((prev) => {
         const next = [...prev];
         next.splice(index, 1);
         return next;
@@ -671,7 +671,7 @@ export default function UploadPage() {
         <div className="pt-2 border-t border-gray-100">
           <button
             type="button"
-            onClick={() => setShowOptions(v => !v)}
+            onClick={() => setShowOptions((v) => !v)}
             className="text-sm text-gray-700 hover:text-gray-900 focus:outline-none"
           >
             {showOptions ? 'Hide options' : 'Show options'}
@@ -687,7 +687,7 @@ export default function UploadPage() {
                   type="text"
                   placeholder="Add a title"
                   value={title}
-                  onChange={e => setTitle(e.target.value)}
+                  onChange={(e) => setTitle(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -703,7 +703,7 @@ export default function UploadPage() {
                   rows={3}
                   placeholder="Describe what you upload (optional)"
                   value={description}
-                  onChange={e => setDescription(e.target.value)}
+                  onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>

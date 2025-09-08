@@ -244,20 +244,20 @@ export default function AnalyticsPage() {
     { name: 'Rejected', value: globalOrderStats?.rejected_orders || 0, color: CHART_COLORS[2] },
   ];
 
-  const athleteContentChartData = athleteContentStats.map(athlete => ({
+  const athleteContentChartData = athleteContentStats.map((athlete) => ({
     name: athlete.athlete_name,
     photos: athlete.photos,
     videos: athlete.videos,
     total: athlete.total_content,
   }));
 
-  const athleteOrderChartData = athleteOrderStats.map(athlete => ({
+  const athleteOrderChartData = athleteOrderStats.map((athlete) => ({
     name: athlete.athlete_name,
     orders: athlete.total_orders,
     items: athlete.total_items,
   }));
 
-  const topProductsData = productStats.slice(0, 10).map(product => ({
+  const topProductsData = productStats.slice(0, 10).map((product) => ({
     name: product.name.length > 15 ? product.name.substring(0, 15) + '...' : product.name,
     quantity: product.total_quantity,
     orders: product.order_count,
@@ -267,7 +267,7 @@ export default function AnalyticsPage() {
   // Group products by category for pie chart
   const categoryData = productStats.reduce(
     (acc: Array<{ name: string; quantity: number; orders: number; color: string }>, product) => {
-      const existing = acc.find(item => item.name === product.category);
+      const existing = acc.find((item) => item.name === product.category);
       if (existing) {
         existing.quantity += product.total_quantity;
         existing.orders += product.order_count;
@@ -281,7 +281,7 @@ export default function AnalyticsPage() {
       }
       return acc;
     },
-    []
+    [],
   );
 
   return (
@@ -437,7 +437,7 @@ export default function AnalyticsPage() {
                           type="text"
                           placeholder="Search athlete by name or email..."
                           value={athleteSearch}
-                          onChange={e => {
+                          onChange={(e) => {
                             setAthleteSearch(e.target.value);
                             setVisibleAthletes(12);
                           }}
@@ -450,7 +450,7 @@ export default function AnalyticsPage() {
                       <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {athleteContentStats
                           .slice()
-                          .filter(a => {
+                          .filter((a) => {
                             if (!athleteSearch.trim()) return true;
                             const q = athleteSearch.toLowerCase();
                             return (
@@ -460,7 +460,7 @@ export default function AnalyticsPage() {
                           })
                           .sort((a, b) => (b.total_content || 0) - (a.total_content || 0))
                           .slice(0, visibleAthletes)
-                          .map(athlete => (
+                          .map((athlete) => (
                             <div
                               key={athlete.athlete_id}
                               className="relative z-10 card p-4 pt-7 flex flex-col min-h-[132px] hover:shadow-md transition-shadow overflow-hidden"
@@ -538,7 +538,7 @@ export default function AnalyticsPage() {
                             </div>
                           ))}
                       </div>
-                      {athleteContentStats.filter(a => {
+                      {athleteContentStats.filter((a) => {
                         if (!athleteSearch.trim()) return true;
                         const q = athleteSearch.toLowerCase();
                         return (
@@ -548,7 +548,7 @@ export default function AnalyticsPage() {
                       }).length > visibleAthletes && (
                         <div className="mt-4 text-center">
                           <button
-                            onClick={() => setVisibleAthletes(v => v + 12)}
+                            onClick={() => setVisibleAthletes((v) => v + 12)}
                             className="btn text-sm"
                           >
                             Load more
@@ -874,12 +874,12 @@ export default function AnalyticsPage() {
                               (sum, athlete) =>
                                 sum +
                                 athlete.products
-                                  .filter(product => product.category === 'skis')
+                                  .filter((product) => product.category === 'skis')
                                   .reduce(
                                     (productSum, product) => productSum + product.quantity,
-                                    0
+                                    0,
                                   ),
-                              0
+                              0,
                             )}
                           </div>
                           <div className="text-xs" style={{ color: 'hsl(var(--success))' }}>
@@ -912,12 +912,12 @@ export default function AnalyticsPage() {
                               (sum, athlete) =>
                                 sum +
                                 athlete.products
-                                  .filter(product => product.category === 'bindings')
+                                  .filter((product) => product.category === 'bindings')
                                   .reduce(
                                     (productSum, product) => productSum + product.quantity,
-                                    0
+                                    0,
                                   ),
-                              0
+                              0,
                             )}
                           </div>
                           <div className="text-xs text-[hsl(var(--muted))]">units delivered</div>
@@ -937,7 +937,7 @@ export default function AnalyticsPage() {
                       </div>
                     ) : (
                       <div className="space-y-6">
-                        {athleteProductStats.map(athlete => (
+                        {athleteProductStats.map((athlete) => (
                           <div
                             key={athlete.athlete_id}
                             className="rounded-lg p-6"
@@ -989,13 +989,14 @@ export default function AnalyticsPage() {
                                   style={{ color: 'hsl(var(--foreground))' }}
                                 >
                                   {athlete.products
-                                    .filter(product => product.category === 'skis')
+                                    .filter((product) => product.category === 'skis')
                                     .reduce((sum, product) => sum + product.quantity, 0)}
                                 </div>
                                 <div className="text-xs" style={{ color: 'hsl(var(--info))' }}>
                                   {
-                                    athlete.products.filter(product => product.category === 'skis')
-                                      .length
+                                    athlete.products.filter(
+                                      (product) => product.category === 'skis',
+                                    ).length
                                   }{' '}
                                   products
                                 </div>
@@ -1032,13 +1033,13 @@ export default function AnalyticsPage() {
                                   style={{ color: 'hsl(var(--foreground))' }}
                                 >
                                   {athlete.products
-                                    .filter(product => product.category === 'bindings')
+                                    .filter((product) => product.category === 'bindings')
                                     .reduce((sum, product) => sum + product.quantity, 0)}
                                 </div>
                                 <div className="text-xs" style={{ color: 'hsl(var(--success))' }}>
                                   {
                                     athlete.products.filter(
-                                      product => product.category === 'bindings'
+                                      (product) => product.category === 'bindings',
                                     ).length
                                   }{' '}
                                   products
@@ -1057,7 +1058,7 @@ export default function AnalyticsPage() {
                                       data={athlete.products.reduce(
                                         (acc, product) => {
                                           const existing = acc.find(
-                                            item => item.name === product.category
+                                            (item) => item.name === product.category,
                                           );
                                           if (existing) {
                                             existing.quantity += product.quantity;
@@ -1074,7 +1075,7 @@ export default function AnalyticsPage() {
                                           name: string;
                                           quantity: number;
                                           color: string;
-                                        }>
+                                        }>,
                                       )}
                                       cx="50%"
                                       cy="50%"
@@ -1090,7 +1091,7 @@ export default function AnalyticsPage() {
                                         .reduce(
                                           (acc, product) => {
                                             const existing = acc.find(
-                                              item => item.name === product.category
+                                              (item) => item.name === product.category,
                                             );
                                             if (existing) {
                                               existing.quantity += product.quantity;
@@ -1108,7 +1109,7 @@ export default function AnalyticsPage() {
                                             name: string;
                                             quantity: number;
                                             color: string;
-                                          }>
+                                          }>,
                                         )
                                         .map((entry, index) => (
                                           <Cell key={`cell-${index}`} fill={entry.color} />

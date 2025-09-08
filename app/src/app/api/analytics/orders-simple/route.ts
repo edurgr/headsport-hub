@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     if (!supabaseAdmin) {
       return NextResponse.json(
         { error: 'Database connection required for analytics' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
       }
 
       const athleteStats = await Promise.all(
-        (athletes || []).map(async athlete => {
+        (athletes || []).map(async (athlete) => {
           // Get orders for this athlete
           const { data: orders } = await supabaseAdmin!
             .from('orders')
@@ -53,7 +53,7 @@ export async function GET(req: Request) {
               .in('order_id', orderIds);
             totalItems = (orderItems || []).reduce(
               (sum: number, item: any) => sum + (item.quantity || 0),
-              0
+              0,
             );
           }
 
@@ -67,7 +67,7 @@ export async function GET(req: Request) {
             rejected_orders: rejectedOrders,
             total_items: totalItems,
           };
-        })
+        }),
       );
 
       return NextResponse.json({
@@ -92,7 +92,7 @@ export async function GET(req: Request) {
         { name: string; category: string; sku: string; total_quantity: number; order_count: number }
       > = {};
 
-      (orderItems || []).forEach(item => {
+      (orderItems || []).forEach((item) => {
         const key = item.product_sku || item.product_name;
         if (!productStats[key]) {
           productStats[key] = {
@@ -127,12 +127,12 @@ export async function GET(req: Request) {
       }
 
       const totalOrders = orders?.length || 0;
-      const pendingOrders = orders?.filter(o => o.status === 'pending_approval').length || 0;
-      const approvedOrders = orders?.filter(o => o.status === 'approved').length || 0;
-      const rejectedOrders = orders?.filter(o => o.status === 'rejected').length || 0;
+      const pendingOrders = orders?.filter((o) => o.status === 'pending_approval').length || 0;
+      const approvedOrders = orders?.filter((o) => o.status === 'approved').length || 0;
+      const rejectedOrders = orders?.filter((o) => o.status === 'rejected').length || 0;
 
       // Get total items ordered
-      const orderIds = (orders || []).map(o => o.id);
+      const orderIds = (orders || []).map((o) => o.id);
       let totalItems = 0;
       if (orderIds.length > 0) {
         const { data: orderItems } = await supabaseAdmin
@@ -161,7 +161,7 @@ export async function GET(req: Request) {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

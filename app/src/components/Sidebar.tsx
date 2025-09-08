@@ -90,7 +90,7 @@ export default function Sidebar() {
       roles: ['admin'],
     },
     // Consolidated: invitations and admin creation live inside Profile Management
-  ].filter(item => !profile || item.roles.includes(profile.role));
+  ].filter((item) => !profile || item.roles.includes(profile.role));
 
   const getIcon = (iconName: string) => {
     const icons: { [key: string]: string } = {
@@ -158,7 +158,7 @@ export default function Sidebar() {
         </div>
         <nav className={`${isCollapsed ? 'px-2 py-4' : 'px-4 py-6'} flex-1`}>
           <ul className="space-y-2">
-            {navigationItems.map(item => {
+            {navigationItems.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <li key={item.name}>

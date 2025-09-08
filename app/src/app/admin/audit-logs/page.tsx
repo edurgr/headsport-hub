@@ -68,7 +68,7 @@ export default function AuditLogsPage() {
   }, [profile, fetchLogs]);
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
 
@@ -115,7 +115,7 @@ export default function AuditLogsPage() {
               <input
                 type="text"
                 value={filters.action}
-                onChange={e => handleFilterChange('action', e.target.value)}
+                onChange={(e) => handleFilterChange('action', e.target.value)}
                 placeholder="e.g., login, create_product"
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -125,7 +125,7 @@ export default function AuditLogsPage() {
               <input
                 type="text"
                 value={filters.resourceType}
-                onChange={e => handleFilterChange('resourceType', e.target.value)}
+                onChange={(e) => handleFilterChange('resourceType', e.target.value)}
                 placeholder="e.g., product, user"
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -135,7 +135,7 @@ export default function AuditLogsPage() {
               <input
                 type="text"
                 value={filters.userId}
-                onChange={e => handleFilterChange('userId', e.target.value)}
+                onChange={(e) => handleFilterChange('userId', e.target.value)}
                 placeholder="User ID"
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -145,7 +145,7 @@ export default function AuditLogsPage() {
               <input
                 type="date"
                 value={filters.startDate}
-                onChange={e => handleFilterChange('startDate', e.target.value)}
+                onChange={(e) => handleFilterChange('startDate', e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -154,7 +154,7 @@ export default function AuditLogsPage() {
               <input
                 type="date"
                 value={filters.endDate}
-                onChange={e => handleFilterChange('endDate', e.target.value)}
+                onChange={(e) => handleFilterChange('endDate', e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -225,7 +225,7 @@ export default function AuditLogsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {logs.map(log => (
+                  {logs.map((log) => (
                     <tr key={log.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {new Date(log.created_at).toLocaleString()}
@@ -273,14 +273,14 @@ export default function AuditLogsPage() {
                 </div>
                 <div className="flex space-x-2">
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
                     className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                   >
                     Previous
                   </button>
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
                     className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                   >

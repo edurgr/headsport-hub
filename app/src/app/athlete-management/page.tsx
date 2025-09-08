@@ -43,18 +43,18 @@ export default function AthleteManagementPage() {
 
     // Filter by role
     if (roleFilter !== 'all') {
-      filtered = filtered.filter(athlete => athlete.role === roleFilter);
+      filtered = filtered.filter((athlete) => athlete.role === roleFilter);
     }
 
     // Filter by search term
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(
-        athlete =>
+        (athlete) =>
           athlete.name?.toLowerCase().includes(searchLower) ||
           (athlete.email?.toLowerCase() || '').includes(searchLower) ||
           athlete.organization?.toLowerCase().includes(searchLower) ||
-          athlete.phone?.toLowerCase().includes(searchLower)
+          athlete.phone?.toLowerCase().includes(searchLower),
       );
     }
 
@@ -142,7 +142,7 @@ export default function AthleteManagementPage() {
 
     const csvContent = [
       headers.join(','),
-      ...athletes.map(athlete =>
+      ...athletes.map((athlete) =>
         [
           `"${athlete.name || ''}"`,
           `"${athlete.email || ''}"`,
@@ -158,7 +158,7 @@ export default function AthleteManagementPage() {
           athlete.equipmentCount || 0,
           `"${athlete.lastOrderDate ? new Date(athlete.lastOrderDate).toLocaleDateString() : ''}"`,
           `"${athlete.created_at ? new Date(athlete.created_at).toLocaleDateString() : ''}"`,
-        ].join(',')
+        ].join(','),
       ),
     ].join('\n');
 
@@ -300,7 +300,7 @@ export default function AthleteManagementPage() {
               </div>
             </div>
             <div className="text-2xl font-bold text-[hsl(var(--foreground))] mt-2">
-              {athletes.filter(a => a.role === 'athlete').length}
+              {athletes.filter((a) => a.role === 'athlete').length}
             </div>
             <div className="text-sm" style={{ color: 'hsl(var(--success))' }}>
               Active Athletes
@@ -339,7 +339,7 @@ export default function AthleteManagementPage() {
               </div>
             </div>
             <div className="text-2xl font-bold text-[hsl(var(--foreground))] mt-2">
-              {athletes.filter(a => a.role === 'manager').length}
+              {athletes.filter((a) => a.role === 'manager').length}
             </div>
             <div className="text-sm" style={{ color: 'hsl(var(--warning))' }}>
               Managers
@@ -381,7 +381,7 @@ export default function AthleteManagementPage() {
               </div>
             </div>
             <div className="text-2xl font-bold text-[hsl(var(--foreground))] mt-2">
-              {athletes.filter(a => a.role === 'admin').length}
+              {athletes.filter((a) => a.role === 'admin').length}
             </div>
             <div className="text-sm text-[hsl(var(--muted))]">Administrators</div>
             <div className="text-xs text-[hsl(var(--muted))]">Platform admins</div>
@@ -413,7 +413,7 @@ export default function AthleteManagementPage() {
                   type="text"
                   placeholder="Search athletes by name, email, organization, or phone..."
                   value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="input pl-10 pr-10 py-2"
                 />
                 {searchTerm && (
@@ -441,7 +441,7 @@ export default function AthleteManagementPage() {
               {/* Role Filter */}
               <select
                 value={roleFilter}
-                onChange={e => setRoleFilter(e.target.value)}
+                onChange={(e) => setRoleFilter(e.target.value)}
                 className="input min-w-[150px]"
               >
                 <option value="all">All Roles</option>
@@ -632,7 +632,7 @@ export default function AthleteManagementPage() {
             <>
               {viewMode === 'cards' ? (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredAthletes.map(athlete => (
+                  {filteredAthletes.map((athlete) => (
                     <div
                       key={athlete.id}
                       className="p-6 rounded-lg border hover:shadow-md transition-shadow"
@@ -783,7 +783,7 @@ export default function AthleteManagementPage() {
                         borderColor: 'hsl(var(--border))',
                       }}
                     >
-                      {filteredAthletes.map(athlete => (
+                      {filteredAthletes.map((athlete) => (
                         <tr key={athlete.id} className="hover:opacity-95">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">

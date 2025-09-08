@@ -100,7 +100,7 @@ export async function GET() {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Content-Type': 'application/json',
         },
-      }
+      },
     );
   }
 }

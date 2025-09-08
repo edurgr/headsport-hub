@@ -46,7 +46,7 @@ export default function PendingOrdersPage() {
   const [managerNotes, setManagerNotes] = useState('');
   const [sendToSAP, setSendToSAP] = useState(false);
   const [pricing, setPricing] = useState<Record<string, { unitPrice: number; totalPrice: number }>>(
-    {}
+    {},
   );
 
   useEffect(() => {
@@ -115,7 +115,7 @@ export default function PendingOrdersPage() {
   };
 
   const updatePricing = (itemId: string, field: 'unitPrice' | 'totalPrice', value: number) => {
-    setPricing(prev => ({
+    setPricing((prev) => ({
       ...prev,
       [itemId]: {
         ...prev[itemId],
@@ -181,7 +181,7 @@ export default function PendingOrdersPage() {
               <p className="text-gray-600">All orders have been processed.</p>
             </div>
           ) : (
-            pendingOrders.map(order => (
+            pendingOrders.map((order) => (
               <div
                 key={order.id}
                 className="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
@@ -239,7 +239,7 @@ export default function PendingOrdersPage() {
                 <div className="mb-4">
                   <h4 className="font-medium text-gray-900 mb-2">Order Items:</h4>
                   <div className="space-y-2">
-                    {order.order_items.map(item => (
+                    {order.order_items.map((item) => (
                       <div
                         key={item.id}
                         className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
@@ -287,14 +287,14 @@ export default function PendingOrdersPage() {
                 <div className="mb-4">
                   <h4 className="font-medium text-gray-900 mb-2">Set Pricing:</h4>
                   <div className="space-y-2">
-                    {selectedOrder.order_items.map(item => (
+                    {selectedOrder.order_items.map((item) => (
                       <div key={item.id} className="flex items-center space-x-2">
                         <span className="text-sm text-gray-600 flex-1">{item.product_name}</span>
                         <input
                           type="number"
                           placeholder="Unit Price"
                           className="px-2 py-1 border border-gray-300 rounded text-sm w-24"
-                          onChange={e =>
+                          onChange={(e) =>
                             updatePricing(item.id, 'unitPrice', parseFloat(e.target.value) || 0)
                           }
                         />
@@ -318,7 +318,7 @@ export default function PendingOrdersPage() {
                 <textarea
                   rows={3}
                   value={managerNotes}
-                  onChange={e => setManagerNotes(e.target.value)}
+                  onChange={(e) => setManagerNotes(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Add notes about this order..."
                 />
@@ -331,7 +331,7 @@ export default function PendingOrdersPage() {
                     <input
                       type="checkbox"
                       checked={sendToSAP}
-                      onChange={e => setSendToSAP(e.target.checked)}
+                      onChange={(e) => setSendToSAP(e.target.checked)}
                       className="mr-2"
                     />
                     <span className="text-sm text-gray-700">

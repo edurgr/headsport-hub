@@ -12,7 +12,7 @@ export async function GET(req: Request) {
           valid: false,
           error: 'No token provided',
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -27,7 +27,7 @@ export async function GET(req: Request) {
           valid: false,
           error: 'Server configuration error',
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -64,7 +64,7 @@ export async function GET(req: Request) {
           valid: false,
           error: 'Invalid or expired invitation',
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -74,7 +74,7 @@ export async function GET(req: Request) {
           valid: false,
           error: 'Invalid or expired invitation',
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -88,7 +88,7 @@ export async function GET(req: Request) {
           valid: false,
           error: 'Invitation has expired',
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -107,7 +107,7 @@ export async function GET(req: Request) {
         valid: false,
         error: 'Internal server error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

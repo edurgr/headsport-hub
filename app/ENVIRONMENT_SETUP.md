@@ -106,6 +106,7 @@ curl http://localhost:3000/api/analytics/athlete-products
 **Causa:** Variables de entorno no configuradas
 
 **Solución:**
+
 ```bash
 # Verificar que .env.local existe
 ls -la .env.local

@@ -44,8 +44,8 @@ async function runMigration() {
       // Split the SQL into individual statements
       const statements = migrationSQL
         .split(';')
-        .map(stmt => stmt.trim())
-        .filter(stmt => stmt.length > 0);
+        .map((stmt) => stmt.trim())
+        .filter((stmt) => stmt.length > 0);
 
       for (const statement of statements) {
         if (statement.trim()) {
@@ -70,7 +70,7 @@ async function runMigration() {
 
     if (tableError && tableError.code === 'PGRST116') {
       console.log(
-        '❌ Addresses table not found. Please run the migration SQL manually in your Supabase SQL editor.'
+        '❌ Addresses table not found. Please run the migration SQL manually in your Supabase SQL editor.',
       );
       console.log('📄 Migration file location:', migrationPath);
     } else {

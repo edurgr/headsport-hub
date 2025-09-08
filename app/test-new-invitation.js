@@ -9,7 +9,7 @@ console.log('\n📧 CONFIGURACIÓN ACTUALIZADA:');
 console.log('NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL);
 console.log(
   'SENDGRID_API_KEY:',
-  process.env.SENDGRID_API_KEY ? '✅ Configurada' : '❌ No configurada'
+  process.env.SENDGRID_API_KEY ? '✅ Configurada' : '❌ No configurada',
 );
 console.log('FROM_EMAIL:', process.env.FROM_EMAIL);
 
@@ -34,7 +34,7 @@ async function testUpdatedAPI() {
 
     // Esperar a que el servidor esté listo
     console.log('⏳ Esperando a que el servidor esté listo...');
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
     const response = await fetch('http://localhost:3000/api/invitations/send', {
       method: 'POST',
@@ -48,7 +48,7 @@ async function testUpdatedAPI() {
       console.log('   Mensaje:', errorData.error);
 
       console.log(
-        '\n💡 El error 403 es esperado - solo usuarios autenticados como admin pueden enviar invitaciones'
+        '\n💡 El error 403 es esperado - solo usuarios autenticados como admin pueden enviar invitaciones',
       );
       console.log('   Esto significa que la API está funcionando correctamente');
     } else if (response.ok) {

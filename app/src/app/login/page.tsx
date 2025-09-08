@@ -86,7 +86,7 @@ export default function LoginPage() {
                   type="text"
                   required={isSignUp}
                   value={name}
-                  onChange={e => setName(e.target.value)}
+                  onChange={(e) => setName(e.target.value)}
                   className="input mt-1"
                   placeholder="Enter your full name"
                 />
@@ -107,7 +107,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 required
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 className="input mt-1"
                 placeholder="Enter your email"
               />
@@ -127,7 +127,7 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 required
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 className="input mt-1"
                 placeholder="Enter your password"
               />

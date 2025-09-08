@@ -19,17 +19,17 @@ async function configureSupabase() {
     console.log('');
 
     // Solicitar URL
-    const url = await new Promise(resolve => {
+    const url = await new Promise((resolve) => {
       rl.question('🔗 NEXT_PUBLIC_SUPABASE_URL: ', resolve);
     });
 
     // Solicitar anon key
-    const anonKey = await new Promise(resolve => {
+    const anonKey = await new Promise((resolve) => {
       rl.question('🔑 NEXT_PUBLIC_SUPABASE_ANON_KEY: ', resolve);
     });
 
     // Solicitar service role key
-    const serviceKey = await new Promise(resolve => {
+    const serviceKey = await new Promise((resolve) => {
       rl.question('🔐 SUPABASE_SERVICE_ROLE_KEY: ', resolve);
     });
 

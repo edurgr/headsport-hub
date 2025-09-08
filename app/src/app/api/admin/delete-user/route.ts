@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     if (!supabaseUrl || !serviceKey) {
       return NextResponse.json(
         { error: 'Server not configured for admin operations' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
           .delete()
           .in(
             'id',
-            inv1.map((r: any) => r.id)
+            inv1.map((r: any) => r.id),
           );
         if (!error) result.invitations.deletedCount += inv1.length;
       }
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
           .delete()
           .in(
             'id',
-            inv2.map((r: any) => r.id)
+            inv2.map((r: any) => r.id),
           );
         if (!error) result.invitations.deletedCount += inv2.length;
       }
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

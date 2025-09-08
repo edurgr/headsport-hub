@@ -11,7 +11,7 @@ export function useAuthenticatedFetch() {
     console.log('🔍 useAuthenticatedFetch: Iniciando request a', url);
     console.log(
       '🔍 useAuthenticatedFetch: Session del contexto:',
-      session ? 'disponible' : 'no disponible'
+      session ? 'disponible' : 'no disponible',
     );
 
     if (session?.access_token) {
