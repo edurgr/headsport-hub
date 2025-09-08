@@ -5,6 +5,10 @@ node_modules/**
 **/*.map
 **/*.log
 out/**
+coverage/**
+tmp/**
+.DS_Store
+.env*
 
 # Also ignore nested app/ artifacts if Pages root is repo root
 app/.next/**
