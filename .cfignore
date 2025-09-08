@@ -1,0 +1,12 @@
+# Ignore Next.js build caches and large artifacts
+.next/**
+node_modules/**
+**/*.pack
+**/*.map
+**/*.log
+out/**
+
+# Also ignore nested app/ artifacts if Pages root is repo root
+app/.next/**
+app/node_modules/**
+app/out/**
