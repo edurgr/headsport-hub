@@ -85,6 +85,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Avoid emitting large webpack filesystem caches in production builds on CI/Pages
+  webpack(config, { dev }) {
+    if (!dev) {
+      // Disable persistent filesystem cache to prevent large .pack files under .next/cache
+      // Cloudflare Pages uploads static assets and may validate output size; caches are not needed at runtime
+      (config as any).cache = false;
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

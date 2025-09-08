@@ -1,4 +1,4 @@
-.next/cache/**
+.next/**
 .next/**/*.pack
 .next/**/*.map
 node_modules/**
