@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -71,13 +71,7 @@ export default function AdminDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState('30');
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (profile?.role === 'admin') {
-      fetchDashboardData();
-    }
-  }, [profile, selectedPeriod]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await authenticatedFetch(`/api/admin/dashboard?period=${selectedPeriod}`);
@@ -89,12 +83,18 @@ export default function AdminDashboard() {
       } else {
         setError(data.error || 'Failed to fetch dashboard data');
       }
-    } catch (err) {
+    } catch (_error) {
       setError('Error fetching dashboard data');
     } finally {
       setLoading(false);
     }
-  };
+  }, [authenticatedFetch, selectedPeriod]);
+
+  useEffect(() => {
+    if (profile?.role === 'admin') {
+      fetchDashboardData();
+    }
+  }, [profile, selectedPeriod, fetchDashboardData]);
 
   const StatCard = ({ 
     title, 

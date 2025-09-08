@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -64,13 +64,7 @@ export default function ContentModerationPage() {
   const [moderationReason, setModerationReason] = useState('');
   const [moderationNotes, setModerationNotes] = useState('');
 
-  useEffect(() => {
-    if (profile?.role === 'admin') {
-      fetchData();
-    }
-  }, [profile, activeTab]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -93,12 +87,18 @@ export default function ContentModerationPage() {
           setError(data.error || 'Failed to fetch moderation stats');
         }
       }
-    } catch (err) {
+    } catch (_error) {
       setError('Error fetching data');
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, authenticatedFetch]);
+
+  useEffect(() => {
+    if (profile?.role === 'admin') {
+      fetchData();
+    }
+  }, [profile, activeTab, fetchData]);
 
   const handleModerateContent = async (fileId: string, action: 'approve' | 'reject' | 'flag', reason?: string, notes?: string) => {
     try {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -48,14 +48,7 @@ export default function ProductManagementPage() {
     { value: 'snowboards_boards', label: 'Snowboard Boards' }
   ];
 
-  useEffect(() => {
-    if (profile?.role === 'admin') {
-      setPage(1);
-      fetchProducts(1, true);
-    }
-  }, [profile]);
-
-  const fetchProducts = async (pageParam = 1, reset = false) => {
+  const fetchProducts = useCallback(async (pageParam = 1, reset = false) => {
     try {
       if (reset) {
         setLoading(true);
@@ -86,13 +79,20 @@ export default function ProductManagementPage() {
       } else {
         setError(data.error || 'Failed to fetch products');
       }
-    } catch (err) {
+    } catch (_error) {
       setError('Error fetching products');
     } finally {
       setLoading(false);
       setLoadingMore(false);
     }
-  };
+  }, [authenticatedFetch, categoryFilter, searchTerm]);
+
+  useEffect(() => {
+    if (profile?.role === 'admin') {
+      setPage(1);
+      fetchProducts(1, true);
+    }
+  }, [profile, fetchProducts]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -103,7 +103,7 @@ export default function ProductManagementPage() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, categoryFilter]);
+  }, [searchTerm, categoryFilter, profile, fetchProducts]);
 
   useEffect(() => {
     if (!loadMoreRef.current) return;

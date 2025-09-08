@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -35,19 +35,13 @@ export default function AuditLogsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 50;
 
-  useEffect(() => {
-    if (profile?.role === 'admin') {
-      fetchLogs();
-    }
-  }, [profile, currentPage, filters]);
-
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: itemsPerPage.toString(),
-        ...Object.fromEntries(Object.entries(filters).filter(([_, value]) => value))
+        ...Object.fromEntries(Object.entries(filters).filter(([, value]) => value))
       });
 
       const response = await authenticatedFetch(`/api/admin/audit-logs?${params}`);
@@ -59,12 +53,18 @@ export default function AuditLogsPage() {
       } else {
         setError(data.error || 'Failed to fetch audit logs');
       }
-    } catch (err) {
+    } catch (_error) {
       setError('Error fetching audit logs');
     } finally {
       setLoading(false);
     }
-  };
+  }, [authenticatedFetch, currentPage, filters]);
+
+  useEffect(() => {
+    if (profile?.role === 'admin') {
+      fetchLogs();
+    }
+  }, [profile, fetchLogs]);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));

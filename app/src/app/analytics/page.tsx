@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   BarChart, 
@@ -103,13 +103,7 @@ export default function AnalyticsPage() {
   const [athleteSearch, setAthleteSearch] = useState('');
   const [visibleAthletes, setVisibleAthletes] = useState(12);
 
-  useEffect(() => {
-    if (hydrated && user) {
-      fetchAllStats();
-    }
-  }, [user, hydrated]);
-
-  const fetchAllStats = async () => {
+  const fetchAllStats = useCallback(async () => {
     setLoadingStats(true);
     try {
       await Promise.all([
@@ -125,7 +119,13 @@ export default function AnalyticsPage() {
     } finally {
       setLoadingStats(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (hydrated && user) {
+      fetchAllStats();
+    }
+  }, [user, hydrated, fetchAllStats]);
 
   const fetchGlobalContentStats = async () => {
     try {
