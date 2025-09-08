@@ -1,0 +1,92 @@
+
+article,ver,lang,name,length,color,weather
+394417,,EN,SOLAR FMR,"FMR lime: S3, VLT 17%",FMR lime,Sunny
+394427,,EN,SOLAR FMR,"FMR blue: S3, VLT 12%",FMR blue,Sunny
+394437,,EN,SOLAR FMR,"FMR red: S2, VLT 28%",FMR red,"Sunny, Overcast"
+394468,,EN,SOLAR FMR,"FMR green: S3, VLT 11%",FMR green,Sunny
+394608,,EN,SOLAR FMR PACK,,,"Sunny, Overcast"
+395410,,EN,NINJA,"Red: S1, VLT 45%",red/black,Overcast
+395430,,EN,NINJA,"Red: S1, VLT 45%",red/pink,Overcast
+392811,,EN,CONTEX,"FMR yellow/red: S2, VLT 32%",red/black,"Sunny, Overcast"
+392412,,EN,CONTEX PHOTO,"Photo blue: S1 - S3, VLT 54%-16%",blue/black,"Sunny, Overcast"
+390023,,EN,SENTINEL 5K + SPARE LENS,"5K chrome: S2, VLT 23%",chrome/RD,"Sunny, Overcast"
+390053,,EN,SENTINEL + SPARE LENS,"Brown: S2, VLT 18%",silver/black,"Sunny, Overcast"
+390123,,EN,HORIZON 5K RACE + SPARE LENS,"5K chrome: S2, VLT 23%",chrome/RD,"Sunny, Overcast"
+390143,,EN,HORIZON RACE + SPARE LENS,"Brown: S2, VLT 18%",silver/black,"Sunny, Overcast"
+390163,,EN,CONTEX PRO 5K RACE + SPARE LENS,"5K chrome: S2, VLT 23%",chrome/RD,"Sunny, Overcast"
+390913,,EN,MAGNIFY 5K,"5K red: S2, VLT 28%",red/black,"Sunny, Overcast"
+391343,,EN,HORIZON 2.0 5K,"5K red: S2, VLT 28%",red/black,"Sunny, Overcast"
+394563,,EN,CONTEX PRO 5K,"5K red: S2, VLT 28%",red/black,"Sunny, Overcast"
+394583,,EN,CONTEX PRO 5K,"5K blue: S3, VLT 17%",blue/WCR,Sunny
+394423,,EN,CONTEX PHOTO,"Photo blue: S1 - S3, VLT 54%-16%",blue/WCR,"Sunny, Overcast"
+394873,,EN,CONTEX,"FMR blue: S3, VLT 12%",blue/white,Sunny
+395113,,EN,CONTEX YOUTH FMR,"FMR yellow/red: S2, VLT 32%",red/black,"Sunny, Overcast"
+395333,,EN,CONTEX YOUTH,"Red: S1, VLT 45%",red/black,Overcast
+395343,,EN,CONTEX YOUTH,"Red: S1, VLT 45%",red/white,Overcast
+390154,,EN,NEVES PRO 5K RACE + SL,"5K chrome: S2, VLT 23%",chrome/RD,Changeable
+390214,,EN,NEVES RETHINK,"FMR yellow/red: S2, VLT 32%",red/grey,Changeable
+390254,,EN,CONTEX RETHINK,"FMR yellow/red: S2, VLT 32%",red/grey,"Sunny, Overcast"
+394714,,EN,F-LYT,"FMR red: S2, VLT 28%",red/black,"Sunny, Overcast"
+394724,,EN,F-LYT,"FMR green: S2, VLT 24%",green/black,"Sunny, Overcast"
+394734,,EN,F-LYT,"FMR blue: S3, VLT 12%",blue/black,Sunny
+394744,,EN,F-LYT,"FMR lime: S3, VLT 17%",lime/black,Sunny
+394764,,EN,F-LYT,"Red: S1, VLT 45%",red/black,Overcast
+394774,,EN,F-LYT,"Transparent: S0, VLT 81%",clear/black,"Night, Overcast"
+395624,,EN,SOLAR JR,"FMR yellow/red: S2, VLT 32%",FMR red,"Sunny, Overcast"
+395634,,EN,SOLAR JR,"FMR blue/green: S2, VLT 24%",FMR blue,"Sunny, Overcast"
+395644,,EN,SOLAR JR,"Red: S1, VLT 45%",red,Overcast
+394644,,EN,F-LYT PACK,,,
+395724,,EN,SOLAR JR PACK,,,Overcast
+391444,,EN,NEVES PRO 5K PHOTO,"5K photo: S1 - S3, VLT 43% - 11%",green/olive,Changeable
+391514,,EN,NEVES PRO 5K,"5K red: S2, VLT 28%",red/black,Changeable
+391714,,EN,NEVES,"FMR yellow/red: S2, VLT 32%",red/black,Changeable
+390175,,EN,NEVES PRO 5K RACE + SL,"5K chrome: S2, VLT 23%",chrome/VIS,Changeable
+390195,,EN,CONTEX PRO 5K RACE + SPARE LENS,"5K chrome: S2, VLT 23%",chrome/VIS,"Sunny, Overcast"
+390855,,EN,MAGNIFY 5K + SPARE LENS,"5K gold: S3, VLT 15%",gold/KORE,Sunny
+390865,,EN,MAGNIFY 5K + SPARE LENS,"5K blue: S3, VLT 17%",blue/black,Sunny
+390925,,EN,MAGNIFY 5K,"5K chrome: S2, VLT 23%",chrome/red,"Sunny, Overcast"
+391235,,EN,HORIZON 2.0 5K + SPARE LENS,"5K blue: S3, VLT 17%",blue/white,Sunny
+391265,,EN,HORIZON 2.0 5K + SPARE LENS,"5K gold: S3, VLT 15%",gold/black,Sunny
+391415,,EN,PORSCHE NEVES SUNSCREEN,"Sunscreen: S1 - S3, VLT 45% - 16%",blue/Porsche,All Weather
+391435,,EN,NEVES SUNSCREEN STANDARD,"Sunscreen: S1 - S3, VLT 45% - 16%",blue/Standard,All Weather
+391425,,EN,NEVES SUNSCREEN,"Sunscreen: S1 - S3, VLT 45% - 16%",blue/black,All Weather
+391525,,EN,NEVES PRO 5K,"5K blue: S3, VLT 17%",blue/white,Sunny
+391535,,EN,NEVES PRO 5K,"5K gold: S3, VLT 15%",gold/KORE,Sunny
+391725,,EN,NEVES,"FMR yellow/red: S2, VLT 32%",red/LTD,Changeable
+391735,,EN,NEVES,"FMR blue: S3, VLT 12%",blue/VIS,Sunny
+391745,,EN,NEVES,"FMR silver: S2, VLT 18%",silver/white,"Changeable, Sunny"
+394435,,EN,CONTEX PHOTO,"Photo blue: S1 - S3, VLT 54%-16%",blue/VIS,"Sunny, Overcast"
+394525,,EN,CONTEX PRO 5K,"5K gold: S3, VLT 15%",gold/KORE,Sunny
+394575,,EN,CONTEX PRO 5K,"5K chrome: S2, VLT 23%",chrome/ash,"Sunny, Overcast"
+394855,,EN,CONTEX,"FMR yellow/red: S2, VLT 32%",red/red,"Sunny, Overcast"
+394865,,EN,CONTEX,"FMR blue/green: S2, VLT 24%",green/ash,"Sunny, Overcast"
+397015,,EN,OTG 5K PHOTO,"5k photo: S1 - S3, VLT 43% - 11%",green/black,Changeable
+397105,,EN,OTG 5K,"5K red: S2, VLT 28%",red/black,Changeable
+397115,,EN,OTG 5K,"5K blue: S3, VLT 17%",blue/white,Sunny
+395135,,EN,CONTEX YOUTH FMR,"FMR silver: S2, VLT 18%",silver/VIS,"Sunny, Overcast"
+395325,,EN,CONTEX YOUTH,"Red: S1, VLT 45%",red/WCR,Overcast
+395425,,EN,NINJA,"Red: S1, VLT 45%",red/VIS,Overcast
+376915,,EN,OTG SL orange,,,
+376110,,EN,SENTINEL LENS RACE,"Brown Lens: S2, VLT 18%",MR Silver,"Sunny, Overcast"
+376140,,EN,SENTINEL LENS RD NR 3,Orange Lens: S1; VLT: 48%,FMR blue,Overcast
+376190,,EN,SENTINEL LENS,Transparent Lens: S0; VLT: 81%,clear,Night
+376141,,EN,SENTINEL LENS 5K,"5K gold: S3, VLT 15%",gold,Sunny
+376151,,EN,SENTINEL LENS 5K,"5K chrome: S2, VLT 23%",chrome,"Sunny, Overcast"
+376211,,EN,MAGNIFY LENS 5K,"5K red: S2, VLT 28%",red,"Sunny, Overcast"
+376221,,EN,MAGNIFY LENS 5K,"5K gold: S3, VLT 15%",gold,Sunny
+376511,,EN,HORIZON LENS 5K,"5K red: S2, VLT 28%",red,"Sunny, Overcast"
+376521,,EN,HORIZON LENS 5K,"5K gold: S3, VLT 15%",gold,Sunny
+376811,,EN,CONTEX PRO LENS 5K,"5K gold: S3, VLT 15%",gold,Sunny
+376821,,EN,CONTEX PRO LENS 5K,"5K red: S2, VLT 28%",red,"Sunny, Overcast"
+376861,,EN,CONTEX LENS FMR,"Rose Lens: S2, VLT 30%",red,"Sunny, Overcast"
+376881,,EN,CONTEX LENS,"Orange Lens: S1, VLT 57%",orange,Overcast
+376871,,EN,CONTEX LENS FMR,Smoke Lens: S3; VLT: 12%,blue,Sunny
+376891,,EN,CONTEX PRO LENS,Transparet Lens: S0; VLT 81%,clear,Night
+376714,,EN,NEVES PRO LENS 5K,"5K gold: S3, VLT 15%",gold,Sunny
+376724,,EN,NEVES PRO LENS 5K,"5K red: S2, VLT 28%",red,"Sunny, Overcast"
+376754,,EN,NEVES LENS FMR,"Rose Lens: S2, VLT 32%",red,"Sunny, Overcast"
+376764,,EN,NEVES LENS FMR,Smoke Lens: S3; VLT: 12%,blue,Sunny
+376774,,EN,NEVES LENS,"Orange Lens: S1, VLT 57%",orange,Overcast
+376784,,EN,NEVES LENS,Transparet Lens: S0; VLT 81%,clear,Night
+376942,,EN,STRAP,,silver,
+376953,,EN,STRAP,,RD,

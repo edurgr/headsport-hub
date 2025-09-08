@@ -1,0 +1,13 @@
+{
+  "build": {
+    "command": "npm run build:cloudflare",
+    "cwd": ".",
+    "watchPaths": ["src/**/*", "public/**/*", "*.json", "*.js", "*.ts", "*.tsx"]
+  },
+  "deploy": {
+    "command": "npm run build:cloudflare"
+  },
+  "functions": {
+    "directory": "functions"
+  }
+}

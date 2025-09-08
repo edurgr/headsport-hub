@@ -1,0 +1,4 @@
+# Next.js SSR on Cloudflare Pages: avoid SPA rewrites to static HTML.
+# Keep API passthrough only when needed; Next handles routes natively.
+
+# No SPA rewrites; Next handles API and SSR routes natively
