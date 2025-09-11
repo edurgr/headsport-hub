@@ -448,3 +448,4 @@ El control final de acceso a datos se garantiza mediante RLS en Supabase.
 - Recovery flow: Email should point to `/auth/callback` with `type=recovery` in the hash; the view will show the new password form.
 - 404 on protected routes: Check `middleware.ts` and prefix; also review `ProtectedRoute` and `hydrated` in `AuthContext`. 
 
+# Test deployment
