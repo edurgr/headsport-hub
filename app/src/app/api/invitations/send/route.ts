@@ -3,23 +3,33 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 import { emailService } from '@/lib/email-service';
+import { getSupabaseConfig } from '@/lib/supabase-config';
 
 // Configure Supabase client with service role key for administrative operations
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+let supabaseAdmin: any = null;
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('Missing Supabase configuration:', {
-    url: !!supabaseUrl,
-    serviceKey: !!supabaseServiceKey
-  });
-  throw new Error('Supabase configuration is missing');
+try {
+  const config = getSupabaseConfig();
+  if (config.serviceKey) {
+    supabaseAdmin = createClient(config.url, config.serviceKey);
+  } else {
+    console.warn('SUPABASE_SERVICE_ROLE_KEY not available, using anon key');
+    supabaseAdmin = createClient(config.url, config.anonKey);
+  }
+} catch (error) {
+  console.error('Failed to initialize Supabase client:', error);
+  // We'll handle this in the route handler
 }
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function POST(request: NextRequest) {
   try {
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: 'Supabase configuration is missing' }, 
+        { status: 500 }
+      );
+    }
+
     const { email, role, token, invitedBy, personalMessage } = await request.json();
 
     if (!email || !role || !token || !invitedBy) {
