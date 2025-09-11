@@ -19,6 +19,11 @@ const eslintConfig = [
       'react-hooks/exhaustive-deps': 'warn',
       '@next/next/no-html-link-for-pages': 'warn',
     },
+    settings: {
+      next: {
+        rootDir: ['apps/*/']
+      }
+    }
   },
 ];
 

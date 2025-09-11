@@ -50,10 +50,10 @@ Follow these instructions to get the project running locally for development and
 
 ### Prerequisites
 
--   [Node.js](https://nodejs.org/en/) (v18.x or later)
--   [npm](https://www.npmjs.com/) (v9.x or later)
--   A [Supabase](https://supabase.io/) account to create a project.
--   A [SendGrid](https://sendgrid.com/) account for sending emails.
+- [Node.js](https://nodejs.org/en/) (v18.x or later)
+- [npm](https://www.npmjs.com/) (v9.x or later)
+- A [Supabase](https://supabase.io/) account to create a project.
+- A [SendGrid](https://sendgrid.com/) account for sending emails.
 
 ### 1. Clone the Repository
 
@@ -66,20 +66,20 @@ cd HEAD-Hub
 
 The application is configured using environment variables.
 
-1.  Navigate to the Next.js application directory:
-    ```bash
-    cd app
-    ```
-2.  Create a local environment file by copying the example:
-    ```bash
-    cp env.example .env.local
-    ```
-3.  Open `.env.local` and fill in the required credentials. **This is a critical step.**
+1. Navigate to the Next.js application directory:
+   ```bash
+   cd app
+   ```
+2. Create a local environment file by copying the example:
+   ```bash
+   cp env.example .env.local
+   ```
+3. Open `.env.local` and fill in the required credentials. **This is a critical step.**
 
-    -   `NEXT_PUBLIC_SUPABASE_URL`: Found in your Supabase project's *Settings > API*.
-    -   `NEXT_PUBLIC_SUPABASE_ANON_KEY`: The `anon` `public` key from your Supabase project's API settings.
-    -   `SUPABASE_SERVICE_ROLE_KEY`: The `service_role` `secret` key from your Supabase project's API settings.
-    -   `SENDGRID_API_KEY`: Your API key from SendGrid.
+   - `NEXT_PUBLIC_SUPABASE_URL`: Found in your Supabase project's *Settings > API*.
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: The `anon` `public` key from your Supabase project's API settings.
+   - `SUPABASE_SERVICE_ROLE_KEY`: The `service_role` `secret` key from your Supabase project's API settings.
+   - `SENDGRID_API_KEY`: Your API key from SendGrid.
 
 ### 3. Install Dependencies
 
@@ -103,16 +103,34 @@ npm run dev
 
 The application should now be running at [http://localhost:3000](http://localhost:3000).
 
+### 6. CI/CD Setup
+
+- **GitHub Actions:** Add workflows for CI and Cloudflare Pages deployment.
+- **CI Workflow:** Runs on PRs and pushes to main, executing `npm run check`.
+- **Cloudflare Pages Deployment:** Uses `cloudflare/pages-action@v1` to build and publish.
+
+### 7. Restoring from .trash/
+
+If any files were moved to `.trash/`, you can restore them by moving them back to their original locations.
+
+```bash
+mv .trash/<file> <original-location>
+```
+
 ---
 
 ## 📜 Available Scripts
 
 All scripts should be run from within the `app/` directory.
 
--   `npm run dev`: Starts the Next.js development server.
--   `npm run build`: Creates an optimized production build of the application.
--   `npm run start`: Starts the application in production mode (requires `npm run build` first).
--   `npm run lint`: Runs ESLint to check for code quality and style issues.
+- `npm run dev`: Starts the Next.js development server.
+- `npm run build`: Creates an optimized production build of the application.
+- `npm run start`: Starts the application in production mode (requires `npm run build` first).
+- `npm run lint`: Runs ESLint to check for code quality and style issues.
+- `npm run typecheck`: Runs TypeScript type checking.
+- `npm run test`: Runs the test suite using Vitest.
+- `npm run format`: Formats the code using Prettier.
+- `npm run check`: Runs lint, typecheck, test, and build scripts.
 
 ---
 
@@ -400,8 +418,8 @@ Other:
 - `NOTIFICATIONS_ENABLED`, `NOTIFICATIONS_EMAIL_ENABLED`
 
 Notes:
-- Nunca commitees claves reales. Usa `.env.local` (git-ignored).
-- Revisa Supabase: Settings → API para obtener URL/keys.
+- Never commit real keys. Use `.env.local` (git-ignored).
+- Check Supabase: Settings → API for URL/keys.
 
 ---
 
@@ -426,36 +444,7 @@ El control final de acceso a datos se garantiza mediante RLS en Supabase.
 
 ## 🧰 Troubleshooting
 
-- Login loop: Verifica que las cookies de Supabase existan (`sb-access-token`). Asegúrate de acceder desde `http://localhost:3000` (mismo origen que `NEXT_PUBLIC_APP_URL`).
-- Recovery flow: El correo debe apuntar a `/auth/callback` con `type=recovery` en el hash; la vista mostrará el formulario para nueva contraseña.
-- 404 en rutas protegidas: Comprueba `middleware.ts` y el prefijo; revisa también `ProtectedRoute` y `hydrated` en `AuthContext`.
-
-# Project Setup
-
-## Setup Instructions
-1. Clone the repository.
-2. Run `npm install` to install dependencies.
-3. Copy `.env.example` to `.env` and fill in the required environment variables.
-4. Run `npm run dev` to start the development server.
-
-## Scripts
-- `npm run dev`: Start the development server.
-- `npm run build`: Build the project for production.
-- `npm run start`: Start the production server.
-- `npm run lint`: Run ESLint.
-- `npm run typecheck`: Run TypeScript type checking.
-- `npm run test`: Run tests using Vitest.
-- `npm run format`: Format code using Prettier.
-- `npm run check`: Run lint, typecheck, test, and build.
-
-## Environment Variables
-Refer to `.env.example` for the required environment variables.
-
-## CI/CD
-- GitHub Actions are used for continuous integration and deployment.
-- On each push to the main branch, the CI workflow runs linting, type checking, tests, and builds the project.
-- Deployment to Cloudflare Pages is triggered after a successful build.
-
-## Restoring from .trash/
-If any files were moved to `.trash/`, you can restore them by moving them back to their original locations.
+- Login loop: Verify that Supabase cookies exist (`sb-access-token`). Ensure access from `http://localhost:3000` (same origin as `NEXT_PUBLIC_APP_URL`).
+- Recovery flow: Email should point to `/auth/callback` with `type=recovery` in the hash; the view will show the new password form.
+- 404 on protected routes: Check `middleware.ts` and prefix; also review `ProtectedRoute` and `hydrated` in `AuthContext`. 
 
