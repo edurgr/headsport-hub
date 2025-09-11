@@ -430,3 +430,32 @@ El control final de acceso a datos se garantiza mediante RLS en Supabase.
 - Recovery flow: El correo debe apuntar a `/auth/callback` con `type=recovery` en el hash; la vista mostrará el formulario para nueva contraseña.
 - 404 en rutas protegidas: Comprueba `middleware.ts` y el prefijo; revisa también `ProtectedRoute` y `hydrated` en `AuthContext`.
 
+# Project Setup
+
+## Setup Instructions
+1. Clone the repository.
+2. Run `npm install` to install dependencies.
+3. Copy `.env.example` to `.env` and fill in the required environment variables.
+4. Run `npm run dev` to start the development server.
+
+## Scripts
+- `npm run dev`: Start the development server.
+- `npm run build`: Build the project for production.
+- `npm run start`: Start the production server.
+- `npm run lint`: Run ESLint.
+- `npm run typecheck`: Run TypeScript type checking.
+- `npm run test`: Run tests using Vitest.
+- `npm run format`: Format code using Prettier.
+- `npm run check`: Run lint, typecheck, test, and build.
+
+## Environment Variables
+Refer to `.env.example` for the required environment variables.
+
+## CI/CD
+- GitHub Actions are used for continuous integration and deployment.
+- On each push to the main branch, the CI workflow runs linting, type checking, tests, and builds the project.
+- Deployment to Cloudflare Pages is triggered after a successful build.
+
+## Restoring from .trash/
+If any files were moved to `.trash/`, you can restore them by moving them back to their original locations.
+
