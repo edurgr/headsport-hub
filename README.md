@@ -103,22 +103,19 @@ npm run dev
 
 The application should now be running at [http://localhost:3000](http://localhost:3000).
 
-### 6. CI/CD Setup ✅
+### 6. CI/CD Setup
 
-- **GitHub Actions:** ✅ Configured with automated CI and Cloudflare Pages deployment
-- **CI Workflow:** ✅ Runs on PRs and pushes to main, executing `npm run check` (lint, typecheck, test, build)
-- **Cloudflare Pages Deployment:** ✅ Uses `cloudflare/pages-action@v1` to build and publish
-- **Repository Cleanup:** ✅ Completed - removed duplicate files and unnecessary directories
+- **GitHub Actions:** Add workflows for CI and Cloudflare Pages deployment.
+- **CI Workflow:** Runs on PRs and pushes to main, executing `npm run check`.
+- **Cloudflare Pages Deployment:** Uses `cloudflare/pages-action@v1` to build and publish.
 
-### 7. Deployment Status
+### 7. Restoring from .trash/
 
-**Current Status:** Ready for Cloudflare Pages deployment
-- ✅ CI/CD pipeline working (all tests pass)
-- ✅ Build process optimized
-- ✅ Repository cleaned and organized
-- ⏳ **Next Step:** Add GitHub Secrets for Cloudflare deployment:
-  - `CLOUDFLARE_API_TOKEN`
-  - `CLOUDFLARE_ACCOUNT_ID`
+If any files were moved to `.trash/`, you can restore them by moving them back to their original locations.
+
+```bash
+mv .trash/<file> <original-location>
+```
 
 ---
 
