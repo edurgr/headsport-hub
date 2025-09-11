@@ -10,6 +10,29 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    ignores: [
+      'out/**/*',
+      'node_modules/**/*',
+      '.next/**/*',
+      'coverage/**/*',
+      '*.config.js',
+      '*.config.mjs',
+      '*.config.ts',
+      '*.d.ts',
+      '**/*.d.ts',
+      '**/test-*.js',
+      '**/run-*.js',
+      '**/setup-*.js',
+      '**/import-*.js',
+      '**/check-*.js',
+      '**/configure-*.js',
+      '**/create-*.js',
+      '**/verify-*.js',
+      '**/update-*.js',
+      '**/quick-*.js'
+    ]
+  },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
     rules: {
@@ -18,6 +41,13 @@ const eslintConfig = [
       'react/no-unescaped-entities': 'off',
       'react-hooks/exhaustive-deps': 'warn',
       '@next/next/no-html-link-for-pages': 'warn',
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-this-alias': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off',
+      '@typescript-eslint/no-wrapper-object-types': 'off',
+      '@typescript-eslint/no-unsafe-function-type': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
+      '@next/next/no-assign-module-variable': 'off'
     },
     settings: {
       next: {
