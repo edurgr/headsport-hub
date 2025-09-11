@@ -31,5 +31,5 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm test -- --ci --watchAll=false
+      - run: npm run test:ci
       - run: npm run build
