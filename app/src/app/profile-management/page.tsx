@@ -51,6 +51,11 @@ export default function ProfileManagementPage() {
   const [adminError, setAdminError] = useState<string | null>(null);
   const [adminInfo, setAdminInfo] = useState<string | null>(null);
 
+  // Delete user state
+  const [deleteConfirm, setDeleteConfirm] = useState<Profile | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   useEffect(() => {
     if (profile?.role === 'admin' || profile?.role === 'manager') {
       fetchProfiles();
@@ -187,6 +192,42 @@ export default function ProfileManagementPage() {
   const clearFilters = () => {
     setSearchTerm('');
     setRoleFilter('all');
+  };
+
+  const handleDeleteUser = async (userProfile: Profile) => {
+    setDeleteLoading(true);
+    setDeleteError(null);
+
+    try {
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      const token = sessionData.session?.access_token;
+
+      const response = await fetch('/api/admin/delete-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          email: userProfile.email,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setAdminInfo(`User ${userProfile.email} deleted successfully`);
+        setDeleteConfirm(null);
+        fetchProfiles(); // Refresh the list
+      } else {
+        setDeleteError(result.error || 'Failed to delete user');
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      setDeleteError('Error deleting user');
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   // Admin creation handler
@@ -648,6 +689,15 @@ export default function ProfileManagementPage() {
                               Edit
                             </button>
                           ))}
+                        {profile?.role === 'admin' && p.role !== 'admin' && (
+                          <button
+                            onClick={() => setDeleteConfirm(p)}
+                            className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                            title="Delete user"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </div>
                     </div>
                     <div className="mt-4">
@@ -994,6 +1044,47 @@ export default function ProfileManagementPage() {
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Confirm User Deletion
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete the user <strong>{deleteConfirm.name}</strong> ({deleteConfirm.email})?
+                <br />
+                <span className="text-red-600 font-medium">
+                  This action cannot be undone and will permanently delete the user account and all associated data.
+                </span>
+              </p>
+              
+              {deleteError && (
+                <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200 mb-4">
+                  {deleteError}
+                </div>
+              )}
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                  disabled={deleteLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteUser(deleteConfirm)}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50"
+                  disabled={deleteLoading}
+                >
+                  {deleteLoading ? 'Deleting...' : 'Delete User'}
+                </button>
               </div>
             </div>
           </div>

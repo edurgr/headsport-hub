@@ -2,8 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { createClient } from '@supabase/supabase-js';
 
+import { verifyAdminAccess } from '@/lib/admin-auth-secure';
+
 export async function POST(request: NextRequest) {
   try {
+    // Check admin access
+    const adminResult = await verifyAdminAccess(request);
+    if (!adminResult.success) {
+      return NextResponse.json({ error: adminResult.error }, { status: adminResult.status });
+    }
+
     const { email } = await request.json();
     if (!email || typeof email !== 'string') {
       return NextResponse.json({ error: 'Missing email' }, { status: 400 });
