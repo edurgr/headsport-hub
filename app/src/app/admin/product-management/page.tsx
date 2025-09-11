@@ -33,6 +33,8 @@ export default function ProductManagementPage() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const [isRequestInProgress, setIsRequestInProgress] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const categories = [
     { value: 'all', label: 'All Categories' },
@@ -51,7 +53,20 @@ export default function ProductManagementPage() {
 
   const fetchProducts = useCallback(
     async (pageParam = 1, reset = false) => {
+      // Prevent multiple simultaneous requests
+      if (isRequestInProgress) return;
+      
       try {
+        setIsRequestInProgress(true);
+        
+        // Cancel previous request if it exists
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+        
+        // Create new abort controller for this request
+        abortControllerRef.current = new AbortController();
+        
         if (reset) {
           setLoading(true);
         } else if (pageParam > 1) {
@@ -59,13 +74,20 @@ export default function ProductManagementPage() {
         } else {
           setLoading(true);
         }
+        
         const params = new URLSearchParams();
         if (searchTerm) params.append('search', searchTerm);
         if (categoryFilter !== 'all') params.append('category', categoryFilter);
         params.append('page', String(pageParam));
         params.append('limit', '100');
 
-        const response = await authenticatedFetch(`/api/admin/products?${params.toString()}`);
+        const response = await authenticatedFetch(`/api/admin/products?${params.toString()}`, {
+          signal: abortControllerRef.current.signal,
+        });
+        
+        // Check if request was aborted
+        if (abortControllerRef.current.signal.aborted) return;
+        
         const data = await response.json();
 
         if (response.ok) {
@@ -81,33 +103,39 @@ export default function ProductManagementPage() {
         } else {
           setError(data.error || 'Failed to fetch products');
         }
-      } catch (_error) {
-        setError('Error fetching products');
+      } catch (error: any) {
+        // Don't show error if request was aborted
+        if (error.name !== 'AbortError') {
+          setError('Error fetching products');
+        }
       } finally {
         setLoading(false);
         setLoadingMore(false);
+        setIsRequestInProgress(false);
       }
     },
-    [authenticatedFetch, categoryFilter, searchTerm],
+    [authenticatedFetch, categoryFilter, searchTerm, isRequestInProgress],
   );
 
+  // Initial load when profile is available
   useEffect(() => {
     if (profile?.role === 'admin') {
       setPage(1);
       fetchProducts(1, true);
     }
-  }, [profile, fetchProducts]);
+  }, [profile?.role]); // Only depend on role, not the entire profile object
 
+  // Debounced search and filter changes
   useEffect(() => {
+    if (profile?.role !== 'admin') return;
+    
     const timeoutId = setTimeout(() => {
-      if (profile?.role === 'admin') {
-        setPage(1);
-        fetchProducts(1, true);
-      }
-    }, 300);
+      setPage(1);
+      fetchProducts(1, true);
+    }, 500); // Increased debounce time to 500ms
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, categoryFilter, profile, fetchProducts]);
+  }, [searchTerm, categoryFilter]); // Removed profile and fetchProducts from deps
 
   useEffect(() => {
     if (!loadMoreRef.current) return;
@@ -115,7 +143,7 @@ export default function ProductManagementPage() {
     const observer = new IntersectionObserver(
       (entries) => {
         const first = entries[0];
-        if (first.isIntersecting && hasMore && !loading && !loadingMore) {
+        if (first.isIntersecting && hasMore && !loading && !loadingMore && !isRequestInProgress) {
           const next = page + 1;
           setPage(next);
           fetchProducts(next);
@@ -125,7 +153,16 @@ export default function ProductManagementPage() {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [hasMore, loading, loadingMore, page]);
+  }, [hasMore, loading, loadingMore, isRequestInProgress, page, fetchProducts]);
+
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const handleDeleteProduct = async (product: Product) => {
     if (!confirm(`Are you sure you want to delete "${product.name}"?`)) {

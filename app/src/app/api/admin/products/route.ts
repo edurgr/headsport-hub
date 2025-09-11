@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     const page = parseInt(url.searchParams.get('page') || '1');
     const limit = parseInt(url.searchParams.get('limit') || '50');
 
-    // Get all products from all categories (using current schema)
+    // Get products from specific category or all categories efficiently
     const categories = [
       'accessories',
       'bindings',
@@ -52,25 +52,43 @@ export async function GET(req: NextRequest) {
       'snowboards_boots',
       'snowboards_accessories',
     ];
+    
     let allProducts: any[] = [];
-
-    for (const cat of categories) {
-      let query = supabase.from(cat).select('*');
-
-      if (category && category !== cat) continue;
-      if (search) {
-        query = query.or(`name.ilike.%${search}%,article.ilike.%${search}%`);
-      }
-
-      const { data, error } = await query;
+    
+    // If filtering by specific category, only query that table
+    if (category && category !== 'all') {
+      const query = supabase.from(category).select('*');
+      const searchQuery = search 
+        ? query.or(`name.ilike.%${search}%,article.ilike.%${search}%`)
+        : query;
+      
+      const { data, error } = await searchQuery;
       if (!error && data) {
-        allProducts = allProducts.concat(
-          data.map((item: any) => ({
-            ...item,
-            table_name: cat,
-            category: cat,
-          })),
-        );
+        allProducts = data.map((item: any) => ({
+          ...item,
+          table_name: category,
+          category: category,
+        }));
+      }
+    } else {
+      // Only query all categories if no specific category filter
+      for (const cat of categories) {
+        let query = supabase.from(cat).select('*');
+        
+        if (search) {
+          query = query.or(`name.ilike.%${search}%,article.ilike.%${search}%`);
+        }
+
+        const { data, error } = await query;
+        if (!error && data) {
+          allProducts = allProducts.concat(
+            data.map((item: any) => ({
+              ...item,
+              table_name: cat,
+              category: cat,
+            })),
+          );
+        }
       }
     }
 
