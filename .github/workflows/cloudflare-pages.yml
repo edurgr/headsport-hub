@@ -11,14 +11,12 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v2
 
     - name: Setup Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v3
       with:
         node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: 'app/package-lock.json'
 
     - name: Install dependencies
       run: cd app && npm ci
@@ -33,3 +31,4 @@ jobs:
         accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         projectName: 'head-hub'
         directory: 'app/.next'
+        gitHubToken: ${{ secrets.GITHUB_TOKEN }}
