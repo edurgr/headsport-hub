@@ -15,8 +15,13 @@ export async function GET(req: Request) {
     const offset = (page - 1) * limit;
 
     // Build Supabase client: prefer Authorization header if provided (matches content API behavior)
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('Missing Supabase configuration in profiles/list');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
 
     let sb = await supabaseServer();
     const authHeader =

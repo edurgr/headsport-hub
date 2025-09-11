@@ -5,10 +5,18 @@ import { createClient } from '@supabase/supabase-js';
 import { emailService } from '@/lib/email-service';
 
 // Configure Supabase client with service role key for administrative operations
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('Missing Supabase configuration:', {
+    url: !!supabaseUrl,
+    serviceKey: !!supabaseServiceKey
+  });
+  throw new Error('Supabase configuration is missing');
+}
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function POST(request: NextRequest) {
   try {
