@@ -11,18 +11,20 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: 'app/package-lock.json'
 
     - name: Install dependencies
-      run: npm ci
+      run: cd app && npm ci
 
     - name: Build project
-      run: npm run build
+      run: cd app && npm run build
 
     - name: Deploy to Cloudflare Pages
       uses: cloudflare/pages-action@v1
@@ -30,4 +32,4 @@ jobs:
         apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         projectName: 'head-hub'
-        directory: 'out'
+        directory: 'app/.next'
