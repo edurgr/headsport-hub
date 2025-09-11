@@ -67,13 +67,33 @@ export default function ContentModerationPage() {
   );
   const [moderationReason, setModerationReason] = useState('');
   const [moderationNotes, setModerationNotes] = useState('');
+  const [isRequestInProgress, setIsRequestInProgress] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchData = useCallback(async () => {
+    // Prevent multiple simultaneous requests
+    if (isRequestInProgress) return;
+    
     try {
+      setIsRequestInProgress(true);
       setLoading(true);
+      
+      // Cancel previous request if it exists
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      
+      // Create new abort controller for this request
+      abortControllerRef.current = new AbortController();
 
       if (activeTab === 'queue') {
-        const response = await authenticatedFetch('/api/admin/content-moderation?action=queue');
+        const response = await authenticatedFetch('/api/admin/content-moderation?action=queue', {
+          signal: abortControllerRef.current.signal,
+        });
+        
+        // Check if request was aborted
+        if (abortControllerRef.current.signal.aborted) return;
+        
         const data = await response.json();
 
         if (response.ok) {
@@ -82,7 +102,13 @@ export default function ContentModerationPage() {
           setError(data.error || 'Failed to fetch moderation queue');
         }
       } else if (activeTab === 'stats') {
-        const response = await authenticatedFetch('/api/admin/content-moderation?action=stats');
+        const response = await authenticatedFetch('/api/admin/content-moderation?action=stats', {
+          signal: abortControllerRef.current.signal,
+        });
+        
+        // Check if request was aborted
+        if (abortControllerRef.current.signal.aborted) return;
+        
         const data = await response.json();
 
         if (response.ok) {
@@ -91,18 +117,39 @@ export default function ContentModerationPage() {
           setError(data.error || 'Failed to fetch moderation stats');
         }
       }
-    } catch (_error) {
-      setError('Error fetching data');
+    } catch (error: any) {
+      // Don't show error if request was aborted
+      if (error.name !== 'AbortError') {
+        setError('Error fetching data');
+      }
     } finally {
       setLoading(false);
+      setIsRequestInProgress(false);
     }
-  }, [activeTab, authenticatedFetch]);
+  }, [activeTab, authenticatedFetch, isRequestInProgress]);
 
+  // Initial load when profile is available
   useEffect(() => {
     if (profile?.role === 'admin') {
       fetchData();
     }
-  }, [profile, activeTab, fetchData]);
+  }, [profile?.role]); // Only depend on role, not the entire profile object
+
+  // Fetch data when tab changes
+  useEffect(() => {
+    if (profile?.role === 'admin') {
+      fetchData();
+    }
+  }, [activeTab]); // Only depend on activeTab, not fetchData
+
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const handleModerateContent = async (
     fileId: string,
@@ -110,7 +157,12 @@ export default function ContentModerationPage() {
     reason?: string,
     notes?: string,
   ) => {
+    // Prevent multiple simultaneous moderation requests
+    if (isRequestInProgress) return;
+    
     try {
+      setIsRequestInProgress(true);
+      
       const response = await authenticatedFetch('/api/admin/content-moderation', {
         method: 'POST',
         body: JSON.stringify({
@@ -131,6 +183,8 @@ export default function ContentModerationPage() {
       }
     } catch (err) {
       setError(`Error ${action}ing content`);
+    } finally {
+      setIsRequestInProgress(false);
     }
   };
 
@@ -140,7 +194,12 @@ export default function ContentModerationPage() {
       return;
     }
 
+    // Prevent multiple simultaneous bulk moderation requests
+    if (isRequestInProgress) return;
+
     try {
+      setIsRequestInProgress(true);
+      
       const response = await authenticatedFetch('/api/admin/content-moderation', {
         method: 'POST',
         body: JSON.stringify({
@@ -163,6 +222,8 @@ export default function ContentModerationPage() {
       }
     } catch (err) {
       setError(`Error bulk ${moderationAction}ing content`);
+    } finally {
+      setIsRequestInProgress(false);
     }
   };
 

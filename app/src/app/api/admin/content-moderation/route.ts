@@ -73,26 +73,31 @@ export async function GET(req: Request) {
 
     if (action === 'stats') {
       const sbClient = sb as any;
-      const [totalRes, pendingRes, approvedRes, rejectedRes, flaggedRes] = await Promise.all([
-        sbClient.from('upload_files').select('*', { count: 'exact', head: true }),
-        sbClient
-          .from('upload_files')
-          .select('*', { count: 'exact', head: true })
-          .eq('moderation_status', 'pending'),
-        sbClient
-          .from('upload_files')
-          .select('*', { count: 'exact', head: true })
-          .eq('moderation_status', 'approved'),
-        sbClient
-          .from('upload_files')
-          .select('*', { count: 'exact', head: true })
-          .eq('moderation_status', 'rejected'),
-        sbClient
-          .from('upload_files')
-          .select('*', { count: 'exact', head: true })
-          .eq('moderation_status', 'flagged'),
-      ]);
+      
+      // Use a single query with aggregation instead of 5 separate queries
+      const { data: statsData, error: statsError } = await sbClient
+        .from('upload_files')
+        .select('moderation_status')
+        .not('moderation_status', 'is', null);
 
+      if (statsError) {
+        console.error('Error fetching stats:', statsError);
+        return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
+      }
+
+      // Count files by status
+      const statusCounts = (statsData || []).reduce((acc: any, file: any) => {
+        const status = file.moderation_status || 'unknown';
+        acc[status] = (acc[status] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Get total count
+      const { count: totalCount } = await sbClient
+        .from('upload_files')
+        .select('*', { count: 'exact', head: true });
+
+      // Get queue size
       let queueSize = 0;
       try {
         const { count } = await sbClient
@@ -104,11 +109,11 @@ export async function GET(req: Request) {
       }
 
       return NextResponse.json({
-        total_files: totalRes.count || 0,
-        pending_files: pendingRes.count || 0,
-        approved_files: approvedRes.count || 0,
-        rejected_files: rejectedRes.count || 0,
-        flagged_files: flaggedRes.count || 0,
+        total_files: totalCount || 0,
+        pending_files: statusCounts.pending || 0,
+        approved_files: statusCounts.approved || 0,
+        rejected_files: statusCounts.rejected || 0,
+        flagged_files: statusCounts.flagged || 0,
         queue_size: queueSize,
         avg_moderation_time_minutes: 0,
       });
