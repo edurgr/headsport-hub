@@ -23,6 +23,16 @@ jobs:
 
     - name: Build project
       run: cd app && npm run build
+      env:
+        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+        NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+        ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+        ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+        FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
 
     - name: Deploy to Cloudflare Pages
       uses: cloudflare/pages-action@v1
