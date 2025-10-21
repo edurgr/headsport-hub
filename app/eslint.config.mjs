@@ -51,7 +51,8 @@ const eslintConfig = [
     },
     settings: {
       next: {
-        rootDir: ['apps/*/']
+        // Set to current project root so Next.js plugin can locate the app dir
+        rootDir: ['.']
       }
     }
   },
