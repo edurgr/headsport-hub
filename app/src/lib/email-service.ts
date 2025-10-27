@@ -77,7 +77,7 @@ export class EmailService {
   }
 
   public async sendInvitationEmail(data: InvitationEmailData): Promise<boolean> {
-    const subject = `You're invited to join Athlete Hub as a ${data.role}`;
+    const subject = `You're invited to join HEAD Sport Hub as a ${data.role}`;
 
     const html = this.generateInvitationHTML(data);
     const text = this.generateInvitationText(data);
@@ -144,7 +144,7 @@ export class EmailService {
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Invitation to Join Athlete Hub</title>
+        <title>Invitation to Join HEAD Sport Hub</title>
         <style>
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -160,12 +160,12 @@ export class EmailService {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🏃‍♂️ Athlete Hub</h1>
+            <h1>HEAD Sport Hub</h1>
             <p>You've been invited to join our platform!</p>
           </div>
           
           <div class="content">
-            <h2>Welcome to Athlete Hub!</h2>
+            <h2>Welcome to HEAD Sport Hub!</h2>
             
             <p>You've been invited to join our platform as a <strong>${data.role}</strong>.</p>
             
@@ -187,12 +187,12 @@ export class EmailService {
             
             <p>If you have any questions or need assistance, please contact your administrator.</p>
             
-            <p>Best regards,<br>The Athlete Hub Team</p>
+            <p>Best regards,<br>The HEAD Sport Hub Team</p>
           </div>
           
           <div class="footer">
             <p>This is an automated message. Please do not reply to this email.</p>
-            <p>© ${new Date().getFullYear()} Athlete Hub. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} HEAD Sport Hub. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -202,9 +202,9 @@ export class EmailService {
 
   private generateInvitationText(data: InvitationEmailData): string {
     return `
-Athlete Hub - Invitation
+HEAD Sport Hub - Invitation
 
-You've been invited to join Athlete Hub as a ${data.role}.
+You've been invited to join HEAD Sport Hub as a ${data.role}.
 
 ${data.personalMessage ? `Personal Message: "${data.personalMessage}"` : ''}
 
@@ -217,11 +217,11 @@ Expires: In 7 days
 If you have any questions, please contact your administrator.
 
 Best regards,
-The Athlete Hub Team
+The HEAD Sport Hub Team
 
 ---
 This is an automated message. Please do not reply to this email.
-© ${new Date().getFullYear()} Athlete Hub. All rights reserved.
+© ${new Date().getFullYear()} HEAD Sport Hub. All rights reserved.
     `.trim();
   }
 

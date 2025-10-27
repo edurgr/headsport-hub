@@ -1,8 +1,8 @@
-# HEAD Hub - Athlete & Equipment Management Platform
+# HEAD Sport Hub - Athlete & Equipment Management Platform
 
 ![HEAD Logo](app/public/head-logo.svg)
 
-**HEAD Hub** is a comprehensive, role-based web application designed to streamline equipment orders, content management, and team coordination for HEAD's athletes, managers, and administrators. Built with a modern, robust technology stack, it provides a centralized platform for all operational needs.
+**HEAD Sport Hub** is a comprehensive, role-based web application designed to streamline equipment orders, content management, and team coordination for HEAD's athletes, managers, and administrators. Built with a modern, robust technology stack, it provides a centralized platform for all operational needs.
 
 ---
 
@@ -205,7 +205,7 @@ The application uses a role-based routing system to control access to different 
 
 ```mermaid
 graph LR
-    App[HEAD Hub] --> Public
+    App[HEAD Sport Hub] --> Public
     App --> Authenticated
 
     subgraph Public

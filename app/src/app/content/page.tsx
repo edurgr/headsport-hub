@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { Upload as UploadIcon } from 'lucide-react';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { Toast } from '@/components/toast';
 import ResponsiveSelect from '@/components/ResponsiveSelect';
 import { useDownload } from '@/contexts/DownloadContext';
 import { supabaseClient } from '@/lib/supabase-client';
@@ -38,6 +39,10 @@ export default function ContentPage() {
   const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [role, setRole] = useState<'athlete' | 'manager' | 'admin'>('athlete');
   const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+  const [confirmPhrase, setConfirmPhrase] = useState('');
+  const [confirmCount, setConfirmCount] = useState('');
   const [activeAuthorId, setActiveAuthorId] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerItems, setViewerItems] = useState<GalleryItem[]>([]);
@@ -49,6 +54,8 @@ export default function ContentPage() {
   const [tableFilter, setTableFilter] = useState<{
     type: 'all' | 'image' | 'video' | 'document' | 'other';
   }>({ type: 'all' });
+  const [showDeleteSelectedModal, setShowDeleteSelectedModal] = useState(false);
+  const [toasts, setToasts] = useState<{ id: number; message: string; type?: 'success' | 'error' | 'info' }[]>([]);
 
   const openViewer = (list: GalleryItem[], startId: string) => {
     const idx = list.findIndex((it) => it.id === startId);
@@ -60,6 +67,94 @@ export default function ContentPage() {
   const closeViewer = () => setViewerOpen(false);
   const prevViewer = () => setViewerIndex((i) => (i - 1 + viewerItems.length) % viewerItems.length);
   const nextViewer = () => setViewerIndex((i) => (i + 1) % viewerItems.length);
+
+  // Selection helpers
+  const getDisplayedItems = (): GalleryItem[] => {
+    if (viewMode === 'grid') {
+      return activeAuthorId ? items.filter((it) => it.author_id === activeAuthorId) : items;
+    }
+    // Table mode: apply same filter and sort used by the table
+    const base = activeAuthorId ? items.filter((it) => it.author_id === activeAuthorId) : items;
+    const filtered =
+      tableFilter.type === 'all' ? base : base.filter((it) => it.file_type === tableFilter.type);
+    const sorted = [...filtered].sort((a, b) => {
+      const dir = -1; // descending
+      switch (tableSort.key) {
+        case 'filename':
+          return a.filename.localeCompare(b.filename) * dir;
+        case 'file_size':
+          return ((a.file_size || 0) - (b.file_size || 0)) * dir;
+        case 'file_type':
+          return a.file_type.localeCompare(b.file_type) * dir;
+        case 'rating':
+          return ((((a.metadata as any)?.rating || 0) - ((b.metadata as any)?.rating || 0)) * dir);
+        case 'created_at':
+        default:
+          return (
+            (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * dir
+          );
+      }
+    });
+    return sorted;
+  };
+
+  const toggleMasterForDisplayed = (checked: boolean) => {
+    const displayed = getDisplayedItems();
+    const displayedIds = new Set(displayed.map((it) => it.id));
+    setSelected((prev) => {
+      const next: Record<string, boolean> = { ...prev };
+      if (checked) {
+        displayed.forEach((it) => {
+          next[it.id] = true;
+        });
+      } else {
+        displayedIds.forEach((id) => {
+          if (id in next) delete next[id];
+        });
+      }
+      return next;
+    });
+  };
+
+  const selectAllForAuthor = (authorId: string) => {
+    const list = items.filter((it) => it.author_id === authorId);
+    setSelected((prev) => {
+      const next = { ...prev } as Record<string, boolean>;
+      list.forEach((it) => (next[it.id] = true));
+      return next;
+    });
+  };
+
+  const getSelectedIds = () => Object.entries(selected).filter(([_, v]) => v).map(([k]) => k);
+  const selectedCount = getSelectedIds().length;
+
+  const addToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    const id = Date.now() + Math.random();
+    setToasts((prev) => [...prev, { id, message, type }]);
+  };
+
+  useEffect(() => {
+    const onKeyDown = async (e: KeyboardEvent) => {
+      const isMetaA = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a';
+      if (isMetaA) {
+        e.preventDefault();
+        toggleMasterForDisplayed(true);
+        addToast('All visible items selected', 'info');
+        return;
+      }
+      if (e.key === 'Escape') {
+        toggleMasterForDisplayed(false);
+        addToast('Selection cleared', 'info');
+        return;
+      }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedCount > 0 && (role === 'admin' || role === 'manager')) {
+        e.preventDefault();
+        setShowDeleteSelectedModal(true);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selectedCount, role]);
 
   async function downloadFromSignedUrls(entries: { url: string; filename: string }[]) {
     const total = entries.length || 1;
@@ -494,6 +589,85 @@ export default function ContentPage() {
               </button>
             )}
 
+            {/* Selection helpers */}
+            {items.length > 0 && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => toggleMasterForDisplayed(true)}
+                  className="px-3 py-2 rounded-md text-sm"
+                  style={{
+                    backgroundColor: 'hsl(var(--secondary))',
+                    border: '1px solid hsl(var(--border))',
+                  }}
+                >
+                  Select all {activeAuthorId ? '(athlete)' : ''}
+                </button>
+                {Object.values(selected).some(Boolean) && (
+                  <button
+                    onClick={() => toggleMasterForDisplayed(false)}
+                    className="px-3 py-2 rounded-md text-sm"
+                    style={{
+                      backgroundColor: 'hsl(var(--secondary))',
+                      border: '1px solid hsl(var(--border))',
+                    }}
+                  >
+                    Clear selection
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Delete controls for admin and manager (bulk delete selected) */}
+            {(role === 'admin' || role === 'manager') && (
+              <div className="flex items-center gap-2">
+                {Object.values(selected).some(Boolean) && (
+                  <button
+                    disabled={deleting}
+                    onClick={async () => {
+                      try {
+                        setDeleting(true);
+                        const ids = Object.entries(selected)
+                          .filter(([_, v]) => v)
+                          .map(([k]) => k);
+                        const { data: sessionData } = await supabaseClient.auth.getSession();
+                        const token = sessionData.session?.access_token;
+                        const res = await fetch('/api/content/files', {
+                          method: 'DELETE',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                          },
+                          body: JSON.stringify({ ids }),
+                        });
+                        if (!res.ok) {
+                          const j = await res.json().catch(() => ({}));
+                          alert(j.error || 'Failed to delete selected');
+                          return;
+                        }
+                        addToast('Selected items deleted', 'success');
+                        // Refresh list
+                        window.location.reload();
+                      } finally {
+                        setDeleting(false);
+                      }
+                    }}
+                    className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
+                  >
+                    {deleting ? 'Deleting…' : `Delete Selected (${Object.values(selected).filter(Boolean).length})`}
+                  </button>
+                )}
+                {items.length > 0 && (
+                  <button
+                    disabled={deleting}
+                    onClick={() => setShowDeleteAllModal(true)}
+                    className="px-3 py-2 bg-red-700 text-white rounded-md hover:bg-red-800 transition-colors text-sm"
+                  >
+                    Delete ALL
+                  </button>
+                )}
+              </div>
+            )}
+
             <div
               className="inline-flex rounded-md overflow-hidden"
               style={{ border: '1px solid hsl(var(--border))' }}
@@ -624,6 +798,16 @@ export default function ContentPage() {
                               }}
                             >
                               Open
+                            </button>
+                            <button
+                              onClick={() => selectAllForAuthor(g.author_id)}
+                              className="px-2 py-1 rounded"
+                              style={{
+                                backgroundColor: 'hsl(var(--secondary))',
+                                border: '1px solid hsl(var(--border))',
+                              }}
+                            >
+                              Select all
                             </button>
                             <button
                               onClick={async () => {
@@ -800,6 +984,29 @@ export default function ContentPage() {
                         >
                           Edit
                         </button>
+                        {(role === 'admin' || role === 'manager') && (
+                          <button
+                            onClick={async () => {
+                              if (!confirm('Delete this item permanently?')) return;
+                              const { data: sessionData } = await supabaseClient.auth.getSession();
+                              const token = sessionData.session?.access_token;
+                              const res = await fetch(`/api/content/files?id=${encodeURIComponent(it.id)}`, {
+                                method: 'DELETE',
+                                headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                              });
+                              if (!res.ok) {
+                                const j = await res.json().catch(() => ({}));
+                                alert(j.error || 'Failed to delete');
+                                return;
+                              }
+                              window.location.reload();
+                            }}
+                            className="px-2 py-1 rounded hover:opacity-80 text-red-600"
+                            style={{ border: '1px solid hsl(var(--border))' }}
+                          >
+                            Delete
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -881,6 +1088,16 @@ export default function ContentPage() {
                       }}
                     >
                       <tr>
+                        <th className="text-left px-4 py-2">
+                          <input
+                            type="checkbox"
+                            checked={(() => {
+                              const displayed = getDisplayedItems();
+                              return displayed.length > 0 && displayed.every((it) => !!selected[it.id]);
+                            })()}
+                            onChange={(e) => toggleMasterForDisplayed(e.target.checked)}
+                          />
+                        </th>
                         <th className="text-left px-4 py-2">Preview</th>
                         <th className="text-left px-4 py-2">Filename</th>
                         <th className="text-left px-4 py-2">Type</th>
@@ -892,41 +1109,17 @@ export default function ContentPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {(() => {
-                        const base = activeAuthorId
-                          ? items.filter((it) => it.author_id === activeAuthorId)
-                          : items;
-                        const filtered =
-                          tableFilter.type === 'all'
-                            ? base
-                            : base.filter((it) => it.file_type === tableFilter.type);
-                        const sorted = [...filtered].sort((a, b) => {
-                          const dir = -1; // fixed: descending
-                          switch (tableSort.key) {
-                            case 'filename':
-                              return a.filename.localeCompare(b.filename) * dir;
-                            case 'file_size':
-                              return ((a.file_size || 0) - (b.file_size || 0)) * dir;
-                            case 'file_type':
-                              return a.file_type.localeCompare(b.file_type) * dir;
-                            case 'rating':
-                              return (
-                                (((a.metadata as any)?.rating || 0) -
-                                  ((b.metadata as any)?.rating || 0)) *
-                                dir
-                              );
-                            case 'created_at':
-                            default:
-                              return (
-                                (new Date(a.created_at).getTime() -
-                                  new Date(b.created_at).getTime()) *
-                                dir
-                              );
-                          }
-                        });
-                        return sorted;
-                      })().map((it) => (
+                      {getDisplayedItems().map((it) => (
                         <tr key={it.id} className="border-t">
+                          <td className="px-4 py-2">
+                            <input
+                              type="checkbox"
+                              checked={!!selected[it.id]}
+                              onChange={(e) =>
+                                setSelected((s) => ({ ...s, [it.id]: e.target.checked }))
+                              }
+                            />
+                          </td>
                           <td className="px-4 py-2">
                             {it.file_type === 'image' && it.url ? (
                               <Image
@@ -1020,6 +1213,29 @@ export default function ContentPage() {
                               >
                                 Edit
                               </button>
+                              {(role === 'admin' || role === 'manager') && (
+                                <button
+                                  onClick={async () => {
+                                    if (!confirm('Delete this item permanently?')) return;
+                                    const { data: sessionData } = await supabaseClient.auth.getSession();
+                                    const token = sessionData.session?.access_token;
+                                    const res = await fetch(`/api/content/files?id=${encodeURIComponent(it.id)}`, {
+                                      method: 'DELETE',
+                                      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                                    });
+                                    if (!res.ok) {
+                                      const j = await res.json().catch(() => ({}));
+                                      alert(j.error || 'Failed to delete');
+                                      return;
+                                    }
+                                    window.location.reload();
+                                  }}
+                                  className="px-2 py-1 rounded hover:opacity-80 text-red-600"
+                                  style={{ border: '1px solid hsl(var(--border))' }}
+                                >
+                                  Delete
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -1105,6 +1321,237 @@ export default function ContentPage() {
                 </button>
                 <button onClick={saveEdit} className="btn">
                   Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Floating selection bar */}
+        {selectedCount > 0 && (
+          <div
+            className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg"
+            style={{ backgroundColor: 'hsl(var(--secondary))', border: '1px solid hsl(var(--border))' }}
+          >
+            <span className="text-sm">{selectedCount} selected</span>
+            <button
+              onClick={() => toggleMasterForDisplayed(true)}
+              className="px-2 py-1 rounded text-sm"
+              style={{ border: '1px solid hsl(var(--border))' }}
+            >
+              Select all visible
+            </button>
+            <button
+              onClick={() => toggleMasterForDisplayed(false)}
+              className="px-2 py-1 rounded text-sm"
+              style={{ border: '1px solid hsl(var(--border))' }}
+            >
+              Clear
+            </button>
+            <button
+              onClick={async () => {
+                const ids = getSelectedIds();
+                const { data: sessionData } = await supabaseClient.auth.getSession();
+                const token = sessionData.session?.access_token;
+                const resp = await fetch('/api/content/download', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                  },
+                  body: JSON.stringify({ file_ids: ids }),
+                });
+                const j = await resp.json();
+                if (j.urls && Array.isArray(j.urls)) {
+                  await downloadFromSignedUrls(
+                    j.urls.map((u: any) => ({ url: u.url, filename: u.filename })),
+                  );
+                }
+                addToast('Download started', 'info');
+              }}
+              className="px-2 py-1 rounded text-sm"
+              style={{ border: '1px solid hsl(var(--border))' }}
+            >
+              Download
+            </button>
+            {(role === 'admin' || role === 'manager') && (
+              <button
+                onClick={() => setShowDeleteSelectedModal(true)}
+                className="px-2 py-1 rounded text-sm text-white"
+                style={{ backgroundColor: 'hsl(var(--error))' }}
+              >
+                Delete selected
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Confirm delete selected modal */}
+        {showDeleteSelectedModal && (role === 'admin' || role === 'manager') && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[70]">
+            <div
+              className="w-full max-w-md rounded-lg shadow-lg p-6"
+              style={{ backgroundColor: 'hsl(var(--secondary))', border: '1px solid hsl(var(--border))' }}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">Delete selected</h3>
+                <button
+                  onClick={() => setShowDeleteSelectedModal(false)}
+                  className="hover:opacity-80"
+                  style={{ color: 'hsl(var(--muted))' }}
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-3 text-sm">
+                <p className="text-[hsl(var(--muted))]">
+                  You are about to permanently delete <strong className="text-[hsl(var(--foreground))]">{selectedCount}</strong> items.
+                </p>
+              </div>
+              <div className="mt-6 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setShowDeleteSelectedModal(false)}
+                  className="px-3 py-2 rounded hover:opacity-80"
+                  style={{ backgroundColor: 'hsl(var(--secondary))', border: '1px solid hsl(var(--border))' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={deleting}
+                  onClick={async () => {
+                    try {
+                      setDeleting(true);
+                      const ids = getSelectedIds();
+                      const { data: sessionData } = await supabaseClient.auth.getSession();
+                      const token = sessionData.session?.access_token;
+                      const res = await fetch('/api/content/files', {
+                        method: 'DELETE',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        },
+                        body: JSON.stringify({ ids }),
+                      });
+                      if (!res.ok) {
+                        const j = await res.json().catch(() => ({}));
+                        addToast(j.error || 'Failed to delete selected', 'error');
+                        return;
+                      }
+                      addToast('Selected items deleted', 'success');
+                      window.location.reload();
+                    } finally {
+                      setDeleting(false);
+                      setShowDeleteSelectedModal(false);
+                    }
+                  }}
+                  className="px-3 py-2 rounded text-white disabled:opacity-50"
+                  style={{ backgroundColor: 'hsl(var(--error))' }}
+                >
+                  {deleting ? 'Deleting…' : 'Confirm delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Toasts */}
+        {toasts.map((t) => (
+          <Toast key={t.id} message={t.message} type={t.type} onClose={() => setToasts((prev) => prev.filter((x) => x.id !== t.id))} />
+        ))}
+
+        {/* Delete ALL confirmation modal (admin-only) */}
+        {showDeleteAllModal && role === 'admin' && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[70]">
+            <div
+              className="w-full max-w-md rounded-lg shadow-lg p-6"
+              style={{ backgroundColor: 'hsl(var(--secondary))', border: '1px solid hsl(var(--border))' }}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">Confirm Delete ALL</h3>
+                <button
+                  onClick={() => {
+                    setShowDeleteAllModal(false);
+                    setConfirmPhrase('');
+                    setConfirmCount('');
+                  }}
+                  className="hover:opacity-80"
+                  style={{ color: 'hsl(var(--muted))' }}
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-4 text-sm">
+                <p className="text-[hsl(var(--muted))]">
+                  This action will permanently delete <strong className="text-[hsl(var(--foreground))]">ALL</strong> content files ({items.length}).
+                  This cannot be undone.
+                </p>
+                <div>
+                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1">
+                    Type DELETE ALL to confirm
+                  </label>
+                  <input
+                    value={confirmPhrase}
+                    onChange={(e) => setConfirmPhrase(e.target.value)}
+                    className="input"
+                    placeholder="DELETE ALL"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-1">
+                    Enter the total number of items ({items.length})
+                  </label>
+                  <input
+                    value={confirmCount}
+                    onChange={(e) => setConfirmCount(e.target.value)}
+                    className="input"
+                    placeholder={String(items.length)}
+                    inputMode="numeric"
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setShowDeleteAllModal(false);
+                    setConfirmPhrase('');
+                    setConfirmCount('');
+                  }}
+                  className="px-3 py-2 rounded hover:opacity-80"
+                  style={{ backgroundColor: 'hsl(var(--secondary))', border: '1px solid hsl(var(--border))' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={
+                    deleting || confirmPhrase !== 'DELETE ALL' || Number(confirmCount) !== items.length
+                  }
+                  onClick={async () => {
+                    try {
+                      setDeleting(true);
+                      const { data: sessionData } = await supabaseClient.auth.getSession();
+                      const token = sessionData.session?.access_token;
+                      const res = await fetch('/api/content/files?all=true', {
+                        method: 'DELETE',
+                        headers: {
+                          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        },
+                      });
+                      if (!res.ok) {
+                        const j = await res.json().catch(() => ({}));
+                        alert(j.error || 'Failed to delete all content');
+                        return;
+                      }
+                      window.location.reload();
+                    } finally {
+                      setDeleting(false);
+                    }
+                  }}
+                  className="px-3 py-2 rounded text-white disabled:opacity-50"
+                  style={{ backgroundColor: 'hsl(var(--error))' }}
+                >
+                  {deleting ? 'Deleting…' : 'Confirm Delete ALL'}
                 </button>
               </div>
             </div>

@@ -96,7 +96,7 @@ export default function AdminDashboard() {
     if (profile?.role === 'admin') {
       fetchDashboardData();
     }
-  }, [profile, selectedPeriod, fetchDashboardData]);
+  }, [profile?.role, fetchDashboardData]);
 
   const StatCard = ({
     title,

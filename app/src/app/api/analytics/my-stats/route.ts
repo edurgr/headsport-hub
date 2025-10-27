@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { decodeBase64ToUtf8 } from '@/lib/edge-compat';
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -52,7 +53,7 @@ export async function GET(req: Request) {
         try {
           const payloadB64 = token.split('.')[1];
           const base64 = payloadB64.replace(/-/g, '+').replace(/_/g, '/');
-          const payloadJson = Buffer.from(base64, 'base64').toString('utf8');
+          const payloadJson = decodeBase64ToUtf8(base64);
           const payload = JSON.parse(payloadJson);
           currentUserId = payload.sub || payload.user_id || null;
           targetAthleteId = targetAthleteId || currentUserId;

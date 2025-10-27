@@ -36,14 +36,14 @@ export const defaultEmailConfig: EmailConfig = {
   service: 'mock',
   sendgrid: {
     apiKey: process.env.SENDGRID_API_KEY || '',
-    fromEmail: process.env.FROM_EMAIL || 'noreply@athletehub.com',
-    fromName: process.env.FROM_NAME || 'Athlete Hub',
+    fromEmail: process.env.FROM_EMAIL || 'noreply@headsport-hub.com',
+    fromName: process.env.FROM_NAME || 'HEAD Sport Hub',
   },
   awsSes: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
     region: process.env.AWS_REGION || 'us-east-1',
-    fromEmail: process.env.FROM_EMAIL || 'noreply@athletehub.com',
+    fromEmail: process.env.FROM_EMAIL || 'noreply@headsport-hub.com',
   },
   nodemailer: {
     host: process.env.SMTP_HOST || 'localhost',
@@ -53,7 +53,7 @@ export const defaultEmailConfig: EmailConfig = {
       user: process.env.SMTP_USER || '',
       pass: process.env.SMTP_PASS || '',
     },
-    fromEmail: process.env.FROM_EMAIL || 'noreply@athletehub.com',
+    fromEmail: process.env.FROM_EMAIL || 'noreply@headsport-hub.com',
   },
 };
 
@@ -95,14 +95,14 @@ export function getFromEmail(): string {
 
   switch (config.service) {
     case 'sendgrid':
-      return config.sendgrid?.fromEmail || 'noreply@athletehub.com';
+      return config.sendgrid?.fromEmail || 'noreply@headsport-hub.com';
     case 'aws-ses':
-      return config.awsSes?.fromEmail || 'noreply@athletehub.com';
+      return config.awsSes?.fromEmail || 'noreply@headsport-hub.com';
     case 'nodemailer':
-      return config.nodemailer?.fromEmail || 'noreply@athletehub.com';
+      return config.nodemailer?.fromEmail || 'noreply@headsport-hub.com';
     case 'mock':
-      return 'noreply@athletehub.com';
+      return 'noreply@headsport-hub.com';
     default:
-      return 'noreply@athletehub.com';
+      return 'noreply@headsport-hub.com';
   }
 }

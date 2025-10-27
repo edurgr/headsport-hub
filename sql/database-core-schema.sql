@@ -1,4 +1,4 @@
--- HEAD Hub - Core Schema (Minimal & Functional)
+-- HEAD Sport Hub - Core Schema (Minimal & Functional)
 -- This script is safe to run in Supabase SQL Editor on a new project.
 
 -- 1) Required extensions (idempotent)

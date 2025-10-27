@@ -8,7 +8,7 @@ import NotificationCenter from './NotificationCenter';
 
 export default function Header() {
   const { user } = useAuth();
-  const brandName = process.env.NEXT_PUBLIC_BRAND_NAME || 'HEAD Hub';
+  const brandName = process.env.NEXT_PUBLIC_BRAND_NAME || 'HEAD Sport Hub';
   const logoPathEnv = process.env.NEXT_PUBLIC_LOGO_PATH || '/head-logo.svg';
   const logoSrc = logoPathEnv.endsWith('.html') ? '/head-logo.svg' : logoPathEnv;
 

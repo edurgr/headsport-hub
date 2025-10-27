@@ -34,7 +34,7 @@ export interface Profile {
 export interface Invitation {
   id: string;
   email: string;
-  role: 'manager' | 'athlete';
+  role: 'admin' | 'manager' | 'athlete';
   invited_by: string;
   status: 'pending' | 'accepted' | 'expired';
   token: string;

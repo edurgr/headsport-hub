@@ -4,7 +4,9 @@ import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { decodeBase64ToBytes } from '@/lib/edge-compat';
 import { supabaseServer } from '@/lib/supabase-server';
+import { verifyAdminAccess, verifyManagerOrAdminAccess } from '@/lib/admin-auth-secure';
 
 async function getClientFromRequest(req: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string | undefined;
@@ -34,35 +36,129 @@ export async function GET(req: Request) {
   return NextResponse.json({ files: data || [] });
 }
 
-// DELETE /api/content/files?id=...
-export async function DELETE(req: Request) {
+// DELETE /api/content/files
+// Query params:
+//   - id: string (delete single)
+//   - all: 'true' (admin only - delete all)
+// Body (JSON, optional for DELETE via fetch): { ids?: string[], all?: boolean }
+export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
-  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+  const allFlag = searchParams.get('all') === 'true';
 
-  const sb = await getClientFromRequest(req);
-  // Fetch file record to remove from Storage as well
-  const { data: file, error: fetchError } = await sb
-    .from('upload_files')
-    .select('file_path')
-    .eq('id', id)
-    .single();
-
-  if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 });
-
-  const { error: deleteDbError } = await sb.from('upload_files').delete().eq('id', id);
-  if (deleteDbError) return NextResponse.json({ error: deleteDbError.message }, { status: 500 });
-
-  // Remove from storage (best-effort)
+  let body: any = null;
   try {
-    if (!supabaseAdmin) throw new Error('Storage admin not configured');
-    const bucket = process.env.NEXT_PUBLIC_UPLOADS_BUCKET as string;
-    await supabaseAdmin.storage.from(bucket).remove([file.file_path]);
-  } catch (error) {
-    // Ignore storage errors to keep API idempotent
-    console.warn('Storage cleanup error:', error);
+    if (req.headers.get('content-type')?.includes('application/json')) {
+      body = await req.json().catch(() => null);
+    }
+  } catch {
+    body = null;
   }
-  return NextResponse.json({ ok: true });
+  const idsFromBody: string[] | undefined = body?.ids;
+  const allFromBody: boolean | undefined = body?.all;
+  const deleteAll = allFlag || !!allFromBody;
+
+  // Helper to remove storage objects (best-effort)
+  async function removeFromStorage(paths: string[]) {
+    try {
+      if (!supabaseAdmin) return; // silently skip if not configured
+      const bucket = process.env.NEXT_PUBLIC_UPLOADS_BUCKET as string;
+      if (!bucket || paths.length === 0) return;
+      // Supabase recommends batches of up to ~1000; our lists are usually small
+      await supabaseAdmin.storage.from(bucket).remove(paths);
+    } catch (error) {
+      console.warn('Storage cleanup error:', error);
+    }
+  }
+
+  // Single delete (user can delete their own via RLS; admins/managers also allowed)
+  if (id && !deleteAll && !idsFromBody) {
+    const sb = await getClientFromRequest(req as unknown as Request);
+    // Fetch file record to remove from Storage as well
+    const { data: file, error: fetchError } = await sb
+      .from('upload_files')
+      .select('file_path')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 });
+
+    // Try using user client first (will pass RLS for owner). If forbidden and admin, use admin.
+    let deleteError = null as any;
+    const { error: deleteDbError } = await sb.from('upload_files').delete().eq('id', id);
+    deleteError = deleteDbError;
+
+    if (deleteError && deleteError.code === 'PGRST116') {
+      // Not found is fine (idempotent)
+      deleteError = null;
+    }
+
+    if (deleteError) {
+      // Check manager or admin access and retry with admin client
+      const elevatedCheck = await verifyManagerOrAdminAccess(req);
+      if (!elevatedCheck.success) {
+        return NextResponse.json({ error: deleteError.message || 'Forbidden' }, { status: 403 });
+      }
+      if (!supabaseAdmin) {
+        return NextResponse.json({ error: 'Admin client not configured' }, { status: 500 });
+      }
+      const { error: adminDelErr } = await supabaseAdmin.from('upload_files').delete().eq('id', id);
+      if (adminDelErr) return NextResponse.json({ error: adminDelErr.message }, { status: 500 });
+    }
+
+    await removeFromStorage(file?.file_path ? [file.file_path] : []);
+    return NextResponse.json({ ok: true });
+  }
+
+  // Bulk or delete all
+  if (deleteAll || (Array.isArray(idsFromBody) && idsFromBody.length > 0)) {
+    // Delete ALL strictly admin-only
+    if (deleteAll) {
+      const adminCheck = await verifyAdminAccess(req);
+      if (!adminCheck.success) {
+        return NextResponse.json({ error: adminCheck.error }, { status: adminCheck.status });
+      }
+      if (!supabaseAdmin) {
+        return NextResponse.json({ error: 'Admin client not configured' }, { status: 500 });
+      }
+      const { data, error } = await supabaseAdmin.from('upload_files').select('id, file_path');
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      const filesToDelete = data || [];
+      if (filesToDelete.length === 0) return NextResponse.json({ ok: true, deleted: 0 });
+      const ids = filesToDelete.map((f) => f.id);
+      const paths = filesToDelete.map((f) => f.file_path).filter(Boolean);
+      const { error: delErr } = await supabaseAdmin.from('upload_files').delete().in('id', ids);
+      if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 });
+      await removeFromStorage(paths);
+      return NextResponse.json({ ok: true, deleted: ids.length });
+    }
+
+    // Bulk delete by specific ids — allow manager or admin
+    const elevatedCheck = await verifyManagerOrAdminAccess(req);
+    if (!elevatedCheck.success) {
+      return NextResponse.json({ error: elevatedCheck.error }, { status: elevatedCheck.status });
+    }
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Admin client not configured' }, { status: 500 });
+    }
+    const idsList = (idsFromBody || []).filter((id: any) => typeof id === 'string');
+    if (idsList.length === 0) return NextResponse.json({ ok: true, deleted: 0 });
+    const { data, error } = await supabaseAdmin
+      .from('upload_files')
+      .select('id, file_path')
+      .in('id', idsList);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const filesToDelete = data || [];
+    if (filesToDelete.length === 0) return NextResponse.json({ ok: true, deleted: 0 });
+    const ids = filesToDelete.map((f) => f.id);
+    const paths = filesToDelete.map((f) => f.file_path).filter(Boolean);
+    const { error: delErr } = await supabaseAdmin.from('upload_files').delete().in('id', ids);
+    if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 });
+    await removeFromStorage(paths);
+    return NextResponse.json({ ok: true, deleted: ids.length });
+  }
+
+  return NextResponse.json({ error: 'Missing id or ids/all in request' }, { status: 400 });
 }
 
 // PATCH /api/content/files
@@ -91,11 +187,11 @@ export async function PATCH(req: NextRequest) {
       const bucket = process.env.NEXT_PUBLIC_UPLOADS_BUCKET as string;
       const base64Data = thumbnail_base64.split(',').pop();
       if (base64Data) {
-        const buffer = Buffer.from(base64Data, 'base64');
+        const bytes = decodeBase64ToBytes(base64Data);
         const thumbPath = `${file.file_path}.thumb.jpg`;
         await supabaseAdmin.storage
           .from(bucket)
-          .upload(thumbPath, buffer, { contentType: 'image/jpeg', upsert: true });
+          .upload(thumbPath, bytes, { contentType: 'image/jpeg', upsert: true });
         thumbnail_path = thumbPath;
       }
     }

@@ -12,7 +12,7 @@ import { Profile } from '@/types';
 // Unified management hub: Profiles (admins/managers), Invitations (admins), Admin creation (admins)
 
 export default function ProfileManagementPage() {
-  const { profile, signUpWithEmail } = useAuth();
+  const { profile, signUpWithEmail, createInvitation } = useAuth();
   const [activeTab, setActiveTab] = useState<'profiles' | 'admins'>('profiles');
 
   // Profiles state
@@ -50,6 +50,14 @@ export default function ProfileManagementPage() {
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminError, setAdminError] = useState<string | null>(null);
   const [adminInfo, setAdminInfo] = useState<string | null>(null);
+
+  // Invitation state (admins only)
+  const [invEmail, setInvEmail] = useState('');
+  const [invRole, setInvRole] = useState<'admin' | 'manager' | 'athlete'>('athlete');
+  const [invMessage, setInvMessage] = useState('');
+  const [invLoading, setInvLoading] = useState(false);
+  const [invError, setInvError] = useState<string | null>(null);
+  const [invSuccess, setInvSuccess] = useState<string | null>(null);
 
   // Delete user state
   const [deleteConfirm, setDeleteConfirm] = useState<Profile | null>(null);
@@ -726,6 +734,14 @@ export default function ProfileManagementPage() {
                                   className="object-cover"
                                   sizes="(max-width: 768px) 33vw, 20vw"
                                 />
+                              ) : it.file_type === 'video' ? (
+                                <video
+                                  src={it.url}
+                                  preload="metadata"
+                                  muted
+                                  playsInline
+                                  className="w-full h-full object-cover bg-black"
+                                />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
                                   {it.file_type}
@@ -748,7 +764,7 @@ export default function ProfileManagementPage() {
         )}
 
         {activeTab === 'admins' && profile?.role === 'admin' && (
-          <div className="max-w-xl">
+          <div className="max-w-xl space-y-8">
             <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Create Administrator Account
@@ -834,6 +850,96 @@ export default function ProfileManagementPage() {
                     <li>• New administrators will have full system access</li>
                     <li>• Email confirmation is required after registration</li>
                     <li>• For other users, use the invitation system</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Send Invitation (Managers/Athletes) */}
+            <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Send Invitation</h2>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setInvError(null);
+                  setInvSuccess(null);
+                  try {
+                    setInvLoading(true);
+                    await createInvitation(invEmail.trim(), invRole, invMessage.trim() || undefined);
+                    setInvSuccess(`Invitation sent to ${invEmail} for role: ${invRole}`);
+                    setInvEmail('');
+                    setInvMessage('');
+                  } catch (err: any) {
+                    setInvError(err?.message || 'Failed to send invitation');
+                  } finally {
+                    setInvLoading(false);
+                  }
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    value={invEmail}
+                    onChange={(e) => setInvEmail(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="user@example.com"
+                    type="email"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                  <select
+                    value={invRole}
+                    onChange={(e) => setInvRole(e.target.value as 'admin' | 'manager' | 'athlete')}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="athlete">Athlete</option>
+                    <option value="manager">Manager</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Personal Message (optional)</label>
+                  <textarea
+                    value={invMessage}
+                    onChange={(e) => setInvMessage(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Welcome to HEAD Sport Hub!"
+                    rows={3}
+                  />
+                </div>
+                {invError && (
+                  <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
+                    {invError}
+                  </div>
+                )}
+                {invSuccess && (
+                  <div className="text-sm text-green-700 bg-green-50 p-3 rounded-md border border-green-200">
+                    {invSuccess}
+                  </div>
+                )}
+                <button
+                  type="submit"
+                  disabled={invLoading}
+                  className={`w-full py-2.5 rounded-md text-white font-medium ${invLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                >
+                  {invLoading ? 'Sending Invitation…' : 'Send Invitation'}
+                </button>
+              </form>
+              <div className="mt-6 p-3 bg-blue-50 rounded-md border border-blue-200">
+                <div className="text-sm text-blue-800">
+                  <div className="flex items-center mb-1">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="font-medium">Invitations</span>
+                  </div>
+                  <ul className="text-xs space-y-1 ml-6">
+                    <li>• Admins can invite Managers or Athletes</li>
+                    <li>• Each invitation expires in 7 days</li>
+                    <li>• Users will complete registration via email link</li>
                   </ul>
                 </div>
               </div>

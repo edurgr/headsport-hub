@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'HEAD Hub',
-  description: 'Athlete management platform tailored for HEAD GmbH',
+  title: 'HEAD Sport Hub',
+  description: 'Athlete and equipment management platform tailored for HEAD GmbH',
 };
 
 export default function RootLayout({

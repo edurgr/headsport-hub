@@ -154,7 +154,7 @@ export async function POST(req: Request) {
 
     if (orderError) {
       return NextResponse.json(
-        { error: 'Failed to create HEAD Hub order: ' + orderError.message },
+        { error: 'Failed to create HEAD Sport Hub order: ' + orderError.message },
         { status: 500 },
       );
     }
@@ -180,7 +180,7 @@ export async function POST(req: Request) {
       // Rollback order creation if items fail
       await sb.from('orders').delete().eq('id', order.id);
       return NextResponse.json(
-        { error: 'Failed to create HEAD Hub order items: ' + itemsError.message },
+        { error: 'Failed to create HEAD Sport Hub order items: ' + itemsError.message },
         { status: 500 },
       );
     }

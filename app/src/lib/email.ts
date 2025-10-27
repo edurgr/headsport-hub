@@ -16,7 +16,7 @@ export async function sendEmail(
           'X-Postmark-Server-Token': process.env.POSTMARK_TOKEN,
         },
         body: JSON.stringify({
-          From: process.env.FROM_EMAIL || 'noreply@head-hub.com',
+          From: process.env.FROM_EMAIL || 'noreply@headsport-hub.com',
           To: to,
           Subject: subject,
           HtmlBody: html,
@@ -52,7 +52,7 @@ export async function sendEmail(
           },
           body: new URLSearchParams({
             Action: 'SendEmail',
-            Source: process.env.FROM_EMAIL || 'noreply@head-hub.com',
+            Source: process.env.FROM_EMAIL || 'noreply@headsport-hub.com',
             Destination: `ToAddresses=${to}`,
             Message: JSON.stringify({
               Subject: { Data: subject },
@@ -93,11 +93,11 @@ export async function sendInvitationEmail(
   inviteUrl: string,
   message?: string,
 ): Promise<boolean> {
-  const subject = `You've been invited to HEAD Hub`;
+  const subject = `You've been invited to HEAD Sport Hub`;
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #2563eb;">Welcome to HEAD Hub!</h2>
-        <p>You've been invited to join HEAD Hub as a <strong>${rolePreset}</strong>.</p>
+              <h2 style="color: #2563eb;">Welcome to HEAD Sport Hub!</h2>
+        <p>You've been invited to join HEAD Sport Hub as a <strong>${rolePreset}</strong>.</p>
       
       <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <p style="margin: 0;"><strong>Click the button below to accept your invitation:</strong></p>
@@ -166,7 +166,7 @@ export async function sendOrderConfirmationEmail(
       
       <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
       <p style="color: #6b7280; font-size: 12px;">
-        Thank you for choosing HEAD Hub!
+        Thank you for choosing HEAD Sport Hub!
       </p>
     </div>
   `;

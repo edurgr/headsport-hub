@@ -58,7 +58,7 @@ export default function OnboardingPage() {
       <div className="p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <h1 className="text-2xl font-bold text-red-800 mb-4">Access Denied</h1>
-          <p className="text-red-700">Please sign in to HEAD Hub to continue.</p>
+          <p className="text-red-700">Please sign in to HEAD Sport Hub to continue.</p>
         </div>
       </div>
     );
@@ -79,8 +79,8 @@ export default function OnboardingPage() {
   return (
     <div className="p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Complete your HEAD Hub profile</h1>
-        <p className="text-gray-600">Tell us a bit about you to get started with HEAD Hub</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Complete your HEAD Sport Hub profile</h1>
+        <p className="text-gray-600">Tell us a bit about you to get started with HEAD Sport Hub</p>
       </div>
 
       <form

@@ -49,7 +49,7 @@ export default function AuthCallbackPage() {
           }, 2000);
         } else {
           setStatus('error');
-          setMessage('No HEAD Hub session found. Please try signing in again.');
+          setMessage('No HEAD Sport Hub session found. Please try signing in again.');
         }
       } catch (error) {
         console.error('Unexpected error in auth callback:', error);

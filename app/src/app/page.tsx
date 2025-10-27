@@ -18,7 +18,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [linkMsg, setLinkMsg] = useState<string | null>(null);
-  const brandName = process.env.NEXT_PUBLIC_BRAND_NAME || 'HEAD Hub';
+  const brandName = process.env.NEXT_PUBLIC_BRAND_NAME || 'HEAD Sport Hub';
 
   useEffect(() => {
     setMounted(true);
@@ -390,7 +390,7 @@ export default function Home() {
 
 function ContentSummary({ userId }: { userId: string }) {
   const [items, setItems] = useState<
-    { id: string; filename: string; created_at: string; thumbnail_url?: string }[]
+    { id: string; filename: string; created_at: string; thumbnail_url?: string; file_type?: string; url?: string }[]
   >([]);
   useEffect(() => {
     if (!userId) return;
@@ -405,6 +405,8 @@ function ContentSummary({ userId }: { userId: string }) {
             filename: x.filename,
             created_at: x.created_at,
             thumbnail_url: x.thumbnail_url,
+            file_type: x.file_type,
+            url: x.url,
           })),
         ),
       )
@@ -419,6 +421,14 @@ function ContentSummary({ userId }: { userId: string }) {
             {i.thumbnail_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={i.thumbnail_url} alt={i.filename} className="w-full h-full object-cover" />
+            ) : i.file_type === 'video' && i.url ? (
+              <video
+                src={i.url}
+                preload="metadata"
+                muted
+                playsInline
+                className="w-full h-full object-cover bg-black"
+              />
             ) : (
               <div className="text-xs text-gray-400">No preview</div>
             )}

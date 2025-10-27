@@ -193,7 +193,7 @@ export default function PendingOrdersPage() {
                       Order #{order.id.slice(-8)}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      HEAD Hub Athlete: {order.athlete_name} ({order.athlete_email})
+                      HEAD Sport Hub Athlete: {order.athlete_name} ({order.athlete_email})
                     </p>
                     <p className="text-sm text-gray-600">
                       Created: {new Date(order.created_at).toLocaleDateString()}
@@ -273,7 +273,7 @@ export default function PendingOrdersPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
-                {approvalAction === 'approve' ? 'Approve' : 'Reject'} HEAD Hub Order
+                {approvalAction === 'approve' ? 'Approve' : 'Reject'} HEAD Sport Hub Order
               </h2>
 
               <div className="mb-4">
@@ -313,7 +313,7 @@ export default function PendingOrdersPage() {
               {/* Manager Notes */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  HEAD Hub Manager Notes:
+                  HEAD Sport Hub Manager Notes:
                 </label>
                 <textarea
                   rows={3}

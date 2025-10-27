@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# HEAD Hub - Quick Start Script
-echo "🚀 HEAD Hub - Configuración Rápida"
+# HEAD Sport Hub - Quick Start Script
+echo "🚀 HEAD Sport Hub - Configuración Rápida"
 echo "=================================="
 echo ""
 
@@ -58,7 +58,7 @@ if [ ! -f ".env.local" ]; then
     else
         # Crear .env.local básico
         cat > .env.local << 'EOF'
-# HEAD Hub - Local Development Environment
+# HEAD Sport Hub - Local Development Environment
 # IMPORTANTE: Reemplaza con tus credenciales reales de Supabase
 
 # SUPABASE CONFIGURATION (REQUIRED)
@@ -67,7 +67,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.your-service-role-key-here
 
 # ADMIN CONFIGURATION (REQUIRED)
-ADMIN_EMAIL=admin@headhub.com
+ADMIN_EMAIL=admin@headsport-hub.com
 ADMIN_PASSWORD=admin123
 
 # SECURITY CONFIGURATION (REQUIRED)
@@ -77,13 +77,13 @@ NEXTAUTH_URL=http://localhost:3000
 # APPLICATION CONFIGURATION
 NODE_ENV=development
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_BRAND_NAME=HEAD Hub
+NEXT_PUBLIC_BRAND_NAME=HEAD Sport Hub
 NEXT_PUBLIC_LOGO_PATH=/head-logo.svg
 NEXT_PUBLIC_UPLOADS_BUCKET=user-uploads
 
 # ORDER CONFIGURATION
 NEXT_PUBLIC_ORDER_EMAILS_ENABLED=false
-NEXT_PUBLIC_ORDER_NOTIFICATION_EMAILS=admin@headhub.com
+NEXT_PUBLIC_ORDER_NOTIFICATION_EMAILS=admin@headsport-hub.com
 
 # INVITATION CONFIGURATION
 INVITE_TOKEN_TTL_DAYS=7

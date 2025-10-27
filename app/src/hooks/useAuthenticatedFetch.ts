@@ -1,10 +1,11 @@
+import { useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabaseClient } from '@/lib/supabase-client';
 
 export function useAuthenticatedFetch() {
   const { session } = useAuth();
 
-  const authenticatedFetch = async (url: string, options: RequestInit = {}) => {
+  const authenticatedFetch = useCallback(async (url: string, options: RequestInit = {}) => {
     // Obtener el token de la sesión actual
     let token = '';
 
@@ -57,7 +58,7 @@ export function useAuthenticatedFetch() {
       headers,
       credentials: 'include',
     });
-  };
+  }, [session?.access_token]);
 
   return { authenticatedFetch };
 }
