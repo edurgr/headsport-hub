@@ -6,9 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseServer } from '@/lib/supabase-server';
 
-// Ensure this API runs on Node and bypasses any static optimization or edge caching
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export async function GET(req: Request) {
   try {
@@ -188,4 +186,4 @@ export async function GET(req: Request) {
   }
 }
 
-export const runtime = 'edge';
+// (edge runtime declared at top)
