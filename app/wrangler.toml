@@ -6,8 +6,6 @@ enabled = true
 
 # Enable Node.js compatibility for AWS SDK v3 and other Node APIs used in Pages Functions
 compatibility_flags = ["nodejs_compat"]
-
-[pages]
 pages_build_output_dir = ".vercel/output/static"
 
 

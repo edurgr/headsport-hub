@@ -154,3 +154,5 @@ export async function GET(req: Request) {
 
   return NextResponse.json({ items, count: items.length });
 }
+
+export const runtime = 'edge';

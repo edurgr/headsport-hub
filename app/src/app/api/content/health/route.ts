@@ -71,3 +71,5 @@ export async function GET() {
 
   return NextResponse.json({ ok: true, results });
 }
+
+export const runtime = 'edge';

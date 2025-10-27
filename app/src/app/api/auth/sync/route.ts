@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
       // Set tokens in cookies understood by middleware and server helpers
       setCookie(res, 'sb-access-token', accessToken, accessTtl);
-      setCookie(res, 'sb:token', accessToken, accessTtl);
+      setCookie(res, 'sb:token', accessTtl, accessTtl);
 
       if (accessToken || refresh) {
         const arr = encodeURIComponent(JSON.stringify([accessToken, refresh]));
@@ -56,3 +56,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 }
+export const runtime = 'edge';
