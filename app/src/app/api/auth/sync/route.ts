@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
       // Set tokens in cookies understood by middleware and server helpers
       setCookie(res, 'sb-access-token', accessToken, accessTtl);
-      setCookie(res, 'sb:token', accessTtl, accessTtl);
+      setCookie(res, 'sb:token', accessToken, accessTtl);
 
       if (accessToken || refresh) {
         const arr = encodeURIComponent(JSON.stringify([accessToken, refresh]));
