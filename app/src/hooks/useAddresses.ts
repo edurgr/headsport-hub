@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 
 import { Address } from '@/components/AddressManager';
 import { supabaseClient } from '@/lib/supabase-client';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useAddresses() {
   const [addresses, setAddresses] = useState<Address[]>([]);
