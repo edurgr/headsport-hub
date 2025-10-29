@@ -181,7 +181,7 @@ export default function ContentModerationPage() {
         const data = await response.json();
         setError(data.error || `Failed to ${action} content`);
       }
-    } catch (_err) {
+    } catch {
       setError(`Error ${action}ing content`);
     } finally {
       setIsRequestInProgress(false);
@@ -220,7 +220,7 @@ export default function ContentModerationPage() {
         const data = await response.json();
         setError(data.error || `Failed to bulk ${moderationAction} content`);
       }
-    } catch (_err) {
+    } catch {
       setError(`Error bulk ${moderationAction}ing content`);
     } finally {
       setIsRequestInProgress(false);

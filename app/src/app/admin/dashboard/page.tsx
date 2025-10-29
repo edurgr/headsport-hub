@@ -85,7 +85,7 @@ export default function AdminDashboard() {
       } else {
         setError(data.error || 'Failed to fetch dashboard data.');
       }
-    } catch (_error) {
+    } catch {
       setError('Failed to fetch dashboard data.');
     } finally {
       setLoading(false);

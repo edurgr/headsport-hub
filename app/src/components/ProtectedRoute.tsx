@@ -7,38 +7,27 @@ import { useRouter, usePathname } from 'next/navigation';
 
 import { useAuth } from '@/contexts/AuthContext';
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-  requiredRole?: 'athlete' | 'manager' | 'admin' | ('athlete' | 'manager' | 'admin')[];
-  fallback?: React.ReactNode;
-}
-
 const ProtectedRoute: FC<PropsWithChildren> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    // Si la sesión ya se verificó (hydrated) y no hay usuario, redirigir
-    if (loading && !user) {
+    if (loading) return;
+
+    // if not logged in, redirect to login page
+    if (!user) {
       router.push('/login');
       return;
     }
 
-    // Onboarding redirect: si el perfil está cargado y no tiene nombre, mandar a onboarding
-    if (
-      loading &&
-      user &&
-      profile &&
-      (!profile.name || profile.name.trim().length === 0)
-    ) {
-      if (window.location.pathname !== '/onboarding') {
-        router.push('/onboarding');
-      }
+    // if logged in, but no profile, redirect to onboarding
+    if (!profile) {
+      router.push('/onboarding');
     }
-  }, [user, loading, router, pathname]);
+  }, [user, profile, loading, router, pathname]);
 
-  if (loading) {
+  if (loading || !user || !profile) {
     return <div>Loading...</div>;
   }
 

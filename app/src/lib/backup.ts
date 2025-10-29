@@ -62,14 +62,12 @@ export class BackupService {
   // Create a new backup operation
   static async createBackup(
     type: BackupType,
-    tablesIncluded?: string[],
     createdBy?: string,
   ): Promise<string> {
     const supabase = await supabaseServer();
 
     const { data, error } = await supabase.rpc('create_backup_operation', {
       p_type: type,
-      p_tables_included: tablesIncluded || null,
       p_created_by: createdBy || null,
     });
 
@@ -286,7 +284,6 @@ export class BackupService {
   static async performBackup(
     backupId: string,
     type: BackupType,
-    tablesIncluded?: string[],
   ): Promise<void> {
     try {
       // Update status to in_progress
@@ -367,7 +364,6 @@ export class BackupService {
   static async scheduleBackup(
     type: BackupType,
     cronExpression: string,
-    tablesIncluded?: string[],
   ): Promise<void> {
     // This would integrate with your cron job system
     // For now, we'll just create a schedule record
@@ -377,7 +373,6 @@ export class BackupService {
       cron_expression: cronExpression,
       is_active: true,
       retention_days: 30,
-      tables_to_include: tablesIncluded,
     });
   }
 }

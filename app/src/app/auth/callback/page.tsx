@@ -104,10 +104,10 @@ export default function AuthCallbackPage(): ReactElement {
         setFormError('Passwords do not match');
         return;
       }
-      const { data: upd, error: updErr } = await supabaseClient.auth.updateUser({ password });
-      if (updErr) {
-        console.error('updateUser error:', updErr);
-        setFormError(updErr.message || 'Failed to update password');
+      const { error } = await supabaseClient.auth.updateUser({ password });
+      if (error) {
+        console.error('updateUser error:', error);
+        setFormError(error.message || 'Failed to update password');
         return;
       }
       setMessage('Password updated successfully! Redirecting...');
@@ -122,7 +122,7 @@ export default function AuthCallbackPage(): ReactElement {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token: inviteToken }),
           });
-        } catch (error) {
+        } catch {
           // It's safe to ignore this error, as it's just a sync call
         }
       }

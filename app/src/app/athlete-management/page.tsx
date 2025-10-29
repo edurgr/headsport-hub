@@ -25,9 +25,14 @@ export default function AthleteManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalAthletes, setTotalAthletes] = useState(0);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   // Check if user has permission to access this page
   const hasPermission = profile?.role === 'manager' || profile?.role === 'admin';
+
+  useEffect(() => {
+    setIsDemoMode(process.env.NEXT_PUBLIC_DEMO_MODE === 'true');
+  }, []);
 
   const fetchAthletes = useCallback(async () => {
     try {
@@ -197,8 +202,7 @@ export default function AthleteManagementPage() {
             Manage and monitor all athletes in the platform
           </p>
 
-          {/* Demo Mode Notice */}
-          {!process.env.NEXT_PUBLIC_SUPABASE_URL && (
+          {isDemoMode && (
             <div
               className="mt-4 p-4 rounded-lg"
               style={{

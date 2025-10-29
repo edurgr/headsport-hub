@@ -182,7 +182,7 @@ export default function ProductManagementPage() {
         const data = await response.json();
         setError(data.error || 'Failed to delete product');
       }
-    } catch (_err) {
+    } catch {
       setError('Error deleting product');
     }
   };
@@ -211,7 +211,7 @@ export default function ProductManagementPage() {
         const data = await response.json();
         setError(data.error || 'Failed to create product');
       }
-    } catch (_err) {
+    } catch {
       setError('Error creating product');
     }
   };
@@ -238,7 +238,7 @@ export default function ProductManagementPage() {
         const data = await response.json();
         setError(data.error || 'Failed to update product');
       }
-    } catch (_err) {
+    } catch {
       setError('Error updating product');
     }
   };
@@ -261,7 +261,7 @@ export default function ProductManagementPage() {
         const data = await response.json();
         setError(data.error || 'Failed to update product');
       }
-    } catch (_err) {
+    } catch {
       setError('Error updating product');
     }
   };

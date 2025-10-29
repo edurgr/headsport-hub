@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react'; // Import useCallback
+import { useEffect, useState, useCallback } from 'react'; // Import useCallback
 import type { ReactElement } from 'react';
 
 import { Product } from '@/types';

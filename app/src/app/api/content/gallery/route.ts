@@ -1,23 +1,21 @@
-import { NextResponse } from 'next/server';
-import { decodeBase64ToUtf8 } from '@/lib/edge-compat';
-import { NextRequest } from 'next/server';
-
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-import { supabaseAdmin as supabaseAdminClient } from '@/lib/supabase-admin';
+import { decodeBase64ToUtf8 } from '@/lib/edge-compat';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withAdmin } from '@/lib/admin-auth-secure';
 import { supabaseServer } from '@/lib/supabase-server';
+
+export const runtime = 'edge';
 
 // GET /api/content/gallery?limit=50
 export async function GET(req: NextRequest) {
-  return withAdmin(async ({ supabase, user }) => {
+  return withAdmin(async ({ supabase }) => {
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get('limit') || '50', 10);
     const userIdParam = searchParams.get('user_id'); // Allow filtering by user
 
     try {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) throw sessionError;
-
       const uploadsBucket = process.env.NEXT_PUBLIC_UPLOADS_BUCKET || 'user-uploads';
 
       let query = supabase
@@ -52,7 +50,7 @@ export async function GET(req: NextRequest) {
 
       // Fetch sessions for those files
       const sessionIds = Array.from(new Set(files.map((f: any) => f.session_id)));
-      const sessionSource = supabaseAdminClient; // Use supabaseAdminClient directly
+      const sessionSource = supabaseAdmin; // Use supabaseAdmin directly
       const { data: sessions, error: sessionsError } = await sessionSource
         .from('upload_sessions')
         .select('id,user_id,title,created_at')
@@ -88,7 +86,7 @@ export async function GET(req: NextRequest) {
 
           // Generate file URL
           try {
-            const storageClient = supabaseAdminClient;
+            const storageClient = supabaseAdmin;
             const { data } = await storageClient.storage
               .from(uploadsBucket)
               .createSignedUrl(f.file_path, 60 * 60);
@@ -96,7 +94,7 @@ export async function GET(req: NextRequest) {
           } catch (error) {
             console.error(`Error creating signed URL for ${f.filename}:`, error);
             try {
-              const { data } = supabaseAdminClient.storage.from(uploadsBucket).getPublicUrl(f.file_path);
+              const { data } = supabaseAdmin.storage.from(uploadsBucket).getPublicUrl(f.file_path);
               url = data.publicUrl;
             } catch (fallbackError) {
               console.error(`Error creating public URL for ${f.filename}:`, fallbackError);
@@ -107,7 +105,7 @@ export async function GET(req: NextRequest) {
           // Generate thumbnail URL if present
           if (f.thumbnail_path) {
             try {
-              const storageClient = supabaseAdminClient;
+              const storageClient = supabaseAdmin;
               const { data } = await storageClient.storage
                 .from(uploadsBucket)
                 .createSignedUrl(f.thumbnail_path, 60 * 60);
@@ -115,7 +113,7 @@ export async function GET(req: NextRequest) {
             } catch (error) {
               console.error('Error creating signed thumbnail URL:', error);
               try {
-                const { data } = supabaseAdminClient.storage
+                const { data } = supabaseAdmin.storage
                   .from(uploadsBucket)
                   .getPublicUrl(f.thumbnail_path);
                 thumbnail_url = data.publicUrl;
@@ -124,8 +122,7 @@ export async function GET(req: NextRequest) {
                 thumbnail_url = null;
               }
             }
-          } else {
-          }
+          } 
 
           const item = {
             id: f.id,
@@ -154,5 +151,3 @@ export async function GET(req: NextRequest) {
     }
   });
 }
-
-export const runtime = 'edge';

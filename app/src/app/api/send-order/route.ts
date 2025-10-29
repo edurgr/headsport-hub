@@ -70,7 +70,7 @@ export async function POST(req: Request) {
     // Sanitize and validate each order item
     console.log('🔍 Validating order items...');
     const validationErrors: string[] = [];
-    const sanitizedRows = rows
+    rows
       .map((row: any, index: number) => {
         try {
           console.log(`🔍 Validating item ${index + 1}:`, JSON.stringify(row, null, 2));
