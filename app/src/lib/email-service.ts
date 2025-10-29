@@ -1,11 +1,5 @@
-import sgMail from '@sendgrid/mail';
-
 import { getEmailConfig, getFromEmail } from './email-config';
 
-// Configurar SendGrid
-if (process.env.SENDGRID_API_KEY) {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-}
 
 export interface EmailData {
   to: string;
@@ -95,22 +89,40 @@ export class EmailService {
       throw new Error('SendGrid API key not configured');
     }
 
-    const msg = {
-      to: emailData.to,
-      from: getFromEmail(),
-      subject: emailData.subject,
-      html: emailData.html,
-      text: emailData.text || this.htmlToText(emailData.html),
-    };
+    const apiKey = process.env.SENDGRID_API_KEY as string;
+    const fromEmail = getFromEmail();
+    const textFallback = emailData.text || this.htmlToText(emailData.html);
 
-    try {
-      await sgMail.send(msg);
-      console.log(`✅ Email sent via SendGrid to ${emailData.to}`);
-      return true;
-    } catch (error) {
-      console.error('SendGrid error:', error);
-      throw error;
+    const payload = {
+      personalizations: [
+        {
+          to: [{ email: emailData.to }],
+          subject: emailData.subject,
+        },
+      ],
+      from: { email: fromEmail },
+      content: [
+        { type: 'text/plain', value: textFallback },
+        { type: 'text/html', value: emailData.html },
+      ],
+    } as any;
+
+    const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error(`SendGrid API error: ${res.status} ${res.statusText} ${body}`);
     }
+
+    console.log(`✅ Email sent via SendGrid to ${emailData.to}`);
+    return true;
   }
 
   private async sendWithAWSSES(emailData: EmailData): Promise<boolean> {
