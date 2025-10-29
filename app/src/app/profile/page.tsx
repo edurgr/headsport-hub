@@ -28,18 +28,19 @@ export default function ProfilePage() {
   const cropBoxRef = useRef<HTMLDivElement | null>(null);
   const previewBoxRef = useRef<HTMLDivElement | null>(null);
   const [previewRatio, setPreviewRatio] = useState<number>(0.375); // previewSize / cropBoxSize
-  const [cropSize, setCropSize] = useState<number>(256);
+  const [cropSize, setCropSize] = useState<number>(256); // Default or initial crop size
   const [formData, setFormData] = useState({
-    name: profile?.name || '',
-    organization: profile?.organization || '',
-    phone: profile?.phone || '',
-    address: profile?.address || '',
-    city: profile?.city || '',
-    state: profile?.state || '',
-    postal_code: profile?.postal_code || '',
-    country: profile?.country || 'US',
+    name: '', // Initialize empty, populate in useEffect
+    organization: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    postal_code: '',
+    country: 'US', // Default country
   });
 
+  // Populate form data when profile is loaded or changes
   useEffect(() => {
     if (profile) {
       setFormData({
@@ -50,36 +51,57 @@ export default function ProfilePage() {
         city: profile.city || '',
         state: profile.state || '',
         postal_code: profile.postal_code || '',
-        country: profile.country || 'US',
+        country: profile.country || 'US', // Use profile country or default
       });
-      // load avatar if present
+      // load avatar if present in profile data (faster initial load)
       const possible = (profile as any).avatar_url || (profile as any).avatar_path || null;
       if (typeof possible === 'string') setAvatarUrl(possible);
     }
   }, [profile]);
 
-  // Load avatar from storage on mount/user change (robust even without DB columns)
+  // Load avatar from storage on mount/user change
   useEffect(() => {
     const loadAvatar = async () => {
-      if (!user) return;
+      // Don't run if user is null
+      if (!user) {
+        setAvatarUrl(null); // Clear avatar if user logs out
+        return;
+      }
       try {
         const bucket = (process.env.NEXT_PUBLIC_UPLOADS_BUCKET as string) || 'content';
+        // Consistent path based on user ID
         const path = `${user.id}/avatar.jpg`;
-        // Try signed URL first (works for private buckets)
-        const { data, error } = await supabaseClient.storage
+
+        // Attempt to get a signed URL (valid for a limited time, works for private buckets)
+        const { data: signedData, error: signedError } = await supabaseClient.storage
           .from(bucket)
-          .createSignedUrl(path, 60 * 60);
-        if (!error && data?.signedUrl) {
-          setAvatarUrl(`${data.signedUrl}`);
+          .createSignedUrl(path, 60 * 60); // 1 hour validity
+
+        if (!signedError && signedData?.signedUrl) {
+          // Add a timestamp to break browser cache if the image was updated
+          setAvatarUrl(`${signedData.signedUrl}&t=${Date.now()}`);
           return;
         }
-        // Fallback to public URL
-        const pub = supabaseClient.storage.from(bucket).getPublicUrl(path);
-        if (pub?.data?.publicUrl) setAvatarUrl(`${pub.data.publicUrl}`);
-      } catch {}
+
+        // Fallback: Try getting a public URL (works for public buckets or if signed URL fails)
+        const { data: publicData } = supabaseClient.storage.from(bucket).getPublicUrl(path);
+        if (publicData?.publicUrl) {
+          // Add timestamp here too
+          setAvatarUrl(`${publicData.publicUrl}?t=${Date.now()}`);
+          return;
+        }
+
+        // If both fail, assume no avatar exists
+        console.warn("Could not load avatar - signed or public URL failed.");
+        setAvatarUrl(null);
+
+      } catch (fetchError) {
+         console.error("Error loading avatar:", fetchError);
+         setAvatarUrl(null); // Ensure avatar is cleared on error
+      }
     };
     loadAvatar();
-  }, [user?.id]);
+  }, [user]); // CORREGIDO: Depend on the whole user object
 
   // Keep preview scale ratio in sync with layout sizes
   useEffect(() => {
@@ -89,19 +111,22 @@ export default function ProfilePage() {
       setPreviewRatio(prevW / cropW);
       setCropSize(cropW);
     };
-    updateRatio();
+    updateRatio(); // Initial calculation
+    // Use ResizeObserver if available for better performance
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateRatio) : null;
     if (ro) {
       if (cropBoxRef.current) ro.observe(cropBoxRef.current);
       if (previewBoxRef.current) ro.observe(previewBoxRef.current);
     } else {
+      // Fallback for older browsers
       window.addEventListener('resize', updateRatio);
     }
+    // Cleanup function
     return () => {
       if (ro) ro.disconnect();
       else window.removeEventListener('resize', updateRatio);
     };
-  }, []);
+  }, []); // Empty array: runs once on mount, cleans up on unmount
 
   // Removed recent uploads from Profile; this now lives in Dashboard
 
@@ -112,26 +137,40 @@ export default function ProfilePage() {
 
     try {
       if (updateProfile) {
-        await updateProfile(formData);
+        // Only send fields that might have changed
+        const updateData = {
+          name: formData.name,
+          organization: formData.organization,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          postal_code: formData.postal_code,
+          country: formData.country,
+        };
+        await updateProfile(updateData);
         setSaveMessage({ type: 'success', text: 'Profile updated successfully!' });
         setIsEditing(false);
 
         // Clear success message after 3 seconds
         setTimeout(() => setSaveMessage(null), 3000);
+      } else {
+         throw new Error("updateProfile function not available");
       }
     } catch (error) {
       console.error('Error updating profile:', error);
       setSaveMessage({
         type: 'error',
-        text: 'Failed to update profile. Please try again.',
+        text: (error instanceof Error ? error.message : 'Failed to update profile. Please try again.'),
       });
     } finally {
       setIsSaving(false);
     }
   };
 
+
   const handleCancel = () => {
-    // Reset form data to original profile values
+    // Reset form data to original profile values if profile exists
     if (profile) {
       setFormData({
         name: profile.name || '',
@@ -143,10 +182,14 @@ export default function ProfilePage() {
         postal_code: profile.postal_code || '',
         country: profile.country || 'US',
       });
+    } else {
+      // Reset to empty if profile somehow isn't loaded
+       setFormData({ name: '', organization: '', phone: '', address: '', city: '', state: '', postal_code: '', country: 'US' });
     }
     setIsEditing(false);
-    setSaveMessage(null);
+    setSaveMessage(null); // Clear any previous messages
   };
+
 
   // No addresses persisted yet; address fields are part of profile
 
@@ -206,69 +249,91 @@ export default function ProfilePage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Profile Photo</h2>
 
             <div className="text-center">
-              <div className="w-32 h-32 mx-auto mb-4 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+               {/* Avatar Display */}
+              <div className="w-32 h-32 mx-auto mb-4 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border">
                 {avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={avatarUrl}
                     alt="Profile avatar"
-                    className="w-full h-full object-cover rounded-full"
+                    key={avatarUrl} // Add key to force re-render on URL change
+                    className="w-full h-full object-cover" // Removed rounded-full here
+                    onError={(e) => { // Handle image loading errors
+                      console.warn("Avatar image failed to load:", avatarUrl);
+                      (e.target as HTMLImageElement).style.display = 'none'; // Hide broken image
+                      // Optionally show placeholder again
+                    }}
                   />
+                  // Fallback placeholder logic integrated with onError or potentially show if !avatarUrl initially
                 ) : (
-                  <svg
-                    className="w-20 h-20 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
+                  <svg className="w-20 h-20 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                   </svg>
                 )}
               </div>
 
+
+              {/* File Input and Label */}
               <div className="mb-4">
                 <input
                   type="file"
-                  id="profile-photo"
+                  id="profile-photo-input" // Changed ID to avoid conflict if label reused
                   className="hidden"
-                  accept="image/*"
+                  accept="image/jpeg, image/png, image/webp" // Specify accepted types
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
+
+                    // Basic validation (e.g., size limit)
+                    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                      alert("File is too large. Please select an image under 5MB.");
+                      e.target.value = ''; // Reset file input
+                      return;
+                    }
+
+
                     const url = URL.createObjectURL(file);
-                    setAvatarSrc(url);
-                    setScale(1);
+                    setAvatarSrc(url); // Set source for cropper
+                    setScale(1); // Reset cropper state
                     setOffset({ x: 0, y: 0 });
-                    setIsCropping(true);
-                    // Preload to compute base scale so the image covers the crop square
+                    setIsCropping(true); // Open cropper modal
+
+                    // Preload image to calculate initial scale for covering crop box
                     try {
                       const probe = new Image();
+                      probe.onload = () => {
+                         const c = cropBoxRef.current?.clientWidth || 256; // Use current crop box size
+                         const coverScale = Math.max(
+                           c / Math.max(1, probe.naturalWidth),
+                           c / Math.max(1, probe.naturalHeight),
+                         );
+                         setBaseScale(coverScale); // Set base scale to cover
+                         URL.revokeObjectURL(url); // Clean up object URL after use
+                      };
+                      probe.onerror = () => {
+                        console.error("Failed to preload image for scaling");
+                        URL.revokeObjectURL(url); // Clean up even on error
+                      }
                       probe.src = url;
-                      await probe.decode().catch(() => {});
-                      const c = cropBoxRef.current?.clientWidth || 256;
-                      const cover = Math.max(
-                        c / Math.max(1, probe.naturalWidth),
-                        c / Math.max(1, probe.naturalHeight),
-                      );
-                      setBaseScale(cover);
-                    } catch {}
+                    } catch (preloadError){
+                      console.error("Error during image preload:", preloadError);
+                       URL.revokeObjectURL(url); // Clean up on error
+                       setIsCropping(false); // Don't show cropper if preload fails
+                       alert("Could not process image file.");
+                    }
+                     e.target.value = ''; // Reset file input after selection
                   }}
                 />
+                 {/* Updated Label */}
                 <label
-                  htmlFor="profile-photo"
-                  className="inline-block px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors cursor-pointer"
+                  htmlFor="profile-photo-input"
+                  className="inline-block px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors cursor-pointer text-sm" // Adjusted size
                 >
-                  Select File
+                   {isCropping ? 'Processing...' : 'Change Photo'} {/* Dynamic label */}
                 </label>
-                <p className="text-sm text-gray-500 mt-2">No file selected</p>
               </div>
 
-              <p className="text-sm text-gray-600">Upload a square image for best results.</p>
+              <p className="text-sm text-gray-600">Upload a JPG, PNG, or WEBP file (max 5MB).</p>
             </div>
           </div>
 
@@ -280,172 +345,76 @@ export default function ProfilePage() {
 
             {!isEditing ? (
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                  <p className="mt-1 text-gray-900">{formData.name || '-'}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <p className="mt-1 text-gray-900">{profile?.email || '-'}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Organization</label>
-                  <p className="mt-1 text-gray-900">{formData.organization || '-'}</p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Phone</label>
-                    <p className="mt-1 text-gray-900">{formData.phone || '-'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Country</label>
-                    <p className="mt-1 text-gray-900">{formData.country || '-'}</p>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Address</label>
-                  <p className="mt-1 text-gray-900">{formData.address || '-'}</p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">City</label>
-                    <p className="mt-1 text-gray-900">{formData.city || '-'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">State</label>
-                    <p className="mt-1 text-gray-900">{formData.state || '-'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Postal Code</label>
-                    <p className="mt-1 text-gray-900">{formData.postal_code || '-'}</p>
-                  </div>
-                </div>
+                {/* Display fields */}
+                 <div><label className="label-text">Full Name</label><p className="value-text">{formData.name || '-'}</p></div>
+                 <div><label className="label-text">Email</label><p className="value-text">{profile?.email || '-'}</p></div>
+                 <div><label className="label-text">Organization</label><p className="value-text">{formData.organization || '-'}</p></div>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                   <div><label className="label-text">Phone</label><p className="value-text">{formData.phone || '-'}</p></div>
+                   <div><label className="label-text">Country</label><p className="value-text">{formData.country || '-'}</p></div>
+                 </div>
+                 <div><label className="label-text">Address</label><p className="value-text">{formData.address || '-'}</p></div>
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                   <div><label className="label-text">City</label><p className="value-text">{formData.city || '-'}</p></div>
+                   <div><label className="label-text">State</label><p className="value-text">{formData.state || '-'}</p></div>
+                   <div><label className="label-text">Postal Code</label><p className="value-text">{formData.postal_code || '-'}</p></div>
+                 </div>
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="w-full px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+                  className="w-full btn btn-primary mt-4" // Use theme button classes
                 >
                   Edit Profile
                 </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter your full name"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Organization
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.organization}
-                    onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Organization name"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                    <input
-                      type="text"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Phone number"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
-                    <input
-                      type="text"
-                      value={formData.country}
-                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Country"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                  <input
-                    type="text"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Street and number"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
-                    <input
-                      type="text"
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="City"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
-                    <input
-                      type="text"
-                      value={formData.state}
-                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="State / Region"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Postal Code
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.postal_code}
-                      onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="ZIP / Postal Code"
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:space-x-3 space-y-2 sm:space-y-0">
+                 {/* Input fields */}
+                 <div>
+                   <label className="label"><span className="label-text">Full Name</span></label>
+                   <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="input input-bordered w-full" placeholder="Enter full name" required />
+                 </div>
+                 <div>
+                   <label className="label"><span className="label-text">Organization</span></label>
+                   <input type="text" value={formData.organization} onChange={(e) => setFormData({ ...formData, organization: e.target.value })} className="input input-bordered w-full" placeholder="Organization name" />
+                 </div>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                   <div>
+                     <label className="label"><span className="label-text">Phone</span></label>
+                     <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="input input-bordered w-full" placeholder="Phone number" />
+                   </div>
+                   <div>
+                     <label className="label"><span className="label-text">Country</span></label>
+                     <input type="text" value={formData.country} onChange={(e) => setFormData({ ...formData, country: e.target.value })} className="input input-bordered w-full" placeholder="Country" />
+                   </div>
+                 </div>
+                 <div>
+                   <label className="label"><span className="label-text">Address</span></label>
+                   <input type="text" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="input input-bordered w-full" placeholder="Street address" />
+                 </div>
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                   <div>
+                     <label className="label"><span className="label-text">City</span></label>
+                     <input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} className="input input-bordered w-full" placeholder="City" />
+                   </div>
+                   <div>
+                     <label className="label"><span className="label-text">State / Region</span></label>
+                     <input type="text" value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} className="input input-bordered w-full" placeholder="State / Region" />
+                   </div>
+                   <div>
+                     <label className="label"><span className="label-text">Postal Code</span></label>
+                     <input type="text" value={formData.postal_code} onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })} className="input input-bordered w-full" placeholder="ZIP / Postal Code" />
+                   </div>
+                 </div>
+
+                <div className="flex flex-col sm:flex-row sm:space-x-3 space-y-2 sm:space-y-0 pt-2">
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                    className="btn btn-primary flex-1" // Use theme button classes
                   >
                     {isSaving ? (
                       <>
-                        <svg
-                          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
+                        <span className="loading loading-spinner"></span> {/* Use theme spinner */}
                         Saving...
                       </>
                     ) : (
@@ -456,7 +425,7 @@ export default function ProfilePage() {
                     type="button"
                     onClick={handleCancel}
                     disabled={isSaving}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
+                    className="btn btn-ghost flex-1 sm:flex-initial" // Use theme button classes
                   >
                     Cancel
                   </button>
@@ -470,11 +439,12 @@ export default function ProfilePage() {
         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 w-full max-w-full overflow-hidden">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Shipping Addresses</h2>
           <p className="text-sm text-gray-600 mb-6">
-            Manage your shipping addresses for orders. You can add multiple addresses and set one as
-            preferred.
+            Manage shipping addresses for orders. Add multiple and set one as preferred.
           </p>
-          <AddressManager useDatabase={true} />
+           {/* Pass user ID only if needed by AddressManager */}
+          <AddressManager useDatabase={true} userId={user?.id} />
         </div>
+
 
         {/* Right Column - Role and meta */}
         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 w-full max-w-full overflow-hidden">
@@ -482,18 +452,16 @@ export default function ProfilePage() {
           <div className="space-y-3 text-sm">
             <div>
               <span className="font-medium text-gray-700">Role:</span>{' '}
-              <span className="uppercase px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
-                {profile?.role}
-              </span>
+              <span className="badge badge-neutral uppercase">{profile?.role || 'N/A'}</span>
             </div>
             <div>
-              <span className="font-medium text-gray-700">Created:</span>{' '}
+              <span className="font-medium text-gray-700">Joined:</span> {/* Changed label */}
               <span className="text-gray-600">
                 {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : '-'}
               </span>
             </div>
             <div>
-              <span className="font-medium text-gray-700">Updated:</span>{' '}
+              <span className="font-medium text-gray-700">Last Updated:</span> {/* Changed label */}
               <span className="text-gray-600">
                 {profile?.updated_at ? new Date(profile.updated_at).toLocaleDateString() : '-'}
               </span>
@@ -508,105 +476,115 @@ export default function ProfilePage() {
           <div className="bg-white w-full max-w-md rounded-lg overflow-hidden shadow-xl">
             <div className="p-4 border-b text-gray-900 font-semibold">Crop your photo</div>
             <div className="p-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Crop area with circular guide */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center"> {/* Aligned items */}
+                {/* Crop area */}
                 <div
                   ref={cropBoxRef}
-                  className="mx-auto w-64 h-64 rounded-lg overflow-hidden bg-gray-100 relative touch-pan-y touch-pan-x"
+                  className="mx-auto w-full max-w-[256px] aspect-square rounded-lg overflow-hidden bg-gray-100 relative cursor-move touch-none" // Improved touch action
+                   onMouseDown={(e) => {
+                     if (!imgRef.current) return;
+                     setDragging(true);
+                     dragRef.current = { startX: e.clientX, startY: e.clientY, origX: offset.x, origY: offset.y };
+                     (e.target as HTMLElement).style.cursor = 'grabbing';
+                   }}
+                   onMouseMove={(e) => {
+                     if (!dragging || !dragRef.current) return;
+                     const dx = e.clientX - dragRef.current.startX;
+                     const dy = e.clientY - dragRef.current.startY;
+                     // Add boundary checks here if needed
+                     setOffset({ x: dragRef.current.origX + dx, y: dragRef.current.origY + dy });
+                   }}
+                   onMouseUp={(e) => {
+                     setDragging(false);
+                     dragRef.current = null;
+                      (e.target as HTMLElement).style.cursor = 'move';
+                   }}
+                   onMouseLeave={(e) => { // Handle mouse leaving the area while dragging
+                     if (dragging) {
+                       setDragging(false);
+                       dragRef.current = null;
+                        (e.target as HTMLElement).style.cursor = 'move';
+                     }
+                   }}
+                   onTouchStart={(e) => {
+                     if (!imgRef.current || e.touches.length !== 1) return;
+                     const t = e.touches[0];
+                     setDragging(true);
+                     dragRef.current = { startX: t.clientX, startY: t.clientY, origX: offset.x, origY: offset.y };
+                   }}
+                   onTouchMove={(e) => {
+                     if (!dragging || !dragRef.current || e.touches.length !== 1) return;
+                     const t = e.touches[0];
+                     const dx = t.clientX - dragRef.current.startX;
+                     const dy = t.clientY - dragRef.current.startY;
+                      // Add boundary checks here if needed
+                     setOffset({ x: dragRef.current.origX + dx, y: dragRef.current.origY + dy });
+                   }}
+                   onTouchEnd={() => {
+                     setDragging(false);
+                     dragRef.current = null;
+                   }}
                 >
-                  <div className="absolute inset-0 rounded-full ring-2 ring-white/90 pointer-events-none" />
+                  <div className="absolute inset-0 rounded-full ring-2 ring-white/90 pointer-events-none z-10" /> {/* Guide on top */}
                   {avatarSrc && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       ref={imgRef}
                       src={avatarSrc}
-                      alt="crop"
-                      className="select-none absolute left-1/2 top-1/2 will-change-transform"
+                      alt="crop source" // More descriptive alt
+                      className="select-none absolute left-1/2 top-1/2 will-change-transform" // Added will-change
                       style={{
                         transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px)) scale(${baseScale * scale})`,
+                        cursor: dragging ? 'grabbing' : 'move', // Dynamic cursor
                       }}
-                      onMouseDown={(e) => {
-                        setDragging(true);
-                        dragRef.current = {
-                          startX: e.clientX,
-                          startY: e.clientY,
-                          origX: offset.x,
-                          origY: offset.y,
-                        };
-                      }}
-                      onMouseMove={(e) => {
-                        if (!dragging || !dragRef.current) return;
-                        const dx = e.clientX - dragRef.current.startX;
-                        const dy = e.clientY - dragRef.current.startY;
-                        setOffset({ x: dragRef.current.origX + dx, y: dragRef.current.origY + dy });
-                      }}
-                      onMouseUp={() => {
-                        setDragging(false);
-                        dragRef.current = null;
-                      }}
-                      onMouseLeave={() => {
-                        setDragging(false);
-                        dragRef.current = null;
-                      }}
-                      onTouchStart={(e) => {
-                        const t = e.touches[0];
-                        setDragging(true);
-                        dragRef.current = {
-                          startX: t.clientX,
-                          startY: t.clientY,
-                          origX: offset.x,
-                          origY: offset.y,
-                        };
-                      }}
-                      onTouchMove={(e) => {
-                        if (!dragging || !dragRef.current) return;
-                        const t = e.touches[0];
-                        const dx = t.clientX - dragRef.current.startX;
-                        const dy = t.clientY - dragRef.current.startY;
-                        setOffset({ x: dragRef.current.origX + dx, y: dragRef.current.origY + dy });
-                      }}
-                      onTouchEnd={() => {
-                        setDragging(false);
-                        dragRef.current = null;
-                      }}
+                      // Removed inline event handlers, using parent div handlers instead
+                       draggable="false" // Prevent native drag
                     />
                   )}
                 </div>
-                {/* Live circular preview (LinkedIn-like) */}
-                <div className="flex items-center justify-center">
+                {/* Live circular preview */}
+                <div className="flex flex-col items-center justify-center"> {/* Centering column */}
                   <div
                     ref={previewBoxRef}
-                    className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden bg-gray-100 relative"
+                     // Responsive preview size using aspect ratio and max-width
+                    className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden bg-gray-100 relative border"
                   >
                     {avatarSrc && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={avatarSrc}
-                        alt="preview"
+                        alt="crop preview" // More descriptive alt
                         className="absolute left-1/2 top-1/2 select-none"
                         style={{
                           transform: `translate(calc(-50% + ${offset.x * previewRatio}px), calc(-50% + ${offset.y * previewRatio}px)) scale(${baseScale * scale * previewRatio})`,
+                          width: imgRef.current?.naturalWidth ? `${imgRef.current.naturalWidth}px` : 'auto', // Set explicit width/height for preview accuracy
+                          height: imgRef.current?.naturalHeight ? `${imgRef.current.naturalHeight}px` : 'auto',
                         }}
+                         draggable="false" // Prevent native drag
                       />
                     )}
                   </div>
+                   <label htmlFor="zoom-slider" className="text-xs text-gray-500 mt-2">Zoom</label>
                 </div>
               </div>
+              {/* Zoom Slider */}
               <div className="mt-4">
-                <input
-                  type="range"
-                  min={1}
-                  max={3}
-                  step={0.01}
-                  value={scale}
-                  onChange={(e) => setScale(Number(e.target.value))}
-                  className="w-full"
-                />
+                 <input
+                   id="zoom-slider"
+                   type="range"
+                   min={1} // Min scale is 1 (base scale)
+                   max={3} // Max zoom level
+                   step={0.01}
+                   value={scale}
+                   onChange={(e) => setScale(Number(e.target.value))}
+                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-sm dark:bg-gray-700" // Styled range input
+                 />
               </div>
             </div>
+            {/* Modal Actions */}
             <div className="p-4 border-t flex justify-end gap-2">
               <button
-                className="px-4 py-2 rounded-md border text-gray-700 hover:bg-gray-50"
+                className="btn btn-ghost" // Use theme button
                 onClick={() => {
                   setIsCropping(false);
                   if (avatarSrc) URL.revokeObjectURL(avatarSrc);
@@ -616,76 +594,101 @@ export default function ProfilePage() {
                 Cancel
               </button>
               <button
-                className="px-4 py-2 rounded-md text-white"
-                style={{ backgroundColor: 'hsl(var(--foreground))' }}
+                className="btn btn-primary" // Use theme button
                 onClick={async () => {
-                  if (!imgRef.current || !user) return;
-                  const img = imgRef.current;
-                  const canvas = document.createElement('canvas');
-                  const size = 512;
-                  canvas.width = size;
-                  canvas.height = size;
-                  const ctx = canvas.getContext('2d');
-                  if (!ctx) return;
-                  // Draw using the same transform as the crop box: translate + scale(baseScale*scale)
-                  ctx.fillStyle = '#fff';
-                  ctx.fillRect(0, 0, size, size);
-                  ctx.translate(size / 2, size / 2);
-                  const totalScale = baseScale * scale;
-                  ctx.scale(totalScale, totalScale);
-                  const natural = new Image();
-                  natural.src = img.src;
-                  await natural.decode().catch(() => {});
-                  ctx.drawImage(
-                    natural,
-                    -natural.width / 2 + offset.x / totalScale,
-                    -natural.height / 2 + offset.y / totalScale,
-                  );
-                  const blob: Blob | null = await new Promise((res) =>
-                    canvas.toBlob(res, 'image/jpeg', 0.9),
-                  );
-                  if (!blob) return;
-                  const bucket = (process.env.NEXT_PUBLIC_UPLOADS_BUCKET as string) || 'content';
-                  // Storage policies require first folder to be the user id
-                  const path = `${user.id}/avatar.jpg`;
-                  try {
-                    await supabaseClient.storage.from(bucket).remove([path]);
-                  } catch {}
-                  const { error } = await supabaseClient.storage
-                    .from(bucket)
-                    .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
-                  if (error) {
-                    alert(`Failed to upload avatar: ${error.message}`);
-                    return;
-                  }
-                  // Prefer a fresh signed URL to avoid cache issues
-                  let freshUrl: string | null = null;
-                  try {
-                    const { data } = await supabaseClient.storage
-                      .from(bucket)
-                      .createSignedUrl(path, 60 * 60);
-                    freshUrl = data?.signedUrl || null;
-                  } catch {}
-                  if (!freshUrl) {
-                    try {
-                      const { data } = supabaseClient.storage.from(bucket).getPublicUrl(path);
-                      freshUrl = data.publicUrl;
-                    } catch {}
-                  }
-                  setAvatarUrl(freshUrl || `${bucket}/${path}?t=${Date.now()}`);
-                  // Best effort: update profile with avatar_url/avatar_path if available
-                  try {
-                    await supabaseClient
-                      .from('profiles')
-                      .update({ avatar_url: freshUrl || null, avatar_path: path })
-                      .eq('id', user.id);
-                  } catch {}
-                  setIsCropping(false);
-                  if (avatarSrc) URL.revokeObjectURL(avatarSrc);
-                  setAvatarSrc(null);
-                }}
+                   if (!imgRef.current || !user || !avatarSrc) return;
+                   const img = imgRef.current;
+                   const canvas = document.createElement('canvas');
+                   const targetSize = 256; // Target output size (can be adjusted)
+                   canvas.width = targetSize;
+                   canvas.height = targetSize;
+                   const ctx = canvas.getContext('2d');
+                   if (!ctx) {
+                     alert("Could not process image.");
+                     return;
+                   }
+
+                   // Calculate crop parameters based on current state
+                   const totalScale = baseScale * scale;
+                   const sourceX = (img.naturalWidth / 2) - (offset.x / totalScale) - (cropSize / (2 * totalScale));
+                   const sourceY = (img.naturalHeight / 2) - (offset.y / totalScale) - (cropSize / (2 * totalScale));
+                   const sourceSize = cropSize / totalScale;
+
+                   // Draw the cropped area onto the canvas
+                   ctx.drawImage(
+                      img,
+                      sourceX, sourceY, sourceSize, sourceSize, // Source rectangle (from original image)
+                      0, 0, targetSize, targetSize // Destination rectangle (on canvas)
+                    );
+
+
+                   const blob: Blob | null = await new Promise((res) =>
+                     canvas.toBlob(res, 'image/jpeg', 0.9), // Use JPEG format, adjust quality if needed
+                   );
+                   if (!blob) {
+                      alert("Could not create image blob.");
+                      return;
+                   }
+
+                   // Upload logic
+                   const bucket = (process.env.NEXT_PUBLIC_UPLOADS_BUCKET as string) || 'content';
+                   const path = `${user.id}/avatar.jpg`; // Consistent path
+
+                   try {
+                     // Upsert directly, handles both new upload and replacement
+                     const { error } = await supabaseClient.storage
+                       .from(bucket)
+                       .upload(path, blob, { contentType: 'image/jpeg', upsert: true, cacheControl: '0' }); // Disable cache on upload
+
+                     if (error) throw error; // Throw if upload fails
+
+                     // Get a fresh URL (public or signed) to bypass cache
+                     let freshUrl: string | null = null;
+                      // Try public URL first if bucket is public
+                      const { data: publicData } = supabaseClient.storage.from(bucket).getPublicUrl(path);
+                      if (publicData?.publicUrl) {
+                        freshUrl = `${publicData.publicUrl}?t=${Date.now()}`; // Add timestamp
+                      } else {
+                         // Fallback to signed URL if needed (e.g., private bucket)
+                         const { data: signedData, error: signedError } = await supabaseClient.storage
+                           .from(bucket)
+                           .createSignedUrl(path, 60); // Short expiry for immediate use
+                         if (!signedError && signedData?.signedUrl) {
+                           freshUrl = signedData.signedUrl; // Signed URLs usually bypass cache better
+                         }
+                      }
+
+
+                      if (freshUrl) {
+                         setAvatarUrl(freshUrl); // Update UI immediately with the fresh URL
+                         // Optionally update profile record in DB if you store avatar_url there
+                          try {
+                            await supabaseClient
+                              .from('profiles')
+                              .update({ avatar_url: freshUrl.split('?')[0] }) // Store base URL without timestamp
+                              .eq('id', user.id);
+                          } catch (dbError) {
+                            console.warn("Failed to update profile record with new avatar URL:", dbError);
+                          }
+                      } else {
+                         // Fallback if no URL could be generated, force reload or show generic path
+                         setAvatarUrl(`${bucket}/${path}?t=${Date.now()}`); // Less reliable cache busting
+                      }
+
+
+                     setIsCropping(false); // Close modal on success
+
+                   } catch (uploadError: any) {
+                     console.error("Failed to upload avatar:", uploadError);
+                     alert(`Failed to upload avatar: ${uploadError.message || 'Unknown error'}`);
+                   } finally {
+                      // Clean up object URL regardless of success/failure
+                      if (avatarSrc) URL.revokeObjectURL(avatarSrc);
+                      setAvatarSrc(null);
+                   }
+                 }}
               >
-                Save
+                Save Photo
               </button>
             </div>
           </div>

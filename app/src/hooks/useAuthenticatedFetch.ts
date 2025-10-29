@@ -50,7 +50,7 @@ export function useAuthenticatedFetch() {
 
     console.log('📤 useAuthenticatedFetch: Realizando request con headers:', Object.keys(headers));
 
-    // Realizar la request con autenticación
+    /// ... (resto de la función fetch) ...
     return fetch(url, {
       cache: 'no-store',
       redirect: 'follow',
@@ -58,7 +58,8 @@ export function useAuthenticatedFetch() {
       headers,
       credentials: 'include',
     });
-  }, [session?.access_token]);
+  }, [session]); 
 
   return { authenticatedFetch };
 }
+

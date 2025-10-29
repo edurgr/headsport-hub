@@ -73,16 +73,16 @@ export default function ContentModerationPage() {
   const fetchData = useCallback(async () => {
     // Prevent multiple simultaneous requests
     if (isRequestInProgress) return;
-    
+
     try {
       setIsRequestInProgress(true);
       setLoading(true);
-      
+
       // Cancel previous request if it exists
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
-      
+
       // Create new abort controller for this request
       abortControllerRef.current = new AbortController();
 
@@ -90,10 +90,10 @@ export default function ContentModerationPage() {
         const response = await authenticatedFetch('/api/admin/content-moderation?action=queue', {
           signal: abortControllerRef.current.signal,
         });
-        
+
         // Check if request was aborted
         if (abortControllerRef.current.signal.aborted) return;
-        
+
         const data = await response.json();
 
         if (response.ok) {
@@ -105,10 +105,10 @@ export default function ContentModerationPage() {
         const response = await authenticatedFetch('/api/admin/content-moderation?action=stats', {
           signal: abortControllerRef.current.signal,
         });
-        
+
         // Check if request was aborted
         if (abortControllerRef.current.signal.aborted) return;
-        
+
         const data = await response.json();
 
         if (response.ok) {
@@ -133,14 +133,14 @@ export default function ContentModerationPage() {
     if (profile?.role === 'admin') {
       fetchData();
     }
-  }, [profile?.role]); // Only depend on role, not the entire profile object
+  }, [profile?.role, fetchData]);
 
   // Fetch data when tab changes
   useEffect(() => {
     if (profile?.role === 'admin') {
       fetchData();
     }
-  }, [activeTab]); // Only depend on activeTab, not fetchData
+  }, [activeTab, profile?.role, fetchData]);
 
   // Cleanup abort controller on unmount
   useEffect(() => {
@@ -159,10 +159,10 @@ export default function ContentModerationPage() {
   ) => {
     // Prevent multiple simultaneous moderation requests
     if (isRequestInProgress) return;
-    
+
     try {
       setIsRequestInProgress(true);
-      
+
       const response = await authenticatedFetch('/api/admin/content-moderation', {
         method: 'POST',
         body: JSON.stringify({
@@ -199,7 +199,7 @@ export default function ContentModerationPage() {
 
     try {
       setIsRequestInProgress(true);
-      
+
       const response = await authenticatedFetch('/api/admin/content-moderation', {
         method: 'POST',
         body: JSON.stringify({
@@ -430,7 +430,7 @@ export default function ContentModerationPage() {
                                   : 'Unknown'}
                               </p>
                               <p>
-                                <strong>Uploaded by:</strong>{' '}
+                                S<strong>Uploaded by:</strong>{' '}
                                 {item.file?.upload_sessions?.profiles?.name || 'Unknown User'}
                               </p>
                               <p>

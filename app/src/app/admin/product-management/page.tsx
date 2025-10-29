@@ -55,18 +55,18 @@ export default function ProductManagementPage() {
     async (pageParam = 1, reset = false) => {
       // Prevent multiple simultaneous requests
       if (isRequestInProgress) return;
-      
+
       try {
         setIsRequestInProgress(true);
-        
+
         // Cancel previous request if it exists
         if (abortControllerRef.current) {
           abortControllerRef.current.abort();
         }
-        
+
         // Create new abort controller for this request
         abortControllerRef.current = new AbortController();
-        
+
         if (reset) {
           setLoading(true);
         } else if (pageParam > 1) {
@@ -74,7 +74,7 @@ export default function ProductManagementPage() {
         } else {
           setLoading(true);
         }
-        
+
         const params = new URLSearchParams();
         if (searchTerm) params.append('search', searchTerm);
         if (categoryFilter !== 'all') params.append('category', categoryFilter);
@@ -84,10 +84,10 @@ export default function ProductManagementPage() {
         const response = await authenticatedFetch(`/api/admin/products?${params.toString()}`, {
           signal: abortControllerRef.current.signal,
         });
-        
+
         // Check if request was aborted
         if (abortControllerRef.current.signal.aborted) return;
-        
+
         const data = await response.json();
 
         if (response.ok) {
@@ -123,19 +123,19 @@ export default function ProductManagementPage() {
       setPage(1);
       fetchProducts(1, true);
     }
-  }, [profile?.role]); // Only depend on role, not the entire profile object
+  }, [profile?.role, fetchProducts]);
 
   // Debounced search and filter changes
   useEffect(() => {
     if (profile?.role !== 'admin') return;
-    
+
     const timeoutId = setTimeout(() => {
       setPage(1);
       fetchProducts(1, true);
     }, 500); // Increased debounce time to 500ms
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, categoryFilter]); // Removed profile and fetchProducts from deps
+  }, [searchTerm, categoryFilter, profile?.role, fetchProducts]);
 
   useEffect(() => {
     if (!loadMoreRef.current) return;
@@ -177,7 +177,7 @@ export default function ProductManagementPage() {
 
       if (response.ok) {
         setSuccess('Product deleted successfully');
-        fetchProducts();
+        fetchProducts(1, true); // Recargamos desde la página 1
       } else {
         const data = await response.json();
         setError(data.error || 'Failed to delete product');
@@ -206,7 +206,7 @@ export default function ProductManagementPage() {
         setSuccess('Product created successfully');
         setShowCreateModal(false);
         setEditingProduct(null);
-        fetchProducts();
+        fetchProducts(1, true); // Recargamos desde la página 1
       } else {
         const data = await response.json();
         setError(data.error || 'Failed to create product');
@@ -233,7 +233,7 @@ export default function ProductManagementPage() {
         setSuccess('Product updated successfully');
         setShowCreateModal(false);
         setEditingProduct(null);
-        fetchProducts();
+        fetchProducts(1, true); // Recargamos desde la página 1
       } else {
         const data = await response.json();
         setError(data.error || 'Failed to update product');
@@ -256,7 +256,7 @@ export default function ProductManagementPage() {
 
       if (response.ok) {
         setSuccess(`Product ${!product.is_active ? 'activated' : 'deactivated'} successfully`);
-        fetchProducts();
+        fetchProducts(1, true); // Recargamos desde la página 1
       } else {
         const data = await response.json();
         setError(data.error || 'Failed to update product');

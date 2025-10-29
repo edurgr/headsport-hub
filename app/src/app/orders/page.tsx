@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react'; // Import useCallback
 
 import AddressManager, { Address } from '@/components/AddressManager';
 import ProductSearch from '@/components/ProductSearch';
@@ -19,11 +19,7 @@ export default function OrdersPage() {
   const { user, profile } = useAuth();
   const download = useDownload();
 
-  useEffect(() => {
-    if (user?.email || profile?.role) fetchOrders();
-  }, [user?.email, profile?.role, filter]);
-
-  async function fetchOrders() {
+  const fetchOrders = useCallback(async () => { // CORREGIDO: useCallback añadido
     try {
       let url = '/api/orders';
       if (profile?.role === 'manager' || profile?.role === 'admin') {
@@ -35,6 +31,10 @@ export default function OrdersPage() {
       } else if (user?.email) {
         // Athlete: fetch complete history with a high limit to show all career orders
         url += `?scope=mine&athleteEmail=${encodeURIComponent(user.email)}&limit=1000`;
+      } else {
+        // If no user/role info, don't fetch
+        setOrders([]);
+        return;
       }
       const res = await fetch(url, { cache: 'no-store', redirect: 'follow' });
       const json = await res.json();
@@ -59,12 +59,21 @@ export default function OrdersPage() {
           })),
         );
       } else {
+        console.error("Failed to fetch orders:", json.error);
         setOrders([]);
       }
     } catch (e) {
+      console.error("Error fetching orders:", e);
       setOrders([]);
     }
-  }
+  }, [user?.email, profile?.role, filter]); // CORREGIDO: Dependencias de useCallback
+
+  useEffect(() => {
+    // Only fetch if we have the necessary info
+    if (user?.email || profile?.role) {
+      fetchOrders();
+    }
+  }, [fetchOrders, user?.email, profile?.role]); // CORREGIDO: useEffect depende ahora de la función estable fetchOrders
 
   function addRow() {
     setRows((r) => [
@@ -98,16 +107,20 @@ export default function OrdersPage() {
       if (!row.product) {
         validationErrors.push(`Item ${index + 1}: Product is required`);
       }
-      if (row.quantity < 1) {
+      // Quantity check might be needed if user can type non-numbers
+      if (!row.quantity || row.quantity < 1) {
         validationErrors.push(`Item ${index + 1}: Quantity must be at least 1`);
       }
-      if (row.product?.category === 'skis' && (!row.length_cm || row.length_cm === '')) {
+      // Use optional chaining and check for empty string explicitly
+      if (row.product?.category === 'skis' && !row.length_cm) {
         validationErrors.push(`Item ${index + 1}: Length is required for skis`);
       }
-      if (row.product?.category === 'boots' && (!row.boot_size || row.boot_size === '')) {
+      if (row.product?.category === 'boots' && !row.boot_size) {
         validationErrors.push(`Item ${index + 1}: Boot size is required for boots`);
       }
+      // Add other category specific checks if needed (e.g., bindings color)
     });
+
 
     if (validationErrors.length > 0) {
       alert('Please fix the following errors:\n' + validationErrors.join('\n'));
@@ -157,7 +170,7 @@ export default function OrdersPage() {
       case 'rejected':
         return 'badge-error';
       default:
-        return '';
+        return ''; // Or a default like 'badge-neutral'
     }
   };
 
@@ -303,7 +316,7 @@ export default function OrdersPage() {
                     <option value="all">All Orders</option>
                     <option value="pending">Pending Approval</option>
                     <option value="approved">Approved</option>
-                    <option value="mine">My Orders</option>
+                    <option value="mine">My Orders</option> {/* Assuming managers can also make orders */}
                   </select>
                   <button onClick={fetchOrders} className="btn px-3 py-2 text-sm">
                     Refresh
@@ -314,25 +327,29 @@ export default function OrdersPage() {
                     download.begin('Preparing CSV…');
                     const headers = [
                       'Order ID',
-                      'Athlete',
-                      'Status',
-                      'Created At',
-                      'Item',
-                      'SKU',
-                      'Qty',
-                      'Length',
-                      'Boot Size',
-                      'Color',
+                      'Athlete', 'Athlete Email', 'Athlete Phone',
+                      'Status', 'Created At',
+                      'Approved By', 'Approved At',
+                      'Ship Name', 'Ship Address 1', 'Ship Address 2', 'Ship City', 'Ship State', 'Ship Postal', 'Ship Country', 'Ship Phone',
+                      'Item', 'SKU', 'Qty', 'Length', 'Boot Size', 'Color'
                     ];
                     const rowsCsv: string[] = [headers.join(',')];
                     orders.forEach((o: any) => {
-                      (o.rawItems || []).forEach((it: any) => {
+                      (o.rawItems || []).forEach((it: any, index: number) => {
+                        // For the first item, include order details. For subsequent items, leave order details blank.
+                        const orderDetails = index === 0 ? [
+                          o.id,
+                          o.athlete, o.athleteEmail || '', o.athletePhone || o.shippingAddress?.phone || '',
+                          o.status, o.orderDate,
+                          o.approvedBy || '', o.approvedAt ? new Date(o.approvedAt).toLocaleString() : '',
+                          o.shippingAddress?.name || '', o.shippingAddress?.addressLine1 || '', o.shippingAddress?.addressLine2 || '',
+                          o.shippingAddress?.city || '', o.shippingAddress?.state || '', o.shippingAddress?.postalCode || '',
+                          o.shippingAddress?.country || '', o.shippingAddress?.phone || ''
+                        ] : Array(16).fill(''); // 16 columns for order details
+
                         rowsCsv.push(
                           [
-                            o.id,
-                            o.athlete,
-                            o.status,
-                            o.orderDate,
+                            ...orderDetails,
                             it.product_name,
                             it.product_sku,
                             it.quantity,
@@ -340,7 +357,7 @@ export default function OrdersPage() {
                             it.boot_size || '',
                             it.binding_color || '',
                           ]
-                            .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+                            .map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`) // Handle null/undefined
                             .join(','),
                         );
                       });
@@ -351,7 +368,7 @@ export default function OrdersPage() {
                     const urlCsv = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = urlCsv;
-                    a.download = `orders-${filter}.csv`;
+                    a.download = `orders-${filter}-${new Date().toISOString().split('T')[0]}.csv`;
                     a.click();
                     URL.revokeObjectURL(urlCsv);
                     download.end();
@@ -363,6 +380,7 @@ export default function OrdersPage() {
               </div>
             </div>
           ) : null}
+
 
           {/* Order Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
@@ -378,25 +396,22 @@ export default function OrdersPage() {
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
                   <div className="flex items-center space-x-3 min-w-0">
                     <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
+                      className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" // Added shrink-0
                       style={{ backgroundColor: 'hsl(var(--border))' }}
                     >
                       <span className="text-sm font-medium text-[hsl(var(--foreground))]">
-                        {order.athlete
-                          .split(' ')
-                          .map((n: string) => n[0])
-                          .join('')}
+                        {order.athlete?.split(' ').map((n: string) => n[0]).join('') || '?'}
                       </span>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-[hsl(var(--foreground))] text-sm sm:text-base break-words">
+                    <div className="min-w-0"> {/* Added min-w-0 */}
+                      <h3 className="font-semibold text-[hsl(var(--foreground))] text-sm sm:text-base break-words truncate"> {/* Added truncate */}
                         {order.athlete}
                       </h3>
                       <p className="text-xs sm:text-sm text-[hsl(var(--muted))]">
                         Items: {order.items}
                       </p>
                       {order.approvedBy && (
-                        <p className="text-xs text-[hsl(var(--muted))] break-words line-clamp-2">
+                        <p className="text-xs text-[hsl(var(--muted))] break-words line-clamp-2 truncate"> {/* Added truncate */}
                           Approved by: {order.approvedBy}{' '}
                           {order.approvedAt
                             ? `on ${new Date(order.approvedAt).toLocaleDateString()}`
@@ -410,59 +425,58 @@ export default function OrdersPage() {
                       className={`px-2 py-1 text-xs font-medium rounded-full shrink-0 ${getStatusColor(order.status)}`}
                       style={{ lineHeight: 1 }}
                     >
-                      {order.status}
+                      {order.status.replace(/_/g, ' ')} {/* Replace underscores */}
                     </span>
                     {(profile?.role === 'manager' || profile?.role === 'admin') &&
                       order.status === 'pending_approval' && (
-                        <button
-                          onClick={async () => {
-                            const res = await fetch('/api/orders/approve', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                orderId: order.id,
-                                action: 'approve',
-                                approverEmail: user?.email,
-                              }),
-                            });
-                            const json = await res.json();
-                            if (res.ok) {
-                              alert('Order approved');
-                              fetchOrders();
-                            } else {
-                              alert('Failed to approve: ' + (json.error || 'Unknown error'));
-                            }
-                          }}
-                          className="btn-approve px-2 py-1 text-xs rounded"
-                        >
-                          Approve
-                        </button>
-                      )}
-                    {(profile?.role === 'manager' || profile?.role === 'admin') &&
-                      order.status === 'pending_approval' && (
-                        <button
-                          onClick={async () => {
-                            const res = await fetch('/api/orders/approve', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                orderId: order.id,
-                                action: 'reject',
-                                approverEmail: user?.email,
-                              }),
-                            });
-                            const json = await res.json();
-                            if (res.ok) {
-                              alert('Order rejected');
-                              fetchOrders();
-                            } else {
-                              alert('Failed to reject: ' + (json.error || 'Unknown error'));
-                            }
-                          }}
-                          className="btn-reject px-2 py-1 text-xs rounded"
-                        >
-                          Reject
-                        </button>
+                        <> {/* Wrap buttons in fragment */}
+                          <button
+                            onClick={async () => {
+                              const res = await fetch('/api/orders/approve', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  orderId: order.id,
+                                  action: 'approve',
+                                  approverEmail: user?.email,
+                                }),
+                              });
+                              const json = await res.json();
+                              if (res.ok) {
+                                alert('Order approved');
+                                fetchOrders();
+                              } else {
+                                alert('Failed to approve: ' + (json.error || 'Unknown error'));
+                              }
+                            }}
+                            className="btn-approve px-2 py-1 text-xs rounded"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={async () => {
+                              const res = await fetch('/api/orders/approve', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  orderId: order.id,
+                                  action: 'reject',
+                                  approverEmail: user?.email,
+                                }),
+                              });
+                              const json = await res.json();
+                              if (res.ok) {
+                                alert('Order rejected');
+                                fetchOrders();
+                              } else {
+                                alert('Failed to reject: ' + (json.error || 'Unknown error'));
+                              }
+                            }}
+                            className="btn-reject px-2 py-1 text-xs rounded"
+                          >
+                            Reject
+                          </button>
+                        </>
                       )}
                   </div>
                 </div>
@@ -477,6 +491,7 @@ export default function OrdersPage() {
                         {item}
                       </p>
                     ))}
+                     {order.rawItems.length > 3 && <p className="text-xs text-[hsl(var(--muted))]">... and {order.rawItems.length - 3} more</p>}
                   </div>
                 </div>
 
@@ -504,7 +519,7 @@ export default function OrdersPage() {
                       ) : null}
                     </div>
                     {/* Shipping Address Summary */}
-                    {order.shippingAddress && (
+                    {order.shippingAddress && Object.keys(order.shippingAddress).length > 0 ? (
                       <div
                         className="p-2 rounded border text-xs"
                         style={{
@@ -531,10 +546,12 @@ export default function OrdersPage() {
                           <div>Phone: {order.shippingAddress.phone}</div>
                         ) : null}
                       </div>
+                    ) : (
+                       <div className="p-2 rounded border text-xs text-[hsl(var(--muted))]" style={{borderColor: 'hsl(var(--border))'}}>No shipping address provided for this order.</div>
                     )}
                     {(order as any).rawItems?.map((it: any) => (
                       <div
-                        key={it.id}
+                        key={it.id || `${it.product_name}-${it.quantity}`} // Use a more stable key if id isn't always present
                         className="p-2 rounded border"
                         style={{
                           backgroundColor: 'hsl(var(--secondary))',
@@ -554,64 +571,29 @@ export default function OrdersPage() {
                       <button
                         onClick={() => {
                           download.begin('Preparing order CSV…');
-                          const headers = [
+                           const headers = [
                             'Order ID',
-                            'Athlete',
-                            'Athlete Email',
-                            'Athlete Phone',
-                            'Status',
-                            'Created At',
-                            'Approved By',
-                            'Approved At',
-                            'Ship Name',
-                            'Ship Address 1',
-                            'Ship Address 2',
-                            'Ship City',
-                            'Ship State',
-                            'Ship Postal',
-                            'Ship Country',
-                            'Ship Phone',
+                            'Athlete', 'Athlete Email', 'Athlete Phone',
+                            'Status', 'Created At',
+                            'Approved By', 'Approved At',
+                            'Ship Name', 'Ship Address 1', 'Ship Address 2', 'Ship City', 'Ship State', 'Ship Postal', 'Ship Country', 'Ship Phone',
+                            'Item', 'SKU', 'Qty', 'Length', 'Boot Size', 'Color'
                           ];
-                          const lineHeaders = [
-                            'Item',
-                            'SKU',
-                            'Qty',
-                            'Length',
-                            'Boot Size',
-                            'Color',
-                          ];
-                          const rows: string[] = [];
-                          // Header block
-                          rows.push(headers.join(','));
-                          rows.push(
-                            [
-                              order.id,
-                              order.athlete,
-                              order.athleteEmail || '',
-                              order.athletePhone || order.shippingAddress?.phone || '',
-                              order.status,
-                              order.orderDate,
-                              order.approvedBy || '',
-                              order.approvedAt ? new Date(order.approvedAt).toLocaleString() : '',
-                              order.shippingAddress?.name || '',
-                              order.shippingAddress?.addressLine1 || '',
-                              order.shippingAddress?.addressLine2 || '',
-                              order.shippingAddress?.city || '',
-                              order.shippingAddress?.state || '',
-                              order.shippingAddress?.postalCode || '',
-                              order.shippingAddress?.country || '',
-                              order.shippingAddress?.phone || '',
-                            ]
-                              .map((v: any) => `"${String(v).replace(/"/g, '""')}"`)
-                              .join(','),
-                          );
-                          // Blank line
-                          rows.push('');
-                          // Items table
-                          rows.push(lineHeaders.join(','));
-                          (order as any).rawItems.forEach((it: any) => {
-                            rows.push(
+                          const rowsCsv: string[] = [headers.join(',')];
+                           (order.rawItems || []).forEach((it: any, index: number) => {
+                             const orderDetails = index === 0 ? [
+                               order.id,
+                               order.athlete, order.athleteEmail || '', order.athletePhone || order.shippingAddress?.phone || '',
+                               order.status, order.orderDate,
+                               order.approvedBy || '', order.approvedAt ? new Date(order.approvedAt).toLocaleString() : '',
+                               order.shippingAddress?.name || '', order.shippingAddress?.addressLine1 || '', order.shippingAddress?.addressLine2 || '',
+                               order.shippingAddress?.city || '', order.shippingAddress?.state || '', order.shippingAddress?.postalCode || '',
+                               order.shippingAddress?.country || '', order.shippingAddress?.phone || ''
+                             ] : Array(16).fill('');
+
+                            rowsCsv.push(
                               [
+                                ...orderDetails,
                                 it.product_name,
                                 it.product_sku,
                                 it.quantity,
@@ -619,17 +601,17 @@ export default function OrdersPage() {
                                 it.boot_size || '',
                                 it.binding_color || '',
                               ]
-                                .map((v: any) => `"${String(v).replace(/"/g, '""')}"`)
+                                .map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`)
                                 .join(','),
                             );
                           });
-                          const blob = new Blob([rows.join('\n')], {
+                          const blob = new Blob([rowsCsv.join('\n')], {
                             type: 'text/csv;charset=utf-8;',
                           });
                           const urlCsv = URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = urlCsv;
-                          a.download = `order-${order.id}.csv`;
+                           a.download = `order-${order.id}-${order.athlete.replace(/\s+/g, '_')}-${new Date().toISOString().split('T')[0]}.csv`;
                           a.click();
                           URL.revokeObjectURL(urlCsv);
                           download.end();
@@ -650,7 +632,7 @@ export default function OrdersPage() {
         {showCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50">
             <div className="bg-white rounded-t-lg sm:rounded-lg shadow-xl w-full sm:max-w-5xl mx-0 sm:mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="p-4 sm:p-6 border-b border-gray-200">
+              <div className="p-4 sm:p-6 border-b border-gray-200 sticky top-0 bg-white z-10"> {/* Sticky header */}
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-xl sm:text-2xl font-bold text-[hsl(var(--foreground))]">
@@ -676,9 +658,9 @@ export default function OrdersPage() {
                 </div>
               </div>
 
-              <div className="p-4 sm:p-6">
+             <div className="p-4 sm:p-6 space-y-8"> {/* Added space-y-8 */}
                 {/* Order Details Section */}
-                <div className="mb-8">
+                <div> {/* Removed mb-8 */}
                   <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">
                     Order Details
                   </h3>
@@ -689,7 +671,7 @@ export default function OrdersPage() {
                       </label>
                       <input
                         type="text"
-                        value="ORD-653027"
+                        value="AUTO" // Indicate auto-generation
                         disabled
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-[hsl(var(--muted))]"
                       />
@@ -700,7 +682,7 @@ export default function OrdersPage() {
                       </label>
                       <input
                         type="text"
-                        value={user?.email || 'demo@antolau.com'}
+                        value={profile?.name || user?.email || 'Unknown User'} // Show name if available
                         disabled
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-[hsl(var(--muted))]"
                       />
@@ -712,7 +694,7 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Items Section */}
-                <div className="mb-8">
+                <div> {/* Removed mb-8 */}
                   <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-3 sm:mb-4">
                     Items
                   </h3>
@@ -724,7 +706,7 @@ export default function OrdersPage() {
                     <div className="space-y-6">
                       {rows.map((row, i) => (
                         <div
-                          key={i}
+                          key={i} // Consider more stable keys if rows reorder
                           className="p-4 sm:p-6 border border-gray-200 rounded-lg bg-gray-50"
                         >
                           <div className="flex justify-between items-center mb-3 sm:mb-4">
@@ -776,7 +758,7 @@ export default function OrdersPage() {
                                     min={1}
                                     value={row.quantity}
                                     onChange={(e) =>
-                                      setRow(i, { quantity: Number(e.target.value) })
+                                      setRow(i, { quantity: Math.max(1, Number(e.target.value) || 1) }) // Ensure positive integer
                                     }
                                     className="w-full px-3 h-11 sm:h-9 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
                                   />
@@ -796,7 +778,7 @@ export default function OrdersPage() {
                                         options={[
                                           { value: '', label: 'Select length' },
                                           ...((row.product as any).available_lengths || []).map(
-                                            (len: number) => ({
+                                            (len: number | string) => ({ // Allow string lengths
                                               value: String(len),
                                               label: String(len),
                                             }),
@@ -806,8 +788,8 @@ export default function OrdersPage() {
                                       />
                                     ) : (
                                       <input
-                                        type="number"
-                                        value={row.length_cm}
+                                        type="text" // Allow text input for flexibility
+                                        value={row.length_cm || ''}
                                         onChange={(e) => setRow(i, { length_cm: e.target.value })}
                                         placeholder="Enter length"
                                         className="w-full px-3 h-11 sm:h-9 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
@@ -823,7 +805,7 @@ export default function OrdersPage() {
                                     </label>
                                     <input
                                       type="text"
-                                      value={row.boot_size}
+                                      value={row.boot_size || ''}
                                       onChange={(e) => setRow(i, { boot_size: e.target.value })}
                                       placeholder="Enter boot size"
                                       className="w-full px-3 h-11 sm:h-9 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
@@ -847,19 +829,7 @@ export default function OrdersPage() {
                                 )}
 
                                 {/* Optional: other categories */}
-                                {row.product?.category &&
-                                  !['skis', 'boots', 'bindings'].includes(row.product.category) && (
-                                    <div>
-                                      <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-                                        Size
-                                      </label>
-                                      <input
-                                        type="text"
-                                        placeholder="Enter size"
-                                        className="w-full px-3 h-11 sm:h-9 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base sm:text-sm"
-                                      />
-                                    </div>
-                                  )}
+                                {/* Consider adding a generic 'Size' or 'Variant' field if needed */}
                               </div>
                             )}
                           </div>
@@ -890,7 +860,7 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Customization Section */}
-                <div className="mb-8">
+                <div> {/* Removed mb-8 */}
                   <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                     Customization / Notes (optional)
                   </label>
@@ -902,11 +872,13 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Saved Addresses Section */}
-                <div className="mb-8">
+                <div> {/* Removed mb-8 */}
                   <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-4">
                     Shipping Address
                   </h3>
+                   {/* Pass user ID only if needed by AddressManager */}
                   <AddressManager
+                    userId={user?.id}
                     onSelectAddress={(address) => {
                       setSelectedShippingAddress(address);
                     }}
@@ -933,13 +905,14 @@ export default function OrdersPage() {
                           {selectedShippingAddress.postalCode}
                         </p>
                         <p>{selectedShippingAddress.country}</p>
+                         {selectedShippingAddress.phone && <p>Phone: {selectedShippingAddress.phone}</p>}
                       </div>
                     </div>
                   )}
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row sm:justify-end gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:justify-end gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200 sticky bottom-0 bg-white p-4 sm:p-6 z-10"> {/* Sticky footer */}
                   <button
                     onClick={() => setShowCreateModal(false)}
                     className="px-5 py-2 border border-gray-300 text-[hsl(var(--muted))] rounded-lg hover:bg-gray-50 transition-colors"
@@ -948,7 +921,7 @@ export default function OrdersPage() {
                   </button>
                   <button
                     onClick={submit}
-                    className="px-5 py-2 bg-[hsl(var(--foreground))] text-white rounded-lg hover:bg-[hsl(var(--foreground))] transition-colors font-medium"
+                    className="px-5 py-2 bg-[hsl(var(--foreground))] text-white rounded-lg hover:opacity-90 transition-colors font-medium" // Adjusted hover
                   >
                     Create Order
                   </button>
