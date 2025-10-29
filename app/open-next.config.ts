@@ -1,6 +1,6 @@
 export default {
-  // Use defaults for Cloudflare Pages. Output will be placed under
-  // .vercel/output so Pages can read static and functions automatically.
+  // Minimal non-empty config required by OpenNext
+  default: {},
 };
 
 
