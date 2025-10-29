@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import type { ReactElement } from 'react';
 
 import { useRouter } from 'next/navigation';
 
 import { supabaseClient } from '@/lib/supabase-client';
 
-export default function AuthCallbackPage() {
+export default function AuthCallbackPage(): ReactElement {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
   const [isRecovery, setIsRecovery] = useState(false);
@@ -121,7 +122,9 @@ export default function AuthCallbackPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token: inviteToken }),
           });
-        } catch {}
+        } catch (error) {
+          // It's safe to ignore this error, as it's just a sync call
+        }
       }
 
       // Clear hash to avoid re-triggering recovery on back/refresh
@@ -129,7 +132,7 @@ export default function AuthCallbackPage() {
         window.history.replaceState({}, '', window.location.pathname + window.location.search);
       } catch {}
       setTimeout(() => router.push('/'), 1500);
-    } catch (err) {
+    } catch (_err) {
       setFormError('Unexpected error updating password');
     } finally {
       setUpdating(false);

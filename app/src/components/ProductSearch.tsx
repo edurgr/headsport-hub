@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react'; // Import useCallback
+import { useEffect, useState, useCallback, useMemo } from 'react'; // Import useCallback
+import type { ReactElement } from 'react';
 
 import { Product } from '@/types';
 
@@ -11,7 +12,7 @@ interface ProductSearchProps {
   selectedProduct?: Product | null;
 }
 
-export default function ProductSearch({ onSelect, selectedProduct }: ProductSearchProps) {
+export default function ProductSearch({ onSelect, selectedProduct }: ProductSearchProps): ReactElement {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');

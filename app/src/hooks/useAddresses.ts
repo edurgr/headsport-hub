@@ -2,58 +2,35 @@ import { useEffect, useState, useCallback } from 'react';
 
 import { Address } from '@/components/AddressManager';
 import { supabaseClient } from '@/lib/supabase-client';
+import { useAuth } from '@/hooks/useAuth';
 
-export function useAddresses(userId?: string) {
+export function useAddresses() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [newAddress, setNewAddress] = useState<Partial<Address>>({});
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const fetchAddresses = useCallback(async () => {
-    if (!userId) {
-      setAddresses([]);
-      setLoading(false);
-      return;
-    }
-
+    if (!user?.id) return;
+    setLoading(true);
     try {
-      setLoading(true);
-      setError(null);
-
-      const { data, error: fetchError } = await supabaseClient
+      const { data, error } = await supabaseClient
         .from('addresses')
         .select('*')
-        .eq('user_id', userId)
-        .order('is_preferred', { ascending: false })
-        .order('created_at', { ascending: false });
-
-      if (fetchError) {
-        throw fetchError;
-      }
-
-      const formattedAddresses: Address[] = (data || []).map((addr) => ({
-        id: addr.id,
-        name: addr.name,
-        addressLine1: addr.address_line1,
-        addressLine2: addr.address_line2,
-        city: addr.city,
-        state: addr.state,
-        postalCode: addr.postal_code,
-        country: addr.country,
-        phone: addr.phone,
-        isPreferred: addr.is_preferred,
-      }));
-
-      setAddresses(formattedAddresses);
-    } catch (err) {
+        .eq('user_id', user.id);
+      if (error) throw error;
+      setAddresses(data || []);
+    } catch (err: any) {
       console.error('Error fetching addresses:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch addresses');
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [user?.id]);
 
   const saveAddress = async (address: Omit<Address, 'id'>) => {
-    if (!userId) {
+    if (!user?.id) {
       throw new Error('User ID is required');
     }
 
@@ -61,7 +38,7 @@ export function useAddresses(userId?: string) {
       const { data, error: saveError } = await supabaseClient
         .from('addresses')
         .insert({
-          user_id: userId,
+          user_id: user.id,
           name: address.name,
           address_line1: address.addressLine1,
           address_line2: address.addressLine2,
@@ -89,7 +66,7 @@ export function useAddresses(userId?: string) {
   };
 
   const updateAddress = async (addressId: string, updates: Partial<Omit<Address, 'id'>>) => {
-    if (!userId) {
+    if (!user?.id) {
       throw new Error('User ID is required');
     }
 
@@ -110,7 +87,7 @@ export function useAddresses(userId?: string) {
         .from('addresses')
         .update(updateData)
         .eq('id', addressId)
-        .eq('user_id', userId);
+        .eq('user_id', user.id);
 
       if (updateError) {
         throw updateError;
@@ -125,7 +102,7 @@ export function useAddresses(userId?: string) {
   };
 
   const deleteAddress = async (addressId: string) => {
-    if (!userId) {
+    if (!user?.id) {
       throw new Error('User ID is required');
     }
 
@@ -134,7 +111,7 @@ export function useAddresses(userId?: string) {
         .from('addresses')
         .delete()
         .eq('id', addressId)
-        .eq('user_id', userId);
+        .eq('user_id', user.id);
 
       if (deleteError) {
         throw deleteError;
@@ -149,20 +126,20 @@ export function useAddresses(userId?: string) {
   };
 
   const setPreferredAddress = async (addressId: string) => {
-    if (!userId) {
+    if (!user?.id) {
       throw new Error('User ID is required');
     }
 
     try {
       // First, unset all preferred addresses for this user
-      await supabaseClient.from('addresses').update({ is_preferred: false }).eq('user_id', userId);
+      await supabaseClient.from('addresses').update({ is_preferred: false }).eq('user_id', user.id);
 
       // Then set the selected address as preferred
       const { error: updateError } = await supabaseClient
         .from('addresses')
         .update({ is_preferred: true })
         .eq('id', addressId)
-        .eq('user_id', userId);
+        .eq('user_id', user.id);
 
       if (updateError) {
         throw updateError;

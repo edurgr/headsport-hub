@@ -2,6 +2,9 @@
 
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+
+import type { FC, ReactNode } from 'react';
 
 import { DownloadProvider } from '@/contexts/DownloadContext';
 
@@ -9,12 +12,14 @@ import SidebarContainer from './SidebarContainer';
 
 const DownloadOverlay = dynamic(() => import('./DownloadOverlay'), { ssr: false });
 
-interface LayoutWrapperProps {
-  children: React.ReactNode;
-}
+type LayoutWrapperProps = {
+  children: ReactNode;
+};
 
-export default function LayoutWrapper({ children }: LayoutWrapperProps) {
+const LayoutWrapper: FC<LayoutWrapperProps> = ({ children }) => {
   const pathname = usePathname();
+  const { user, profile, loading, isAdmin } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Páginas públicas que no necesitan sidebar ni layout especial
   const publicPages = [

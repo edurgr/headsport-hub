@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { ReactElement } from 'react';
 
 import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function OnboardingPage() {
+export default function OnboardingPage(): ReactElement {
   const { user, profile, updateProfile, loading } = useAuth();
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);

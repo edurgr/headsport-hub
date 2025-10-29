@@ -50,14 +50,25 @@ export function useAuthenticatedFetch() {
 
     console.log('📤 useAuthenticatedFetch: Realizando request con headers:', Object.keys(headers));
 
-    /// ... (resto de la función fetch) ...
-    return fetch(url, {
-      cache: 'no-store',
-      redirect: 'follow',
-      ...options,
-      headers,
-      credentials: 'include',
-    });
+    try {
+      const res = await fetch(url, {
+        cache: 'no-store',
+        redirect: 'follow',
+        ...options,
+        headers,
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        // Attempt to parse error from response body
+        const errorBody = await res.json().catch(() => ({ error: 'Request failed with status ' + res.status }));
+        // Throw an error that includes the status and message
+        throw new Error(errorBody.error || `HTTP error! status: ${res.status}`);
+      }
+      return res;
+    } catch (error) {
+      // Re-throw the error to be caught by the caller
+      throw error;
+    }
   }, [session]); 
 
   return { authenticatedFetch };

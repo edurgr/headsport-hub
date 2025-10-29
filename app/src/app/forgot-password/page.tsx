@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import type { ReactElement } from 'react';
 
 import { supabaseClient } from '@/lib/supabase-client';
 
-export default function ForgotPasswordPage() {
+export default function ForgotPasswordPage(): ReactElement {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [message, setMessage] = useState('');

@@ -52,7 +52,9 @@ export async function POST(request: Request) {
     clearCookie(res, 'sb:token');
     clearCookie(res, 'supabase-auth-token');
     return res;
-  } catch (e) {
+  } catch (_e) {
+    const errorMessage = _e instanceof Error ? _e.message : 'An unknown error occurred';
+    console.error('Error in POST /api/auth/sync:', errorMessage);
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 }

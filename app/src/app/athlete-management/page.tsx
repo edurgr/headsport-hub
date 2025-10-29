@@ -25,8 +25,6 @@ export default function AthleteManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalAthletes, setTotalAthletes] = useState(0);
-  const [selectedAthlete, setSelectedAthlete] = useState<AthleteData | null>(null);
-  const [showProfileModal, setShowProfileModal] = useState(false);
 
   // Check if user has permission to access this page
   const hasPermission = profile?.role === 'manager' || profile?.role === 'admin';
@@ -852,8 +850,8 @@ export default function AthleteManagementPage() {
                             <div className="flex space-x-2">
                               <button
                                 onClick={() => {
-                                  setSelectedAthlete(athlete);
-                                  setShowProfileModal(true);
+                                  // setSelectedAthlete(athlete); // Removed
+                                  // setShowProfileModal(true); // Removed
                                 }}
                                 className="hover:opacity-80"
                                 style={{ color: 'hsl(var(--info))' }}

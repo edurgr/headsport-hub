@@ -4,7 +4,6 @@ import {
   addSecurityHeaders,
   createSecureErrorResponse,
   sanitizeOrderItem,
-  sanitizeShippingAddress,
   schemas,
   validateRequest,
 } from '@/lib/security';
@@ -23,21 +22,6 @@ interface OrderItem {
   quantity: number;
   boot_size: string;
   binding_color?: string;
-}
-
-interface OrderRequest {
-  rows: OrderItem[];
-  athleteEmail: string;
-  shippingAddress: {
-    name: string;
-    addressLine1: string;
-    addressLine2?: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-    phone?: string;
-  };
 }
 
 export async function POST(req: Request) {

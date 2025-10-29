@@ -413,7 +413,7 @@ export default function ContentPage() {
         setIsLoading(false);
       }
       setEditing(null);
-    } catch (e) {
+    } catch (_e) {
       alert('Failed to save');
     }
   };
@@ -634,7 +634,7 @@ export default function ContentPage() {
                     }}
                     className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
                   >
-                    {deleting ? 'Deleting…' : `Delete Selected (${Object.values(selected).filter(Boolean).length})`}
+                    {deleting ? 'Deleting…' : `Delete Selected (${Object.values(selected).filter((_v) => _v).length})`}
                   </button>
                 )}
                 {items.length > 0 && (

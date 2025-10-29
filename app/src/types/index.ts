@@ -31,27 +31,29 @@ export interface Profile {
   updated_at?: string;
 }
 
-export interface Invitation {
-  id: string;
-  email: string;
-  role: 'admin' | 'manager' | 'athlete';
-  invited_by: string;
-  status: 'pending' | 'accepted' | 'expired';
-  token: string;
-  expires_at: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Order {
+export interface Equipment {
   id: string;
   user_id: string;
-  status: OrderStatus;
-  total_amount: string; // DECIMAL(10,2)
+  product_category: ProductCategory;
+  product_article: string;
   notes?: string | null;
   created_at: string;
   updated_at: string;
 }
+
+export type Product = {
+  id: string;
+  name: string;
+  description: string;
+  sku: string;
+  vertical_number: string;
+  category: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  available_lengths?: number[];
+  image_url?: string;
+};
 
 export interface OrderItem {
   id: string;
@@ -63,54 +65,6 @@ export interface OrderItem {
   product_category?: ProductCategory;
   unit_price?: string;
   total_price?: string;
-}
-
-export interface Equipment {
-  id: string;
-  user_id: string;
-  product_category: ProductCategory;
-  product_article: string;
-  notes?: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface UploadSession {
-  id: string;
-  title: string;
-  description?: string;
-  files: UploadFile[];
-  created_at: string;
-  updated_at: string;
-}
-
-export interface UploadFile {
-  id: string;
-  name: string;
-  url: string;
-  size: number;
-  type: string;
-  uploaded_at: string;
-}
-
-export interface Product {
-  id: string;
-  name: string;
-  sku: string;
-  vertical_number: string;
-  category: string;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-  available_lengths?: number[];
-}
-
-export interface OrderRow {
-  product: Product | null;
-  length_cm: string;
-  quantity: number;
-  boot_size: string;
-  binding_color?: string;
 }
 
 export interface ProductCategoryInfo {
