@@ -35,7 +35,6 @@
     "zod": "^4.0.17"
   },
   "devDependencies": {
-    "@opennextjs/cloudflare": "^2.3.0",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@testing-library/react": "^16.3.0",
