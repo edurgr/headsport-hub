@@ -878,7 +878,6 @@ export default function OrdersPage() {
                   </h3>
                    {/* Pass user ID only if needed by AddressManager */}
                   <AddressManager
-                    userId={user?.id}
                     onSelectAddress={(address) => {
                       setSelectedShippingAddress(address);
                     }}
