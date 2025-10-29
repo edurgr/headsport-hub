@@ -1,6 +1,14 @@
 export default {
-  // Minimal non-empty config required by OpenNext
-  default: {},
+  default: {
+    override: {
+      wrapper: 'cloudflare-node',
+    },
+  },
+  middleware: {
+    override: {
+      wrapper: 'cloudflare-edge',
+    },
+  },
 };
 
 
