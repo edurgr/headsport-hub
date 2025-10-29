@@ -3,8 +3,9 @@ import path from 'node:path';
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname),
-  typescript: { ignoreBuildErrors: true },
-  eslint: { ignoreDuringBuilds: true },
+  // Force ESLint and TypeScript checks to run during builds
+  eslint: { ignoreDuringBuilds: false },
+  typescript: { ignoreBuildErrors: false },
   // Ensure environment variables are available at build time
   env: {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
