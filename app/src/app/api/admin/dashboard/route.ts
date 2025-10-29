@@ -86,6 +86,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+export const runtime = 'edge';
 
 async function getUserStats(supabase: any, period: number) {
   const startDate = new Date();

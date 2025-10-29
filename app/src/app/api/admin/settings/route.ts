@@ -39,3 +39,4 @@ export async function PUT(req: Request) {
 
   return NextResponse.json({ settings });
 }
+export const runtime = 'edge';

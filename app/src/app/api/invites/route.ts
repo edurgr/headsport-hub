@@ -63,3 +63,4 @@ export async function POST(req: NextRequest) {
     emailSent,
   });
 }
+export const runtime = 'edge';
