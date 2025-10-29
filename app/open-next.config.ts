@@ -1,8 +1,6 @@
-import { defineConfig } from '@opennextjs/cloudflare';
-
-export default defineConfig({
-  // Use defaults for Cloudflare Pages and emit Vercel-compatible output
-  // so Pages can read .vercel/output/static and .vercel/output/functions
-});
+export default {
+  // Use defaults for Cloudflare Pages. Output will be placed under
+  // .vercel/output so Pages can read static and functions automatically.
+};
 
 
