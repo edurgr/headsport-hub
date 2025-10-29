@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import { Address } from '@/components/AddressManager';
 import { supabaseClient } from '@/lib/supabase-client';
@@ -8,7 +8,7 @@ export function useAddresses(userId?: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAddresses = async () => {
+  const fetchAddresses = useCallback(async () => {
     if (!userId) {
       setAddresses([]);
       setLoading(false);
@@ -50,7 +50,7 @@ export function useAddresses(userId?: string) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   const saveAddress = async (address: Omit<Address, 'id'>) => {
     if (!userId) {
@@ -178,7 +178,7 @@ export function useAddresses(userId?: string) {
 
   useEffect(() => {
     fetchAddresses();
-  }, [userId]);
+  }, [userId, fetchAddresses]);
 
   return {
     addresses,

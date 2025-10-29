@@ -85,7 +85,7 @@ export default function AdminDashboard() {
       } else {
         setError(data.error || 'Failed to fetch dashboard data');
       }
-    } catch (_error) {
+    } catch {
       setError('Error fetching dashboard data');
     } finally {
       setLoading(false);
@@ -96,7 +96,7 @@ export default function AdminDashboard() {
     if (profile?.role === 'admin') {
       fetchDashboardData();
     }
-  }, [profile, selectedPeriod, fetchDashboardData]);
+  }, [profile?.role, fetchDashboardData]);
 
   const StatCard = ({
     title,

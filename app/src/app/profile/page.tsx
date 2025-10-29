@@ -28,7 +28,6 @@ export default function ProfilePage() {
   const cropBoxRef = useRef<HTMLDivElement | null>(null);
   const previewBoxRef = useRef<HTMLDivElement | null>(null);
   const [previewRatio, setPreviewRatio] = useState<number>(0.375); // previewSize / cropBoxSize
-  const [cropSize, setCropSize] = useState<number>(256);
   const [formData, setFormData] = useState({
     name: profile?.name || '',
     organization: profile?.organization || '',
@@ -41,22 +40,22 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    if (profile) {
+    if (user) {
       setFormData({
-        name: profile.name || '',
-        organization: profile.organization || '',
-        phone: profile.phone || '',
-        address: profile.address || '',
-        city: profile.city || '',
-        state: profile.state || '',
-        postal_code: profile.postal_code || '',
-        country: profile.country || 'US',
+        name: profile?.name || '',
+        organization: profile?.organization || '',
+        phone: profile?.phone || '',
+        address: profile?.address || '',
+        city: profile?.city || '',
+        state: profile?.state || '',
+        postal_code: profile?.postal_code || '',
+        country: profile?.country || 'US',
       });
-      // load avatar if present
-      const possible = (profile as any).avatar_url || (profile as any).avatar_path || null;
-      if (typeof possible === 'string') setAvatarUrl(possible);
+      if (profile?.avatar_url) {
+        setAvatarUrl(profile.avatar_url);
+      }
     }
-  }, [profile]);
+  }, [user, profile]);
 
   // Load avatar from storage on mount/user change (robust even without DB columns)
   useEffect(() => {
@@ -87,7 +86,6 @@ export default function ProfilePage() {
       const cropW = cropBoxRef.current?.clientWidth || 1;
       const prevW = previewBoxRef.current?.clientWidth || 1;
       setPreviewRatio(prevW / cropW);
-      setCropSize(cropW);
     };
     updateRatio();
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateRatio) : null;

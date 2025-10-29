@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,8 +9,7 @@ import { Invitation } from '@/types';
 export default function InviteManagerPage() {
   const { profile, createInvitation, getInvitations, deleteInvitation } = useAuth();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -19,23 +18,27 @@ export default function InviteManagerPage() {
   const [role, setRole] = useState<'manager' | 'athlete'>('athlete');
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    if (profile?.role === 'admin' || profile?.role === 'manager') {
-      fetchInvitations();
-    }
-  }, [profile]);
-
-  const fetchInvitations = async () => {
+  const fetchInvitations = useCallback(async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       const data = await getInvitations();
       setInvitations(data);
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch invitations');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An unexpected error occurred while fetching invitations.',
+      );
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
+  }, [getInvitations]);
+
+  useEffect(() => {
+    if (profile) {
+      fetchInvitations();
+    }
+  }, [profile, fetchInvitations]);
 
   const checkExistingInvitation = (email: string) => {
     const existing = invitations.find(
@@ -69,7 +72,6 @@ export default function InviteManagerPage() {
     }
 
     try {
-      setIsCreating(true);
       setError(null);
       setSuccess(null);
 
@@ -96,8 +98,6 @@ export default function InviteManagerPage() {
       }
 
       setError(errorMessage);
-    } finally {
-      setIsCreating(false);
     }
   };
 
@@ -146,19 +146,6 @@ export default function InviteManagerPage() {
     }
 
     return { text: 'Pending', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'accepted':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'expired':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
   };
 
   const getRoleColor = (role: string) => {
@@ -256,12 +243,12 @@ export default function InviteManagerPage() {
               <div className="flex items-end">
                 <button
                   type="submit"
-                  disabled={isCreating}
+                  disabled={loading}
                   className={`w-full py-2 px-4 rounded-md text-white font-medium ${
-                    isCreating ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                    loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
                   }`}
                 >
-                  {isCreating ? 'Sending...' : 'Send Invitation'}
+                  {loading ? 'Sending...' : 'Send Invitation'}
                 </button>
               </div>
             </div>
@@ -371,7 +358,7 @@ export default function InviteManagerPage() {
             </div>
           </div>
 
-          {isLoading ? (
+          {loading ? (
             <div className="p-6 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
               <p className="text-gray-600 mt-2">Loading invitations...</p>

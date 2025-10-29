@@ -133,14 +133,14 @@ export default function ContentModerationPage() {
     if (profile?.role === 'admin') {
       fetchData();
     }
-  }, [profile?.role]); // Only depend on role, not the entire profile object
+  }, [profile?.role, fetchData]);
 
   // Fetch data when tab changes
   useEffect(() => {
     if (profile?.role === 'admin') {
       fetchData();
     }
-  }, [activeTab]); // Only depend on activeTab, not fetchData
+  }, [activeTab, fetchData]);
 
   // Cleanup abort controller on unmount
   useEffect(() => {

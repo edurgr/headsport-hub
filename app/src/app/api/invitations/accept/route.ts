@@ -4,16 +4,10 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: Request) {
   try {
-    const { token, userId } = await req.json();
+    const { token } = await req.json();
 
     if (!token) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Token is required',
-        },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Missing token' }, { status: 400 });
     }
 
     // Usar el cliente de Supabase directamente

@@ -30,7 +30,7 @@ interface AuthContextType {
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   createInvitation: (
     email: string,
-    role: 'manager' | 'athlete',
+    role: 'admin' | 'manager' | 'athlete',
     personalMessage?: string,
   ) => Promise<void>;
   getInvitations: () => Promise<Invitation[]>;
@@ -376,7 +376,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Invitation management (only for administrators)
   async function createInvitation(
     email: string,
-    role: 'manager' | 'athlete',
+    role: 'admin' | 'manager' | 'athlete',
     personalMessage?: string,
   ): Promise<void> {
     if (!profile || profile.role !== 'admin') {

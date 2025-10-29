@@ -20,8 +20,10 @@ export default function OrdersPage() {
   const download = useDownload();
 
   useEffect(() => {
-    if (user?.email || profile?.role) fetchOrders();
-  }, [user?.email, profile?.role, filter]);
+    if (profile) {
+      fetchOrders();
+    }
+  }, [profile, fetchOrders]);
 
   async function fetchOrders() {
     try {

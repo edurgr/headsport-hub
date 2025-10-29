@@ -64,10 +64,12 @@ export default function UploadPage() {
         }
       };
       xhr.open('PUT', url, true);
-      const form = new FormData();
-      form.append('cacheControl', '3600');
-      form.append('', file);
-      xhr.send(form);
+      // Send raw file bytes to the Supabase signed upload URL.
+      // Using multipart/form-data here causes a 400 from the storage API.
+      try {
+        if (file.type) xhr.setRequestHeader('Content-Type', file.type);
+      } catch {}
+      xhr.send(file);
     });
   }
 
@@ -514,6 +516,18 @@ export default function UploadPage() {
               min-width: 0;
             }
           }
+          @keyframes hh-move-stripes {
+            0% {
+              background-position: 0 0;
+            }
+            100% {
+              background-position: 40px 0;
+            }
+          }
+          .hh-stripes {
+            animation: hh-move-stripes 0.9s linear infinite;
+            background-size: 20px 20px;
+          }
         `}</style>
         {/* Subtle success */}
         {showSuccess && (
@@ -631,7 +645,7 @@ export default function UploadPage() {
             <div className="relative w-full h-3 rounded-full overflow-hidden bg-gradient-to-r from-gray-200 to-gray-300">
               {/* Stripes layer */}
               <div
-                className="absolute inset-0 opacity-30"
+                className="absolute inset-0 opacity-30 hh-stripes"
                 style={{
                   backgroundImage:
                     'repeating-linear-gradient(45deg, rgba(0,0,0,0.25) 0, rgba(0,0,0,0.25) 10px, transparent 10px, transparent 20px)',

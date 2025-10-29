@@ -1,28 +1,25 @@
 'use client';
 
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { supabaseClient } from '@/lib/supabase-client';
+// import { supabaseClient } from '@/lib/supabase-client';
 
 export default function Home() {
+  const { user, profile, session } = useAuth();
   const router = useRouter();
-  const { user, profile, loading, hydrated, signInWithEmail } = useAuth();
-  const [mounted, setMounted] = useState(false);
+  const [linkMsg, ] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [linkMsg, setLinkMsg] = useState<string | null>(null);
-  const brandName = process.env.NEXT_PUBLIC_BRAND_NAME || 'HEAD Hub';
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    if (!session) {
+      router.push('/login');
+    }
+  }, [session, router, email]);
 
   // If Supabase recovery link lands on root (/) with hash tokens, forward to /auth/callback
   useEffect(() => {
@@ -390,7 +387,7 @@ export default function Home() {
 
 function ContentSummary({ userId }: { userId: string }) {
   const [items, setItems] = useState<
-    { id: string; filename: string; created_at: string; thumbnail_url?: string }[]
+    { id: string; filename: string; created_at: string; thumbnail_url?: string; file_type?: string; url?: string }[]
   >([]);
   useEffect(() => {
     if (!userId) return;
@@ -405,6 +402,8 @@ function ContentSummary({ userId }: { userId: string }) {
             filename: x.filename,
             created_at: x.created_at,
             thumbnail_url: x.thumbnail_url,
+            file_type: x.file_type,
+            url: x.url,
           })),
         ),
       )
@@ -419,6 +418,14 @@ function ContentSummary({ userId }: { userId: string }) {
             {i.thumbnail_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={i.thumbnail_url} alt={i.filename} className="w-full h-full object-cover" />
+            ) : i.file_type === 'video' && i.url ? (
+              <video
+                src={i.url}
+                preload="metadata"
+                muted
+                playsInline
+                className="w-full h-full object-cover bg-black"
+              />
             ) : (
               <div className="text-xs text-gray-400">No preview</div>
             )}

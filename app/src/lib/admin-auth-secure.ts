@@ -174,6 +174,88 @@ export async function verifyAdminAccess(req: NextRequest): Promise<
   }
 }
 
+// Verify that the requester is either manager or admin
+export async function verifyManagerOrAdminAccess(req: NextRequest): Promise<
+  | {
+      success: true;
+      user: AdminUser;
+    }
+  | {
+      success: false;
+      error: string;
+      status: number;
+    }
+> {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return {
+        success: false,
+        error: 'Server configuration error',
+        status: 500,
+      };
+    }
+
+    let token = '';
+    const authHeader = req.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    }
+    if (!token) {
+      const cookieStore = await cookies();
+      const possibleTokens = [
+        cookieStore.get('sb-access-token')?.value,
+        cookieStore.get('sb:token')?.value,
+        cookieStore.get('supabase-auth-token')?.value,
+        cookieStore.get('sb-localhost-auth-token')?.value,
+        cookieStore.get('sb-iiyavhodskjhqmycivus-auth-token')?.value,
+      ].filter(Boolean);
+      if (possibleTokens.length > 0) token = possibleTokens[0] as string;
+    }
+
+    if (!token) {
+      return { success: false, error: 'Authentication required', status: 401 };
+    }
+
+    const testSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    const {
+      data: { user },
+    } = await testSupabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: 'Invalid authentication token', status: 401 };
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, email, role, name')
+      .eq('id', user.id)
+      .in('role', ['admin', 'manager'])
+      .single();
+
+    if (profileError || !profile) {
+      return { success: false, error: 'Manager or admin access required', status: 403 };
+    }
+
+    if (profile.email !== user.email) {
+      return { success: false, error: 'Authentication mismatch', status: 403 };
+    }
+
+    return {
+      success: true,
+      user: { id: profile.id, email: profile.email, role: profile.role, name: profile.name },
+    };
+  } catch {
+    return { success: false, error: 'Internal server error', status: 500 };
+  }
+}
+
 // Función para verificar si un usuario es admin (sin hacer request)
 export async function isUserAdmin(userId: string): Promise<boolean> {
   try {

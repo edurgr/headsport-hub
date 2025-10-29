@@ -54,7 +54,7 @@ export default function AuditLogsPage() {
       } else {
         setError(data.error || 'Failed to fetch audit logs');
       }
-    } catch (_error) {
+    } catch {
       setError('Error fetching audit logs');
     } finally {
       setLoading(false);

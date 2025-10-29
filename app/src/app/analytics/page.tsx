@@ -244,13 +244,6 @@ export default function AnalyticsPage() {
     { name: 'Rejected', value: globalOrderStats?.rejected_orders || 0, color: CHART_COLORS[2] },
   ];
 
-  const athleteContentChartData = athleteContentStats.map((athlete) => ({
-    name: athlete.athlete_name,
-    photos: athlete.photos,
-    videos: athlete.videos,
-    total: athlete.total_content,
-  }));
-
   const athleteOrderChartData = athleteOrderStats.map((athlete) => ({
     name: athlete.athlete_name,
     orders: athlete.total_orders,

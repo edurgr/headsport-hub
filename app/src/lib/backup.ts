@@ -286,7 +286,6 @@ export class BackupService {
   static async performBackup(
     backupId: string,
     type: BackupType,
-    tablesIncluded?: string[],
   ): Promise<void> {
     try {
       // Update status to in_progress
