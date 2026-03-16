@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 
-import { supabaseClient } from '@/lib/supabase-client';
-
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
@@ -14,20 +12,24 @@ export default function ForgotPasswordPage() {
     setStatus('sending');
     setMessage('');
     try {
-      const redirectTo = `${window.location.origin}/auth/callback`;
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(
-        email.trim().toLowerCase(),
-        {
-          redirectTo,
-        },
-      );
-      if (error) {
+      const response = await fetch('/api/admin/send-recovery-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) {
         setStatus('error');
-        setMessage(error.message || 'Failed to send password reset email');
+        setMessage(json?.error || 'Failed to send password reset email');
         return;
       }
       setStatus('sent');
-      setMessage('Check your email for the password reset link.');
+      if (json?.emailed === false && json?.action_link) {
+        // Development convenience: show action link if email service is not configured
+        setMessage('Reset link generated. Open this link to continue: ' + json.action_link);
+      } else {
+        setMessage('Check your email for the password reset link.');
+      }
     } catch (err: any) {
       setStatus('error');
       setMessage(err?.message || 'Failed to send password reset email');

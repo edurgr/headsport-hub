@@ -8,7 +8,12 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'athlete' | 'manager' | 'admin' | ('athlete' | 'manager' | 'admin')[];
+  requiredRole?:
+    | 'athlete'
+    | 'manager'
+    | 'admin'
+    | 'superadmin'
+    | ('athlete' | 'manager' | 'admin' | 'superadmin')[];
   fallback?: React.ReactNode;
 }
 
@@ -82,8 +87,11 @@ export default function ProtectedRoute({ children, requiredRole, fallback }: Pro
     );
   }
 
-  // Check role access
+  // Check role access (superadmin can access everything)
   if (requiredRole && profile) {
+    if ((profile.role as any) === 'superadmin') {
+      return <>{children}</>;
+    }
     const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
     const hasAccess = allowedRoles.includes(profile.role as any);
 

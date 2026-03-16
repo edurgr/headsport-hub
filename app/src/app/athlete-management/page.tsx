@@ -16,49 +16,27 @@ interface AthleteData extends Profile {
 export default function AthleteManagementPage() {
   const { profile } = useAuth();
   const download = useDownload();
-  const [athletes, setAthletes] = useState<Profile[]>([]);
+  const [athletes, setAthletes] = useState<AthleteData[]>([]);
+  const [filteredAthletes, setFilteredAthletes] = useState<AthleteData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalAthletes, setTotalAthletes] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState('name');
-  const [sortOrder, setSortOrder] = useState('asc');
+  const [selectedAthlete, setSelectedAthlete] = useState<AthleteData | null>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   // Check if user has permission to access this page
-  const hasPermission = profile?.role === 'manager' || profile?.role === 'admin';
-
-  const fetchAthletes = useCallback(async () => {
-    try {
-      setLoading(true);
-      if (!profile) return;
-
-      const response = await fetch(
-        profile.role === 'admin' ? '/api/profiles/list' : `/api/profiles/list?managerId=${profile.id}`,
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch athletes');
-      }
-
-      const data = await response.json();
-      setAthletes(data.profiles || []);
-      // setError(null);
-    } catch (err) {
-      console.error(err);
-      // setError(err instanceof Error ? err.message : 'An unknown error occurred');
-    } finally {
-      setLoading(false);
-    }
-  }, [profile]);
+  const hasPermission =
+    profile?.role === 'manager' || profile?.role === 'admin' || profile?.role === 'superadmin';
 
   useEffect(() => {
-    if (profile) {
+    if (hasPermission) {
       fetchAthletes();
     }
-  }, [profile, fetchAthletes]);
+  }, [hasPermission, currentPage]);
 
   // Filter athletes based on search term and role filter
   useEffect(() => {
@@ -81,8 +59,61 @@ export default function AthleteManagementPage() {
       );
     }
 
-    // setFilteredAthletes(filtered); // This line was removed as per the new_code
+    setFilteredAthletes(filtered);
   }, [athletes, searchTerm, roleFilter]);
+
+  const fetchAthletes = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: '20',
+      });
+
+      const response = await fetch(`/api/profiles/list?${params}`, {
+        cache: 'no-store',
+        redirect: 'follow',
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        const mapped: AthleteData[] = (data.profiles || []).map((p: any) => ({
+          id: p.id,
+          email: p.email,
+          name: p.name,
+          role: p.role,
+          organization: p.organization || '',
+          phone: p.phone || '',
+          address: p.address || '',
+          city: p.city || '',
+          state: p.state || '',
+          postal_code: p.postalCode || '',
+          country: p.country || '',
+          created_at: p.createdAt,
+          updated_at: p.updatedAt,
+          totalOrders: 0,
+          equipmentCount: 0,
+          lastOrderDate: null,
+        }));
+
+        setAthletes(mapped);
+        setTotalPages(data.pagination.totalPages);
+        setTotalAthletes(data.pagination.total);
+      } else {
+        console.error('Failed to fetch athletes:', data.error);
+        setAthletes([]);
+        setTotalPages(1);
+        setTotalAthletes(0);
+      }
+    } catch (error) {
+      console.error('Error fetching athletes:', error);
+      setAthletes([]);
+      setTotalPages(1);
+      setTotalAthletes(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage]);
 
   // Role colors handled via badge tokens in UI
 
@@ -124,10 +155,10 @@ export default function AthleteManagementPage() {
           `"${athlete.state || ''}"`,
           `"${athlete.postal_code || ''}"`,
           `"${athlete.country || ''}"`,
-          // athlete.totalOrders || 0, // These fields are not in Profile interface
-          // athlete.equipmentCount || 0,
-          // `"${athlete.lastOrderDate ? new Date(athlete.lastOrderDate).toLocaleDateString() : ''}"`,
-          // `"${athlete.created_at ? new Date(athlete.created_at).toLocaleDateString() : ''}"`,
+          athlete.totalOrders || 0,
+          athlete.equipmentCount || 0,
+          `"${athlete.lastOrderDate ? new Date(athlete.lastOrderDate).toLocaleDateString() : ''}"`,
+          `"${athlete.created_at ? new Date(athlete.created_at).toLocaleDateString() : ''}"`,
         ].join(','),
       ),
     ].join('\n');
@@ -158,7 +189,7 @@ export default function AthleteManagementPage() {
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requiredRole={['admin', 'manager', 'superadmin']}>
       <div className="p-6">
         {/* Page Header */}
         <div className="mb-8">
@@ -507,7 +538,7 @@ export default function AthleteManagementPage() {
           {/* Search Results Summary */}
           <div className="flex items-center justify-between text-sm text-[hsl(var(--muted))]">
             <div>
-              Showing {athletes.length} of {totalAthletes} athletes
+              Showing {filteredAthletes.length} of {totalAthletes} athletes
               {searchTerm && (
                 <span className="ml-2 text-[hsl(var(--foreground))]">for "{searchTerm}"</span>
               )}
@@ -563,7 +594,7 @@ export default function AthleteManagementPage() {
                 Loading athletes...
               </div>
             </div>
-          ) : athletes.length === 0 ? (
+          ) : filteredAthletes.length === 0 ? (
             <div className="text-center py-12">
               <svg
                 className="mx-auto h-12 w-12 text-[hsl(var(--muted))]"
@@ -602,7 +633,7 @@ export default function AthleteManagementPage() {
             <>
               {viewMode === 'cards' ? (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {athletes.map((athlete) => (
+                  {filteredAthletes.map((athlete) => (
                     <div
                       key={athlete.id}
                       className="p-6 rounded-lg border hover:shadow-md transition-shadow"
@@ -753,7 +784,7 @@ export default function AthleteManagementPage() {
                         borderColor: 'hsl(var(--border))',
                       }}
                     >
-                      {athletes.map((athlete) => (
+                      {filteredAthletes.map((athlete) => (
                         <tr key={athlete.id} className="hover:opacity-95">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
@@ -822,8 +853,8 @@ export default function AthleteManagementPage() {
                             <div className="flex space-x-2">
                               <button
                                 onClick={() => {
-                                  // setSelectedAthlete(athlete);
-                                  // setShowProfileModal(true);
+                                  setSelectedAthlete(athlete);
+                                  setShowProfileModal(true);
                                 }}
                                 className="hover:opacity-80"
                                 style={{ color: 'hsl(var(--info))' }}

@@ -119,7 +119,7 @@ export default function ProductManagementPage() {
 
   // Initial load when profile is available
   useEffect(() => {
-    if (profile?.role === 'admin') {
+    if (profile?.role === 'admin' || profile?.role === 'superadmin') {
       setPage(1);
       fetchProducts(1, true);
     }
@@ -127,7 +127,7 @@ export default function ProductManagementPage() {
 
   // Debounced search and filter changes
   useEffect(() => {
-    if (profile?.role !== 'admin') return;
+    if (profile?.role !== 'admin' && profile?.role !== 'superadmin') return;
     
     const timeoutId = setTimeout(() => {
       setPage(1);
@@ -135,7 +135,7 @@ export default function ProductManagementPage() {
     }, 500); // Increased debounce time to 500ms
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, categoryFilter, page]); // Removed profile and fetchProducts from deps
+  }, [searchTerm, categoryFilter]); // Removed profile and fetchProducts from deps
 
   useEffect(() => {
     if (!loadMoreRef.current) return;
@@ -266,7 +266,20 @@ export default function ProductManagementPage() {
     }
   };
 
-  if (!profile || profile.role !== 'admin') {
+  const getCategoryColor = (category: string) => {
+    const colors: Record<string, string> = {
+      accessories: 'bg-gray-100 text-gray-800',
+      bindings: 'bg-blue-100 text-blue-800',
+      boots: 'bg-green-100 text-green-800',
+      goggles: 'bg-yellow-100 text-yellow-800',
+      helmet: 'bg-red-100 text-red-800',
+      ski: 'bg-purple-100 text-purple-800',
+      snowboard: 'bg-indigo-100 text-indigo-800',
+    };
+    return colors[category] || 'bg-gray-100 text-gray-800';
+  };
+
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin')) {
     return (
       <div className="p-6">
         <div className="alert alert-error text-center">

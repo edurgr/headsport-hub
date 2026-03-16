@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { supabaseClient } from '@/lib/supabase-client';
 
 export default function OnboardingPage() {
   const { user, profile, updateProfile, loading } = useAuth();
@@ -69,6 +70,30 @@ export default function OnboardingPage() {
     setSubmitting(true);
     try {
       await updateProfile(formData);
+      // After saving profile, create/set preferred shipping address automatically
+      try {
+        const hasAnyAddressField =
+          !!(formData.address || formData.city || formData.state || formData.postal_code || formData.country || formData.phone);
+        if (user && hasAnyAddressField) {
+          // Unset current preferred addresses
+          await supabaseClient.from('addresses').update({ is_preferred: false }).eq('user_id', user.id);
+          // Insert a new preferred address using onboarding data
+          await supabaseClient.from('addresses').insert({
+            user_id: user.id,
+            name: 'Primary',
+            address_line1: formData.address || '',
+            address_line2: '',
+            city: formData.city || '',
+            state: formData.state || '',
+            postal_code: formData.postal_code || '',
+            country: formData.country || 'US',
+            phone: formData.phone || null,
+            is_preferred: true,
+          });
+        }
+      } catch (addrErr) {
+        console.warn('Onboarding: failed to set preferred address', addrErr);
+      }
       router.replace('/');
     } catch (error) {
       console.error('Onboarding update failed', error);

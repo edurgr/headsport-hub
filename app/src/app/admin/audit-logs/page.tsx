@@ -54,7 +54,7 @@ export default function AuditLogsPage() {
       } else {
         setError(data.error || 'Failed to fetch audit logs');
       }
-    } catch {
+    } catch (_error) {
       setError('Error fetching audit logs');
     } finally {
       setLoading(false);
@@ -62,7 +62,7 @@ export default function AuditLogsPage() {
   }, [authenticatedFetch, currentPage, filters]);
 
   useEffect(() => {
-    if (profile?.role === 'admin') {
+    if (profile?.role === 'admin' || profile?.role === 'superadmin') {
       fetchLogs();
     }
   }, [profile, fetchLogs]);
@@ -83,7 +83,7 @@ export default function AuditLogsPage() {
     setCurrentPage(1);
   };
 
-  if (!profile || profile.role !== 'admin') {
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin')) {
     return <div>Access denied</div>;
   }
 

@@ -1,6 +1,8 @@
+export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { sendInvitationEmail } from '@/lib/email';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { sendResendInvitationEmail } from '@/lib/resend-email';
 import { supabaseServer } from '@/lib/supabase-server';
 
 export async function GET(req: Request) {
@@ -48,18 +50,43 @@ export async function POST(req: NextRequest) {
   }
   const url = `${appBase}/accept-invite?token=${token}`;
 
-  // Send invitation email using the new email system
-  const emailSent = await sendInvitationEmail(email, rolePreset, url, message);
-
-  if (!emailSent) {
-    // If email fails, we should probably delete the invite or mark it as failed
-    console.warn('Failed to send invitation email for:', email);
-    // For now, we'll continue but log the warning
+  // Generate Supabase invite action link and send via Resend
+  const admin = getSupabaseAdmin();
+  if (!admin) {
+    return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
+  }
+  const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+    type: 'invite',
+    email,
+    options: { redirectTo: url },
+  });
+  const actionLink: string | null = (linkData as any)?.properties?.action_link || null;
+  if (linkError || !actionLink) {
+    return NextResponse.json(
+      { ok: false, message: linkError?.message || 'Could not generate invite link', emailSent: false },
+      { status: 500 },
+    );
   }
 
-  return NextResponse.json({
-    ok: true,
-    message: 'Invitation created successfully',
-    emailSent,
-  });
+  const hasResendKey = !!(process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_RESEND_API_KEY);
+  if (hasResendKey) {
+    const resend = await sendResendInvitationEmail({ to: email, inviteUrl: actionLink, role: rolePreset, personalMessage: message });
+    return NextResponse.json({
+      ok: true,
+      message: resend.sent ? 'Invitation email sent via Resend' : 'Invitation created (email not sent)',
+      emailSent: resend.sent,
+      actionLink,
+      ...(resend.id ? { providerId: resend.id } : {}),
+      ...(resend.error ? { providerNote: resend.error } : {}),
+    });
+  }
+
+  try {
+    const adminMailer = await getSupabaseAdmin();
+    const { error: inviteErr } = await adminMailer!.auth.admin.inviteUserByEmail(email, { redirectTo: url } as any);
+    const sent = !inviteErr;
+    return NextResponse.json({ ok: true, message: sent ? 'Invitation email sent via Supabase' : 'Invitation created', emailSent: sent, actionLink, ...(inviteErr ? { supabaseError: inviteErr.message || String(inviteErr) } : {}) });
+  } catch (e) {
+    return NextResponse.json({ ok: true, message: 'Invitation created (manual share)', emailSent: false, actionLink, providerNote: e instanceof Error ? e.message : 'Supabase mailer failed' });
+  }
 }

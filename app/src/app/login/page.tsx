@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -16,7 +16,7 @@ export default function LoginPage() {
 
   const { signInWithEmail, signUpWithEmail, user, profile } = useAuth();
   const router = useRouter();
-  // const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
 
   // Redirect if already authenticated
   useEffect(() => {

@@ -51,13 +51,10 @@ export default function AuthCallbackPage() {
           setStatus('error');
           setMessage('No HEAD Hub session found. Please try signing in again.');
         }
-      } catch {
-        console.error('Error in callback handler:');
-        setMessage(
-          `An unexpected error occurred. Please try again.`,
-        );
-      } finally {
+      } catch (error) {
+        console.error('Unexpected error in auth callback:', error);
         setStatus('error');
+        setMessage('An unexpected error occurred. Please try again.');
       }
     };
 

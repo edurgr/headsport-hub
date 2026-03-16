@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  ChangeEvent,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
+import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -42,7 +37,7 @@ export default function ContentPage() {
   const [editTags, setEditTags] = useState<string>('');
   const [editDescription, setEditDescription] = useState<string>('');
   const [thumbFile, setThumbFile] = useState<File | null>(null);
-  const [role, setRole] = useState<'athlete' | 'manager' | 'admin'>('athlete');
+  const [role, setRole] = useState<'athlete' | 'manager' | 'admin' | 'superadmin'>('athlete');
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [deleting, setDeleting] = useState(false);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
@@ -103,38 +98,23 @@ export default function ContentPage() {
     return sorted;
   };
 
-  const toggleMasterForDisplayed = useCallback(() => {
-    const displayedIds = new Set(
-      (document.querySelectorAll('[data-file-id]') as NodeListOf<HTMLElement>).forEach(
-        (el) => el.dataset.fileId,
-      ),
-    );
-    const allSelected = Array.from(displayedIds).every((id) => selected.has(id));
-    if (allSelected) {
-      setSelected((prev) => {
-        const next = new Set(prev);
-        displayedIds.forEach((id) => next.delete(id!));
-        return next;
-      });
-    } else {
-      setSelected((prev) => {
-        const next = new Set(prev);
-        displayedIds.forEach((id) => next.add(id!));
-        return next;
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'a' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        toggleMasterForDisplayed();
+  const toggleMasterForDisplayed = (checked: boolean) => {
+    const displayed = getDisplayedItems();
+    const displayedIds = new Set(displayed.map((it) => it.id));
+    setSelected((prev) => {
+      const next: Record<string, boolean> = { ...prev };
+      if (checked) {
+        displayed.forEach((it) => {
+          next[it.id] = true;
+        });
+      } else {
+        displayedIds.forEach((id) => {
+          if (id in next) delete next[id];
+        });
       }
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [toggleMasterForDisplayed]);
+      return next;
+    });
+  };
 
   const selectAllForAuthor = (authorId: string) => {
     const list = items.filter((it) => it.author_id === authorId);
@@ -167,7 +147,7 @@ export default function ContentPage() {
         addToast('Selection cleared', 'info');
         return;
       }
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedCount > 0 && (role === 'admin' || role === 'manager')) {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedCount > 0 && (role === 'admin' || role === 'manager' || role === 'superadmin')) {
         e.preventDefault();
         setShowDeleteSelectedModal(true);
       }
@@ -212,7 +192,7 @@ export default function ContentPage() {
         console.log('Session token:', token ? 'present' : 'missing');
 
         // Fetch user role
-        let role: 'athlete' | 'manager' | 'admin' = 'athlete';
+        let role: 'athlete' | 'manager' | 'admin' | 'superadmin' = 'athlete';
         if (user) {
           const { data: prof } = await supabaseClient
             .from('profiles')
@@ -286,7 +266,7 @@ export default function ContentPage() {
           setItems(itemsLocal);
           console.log('Items set (client athlete):', itemsLocal.length);
         } else {
-          // Manager/Admin: use API (server signs URLs with admin client)
+          // Manager/Admin/Superadmin: use API (server signs URLs with admin client)
           const res = await fetch('/api/content/gallery', {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
             cache: 'no-store',
@@ -642,7 +622,7 @@ export default function ContentPage() {
             )}
 
             {/* Delete controls for admin and manager (bulk delete selected) */}
-            {(role === 'admin' || role === 'manager') && (
+            {(role === 'admin' || role === 'manager' || role === 'superadmin') && (
               <div className="flex items-center gap-2">
                 {Object.values(selected).some(Boolean) && (
                   <button
@@ -1398,7 +1378,7 @@ export default function ContentPage() {
             >
               Download
             </button>
-            {(role === 'admin' || role === 'manager') && (
+            {(role === 'admin' || role === 'manager' || role === 'superadmin') && (
               <button
                 onClick={() => setShowDeleteSelectedModal(true)}
                 className="px-2 py-1 rounded text-sm text-white"
@@ -1411,7 +1391,7 @@ export default function ContentPage() {
         )}
 
         {/* Confirm delete selected modal */}
-        {showDeleteSelectedModal && (role === 'admin' || role === 'manager') && (
+        {showDeleteSelectedModal && (role === 'admin' || role === 'manager' || role === 'superadmin') && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[70]">
             <div
               className="w-full max-w-md rounded-lg shadow-lg p-6"
@@ -1485,7 +1465,7 @@ export default function ContentPage() {
         ))}
 
         {/* Delete ALL confirmation modal (admin-only) */}
-        {showDeleteAllModal && role === 'admin' && (
+        {showDeleteAllModal && (role === 'admin' || role === 'superadmin') && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[70]">
             <div
               className="w-full max-w-md rounded-lg shadow-lg p-6"

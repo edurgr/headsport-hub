@@ -26,6 +26,7 @@ import {
   YAxis,
 } from 'recharts';
 
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ContentStats {
@@ -104,6 +105,8 @@ export default function AnalyticsPage() {
   const [loadingStats, setLoadingStats] = useState(true);
   const [athleteSearch, setAthleteSearch] = useState('');
   const [visibleAthletes, setVisibleAthletes] = useState(12);
+  const canViewAnalytics =
+    !!profile && ['admin', 'manager', 'superadmin'].includes(profile.role);
 
   const fetchAllStats = useCallback(async () => {
     setLoadingStats(true);
@@ -124,10 +127,10 @@ export default function AnalyticsPage() {
   }, []);
 
   useEffect(() => {
-    if (hydrated && user) {
+    if (hydrated && user && canViewAnalytics) {
       fetchAllStats();
     }
-  }, [user, hydrated, fetchAllStats]);
+  }, [user, hydrated, canViewAnalytics, fetchAllStats]);
 
   const fetchGlobalContentStats = async () => {
     try {
@@ -222,17 +225,6 @@ export default function AnalyticsPage() {
     );
   }
 
-  if (!user || (profile && !['admin', 'manager'].includes(profile.role))) {
-    return (
-      <div className="min-h-screen bg-[hsl(var(--background))] flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-[hsl(var(--foreground))] mb-4">Access Denied</h1>
-          <p className="text-[hsl(var(--muted))]">You don't have permission to access this page.</p>
-        </div>
-      </div>
-    );
-  }
-
   const contentChartData = [
     { name: 'Photos', value: globalContentStats?.photos || 0, color: CHART_COLORS[0] },
     { name: 'Videos', value: globalContentStats?.videos || 0, color: CHART_COLORS[1] },
@@ -243,6 +235,13 @@ export default function AnalyticsPage() {
     { name: 'Approved', value: globalOrderStats?.approved_orders || 0, color: CHART_COLORS[1] },
     { name: 'Rejected', value: globalOrderStats?.rejected_orders || 0, color: CHART_COLORS[2] },
   ];
+
+  const athleteContentChartData = athleteContentStats.map((athlete) => ({
+    name: athlete.athlete_name,
+    photos: athlete.photos,
+    videos: athlete.videos,
+    total: athlete.total_content,
+  }));
 
   const athleteOrderChartData = athleteOrderStats.map((athlete) => ({
     name: athlete.athlete_name,
@@ -278,8 +277,9 @@ export default function AnalyticsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--background))]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ProtectedRoute requiredRole={['admin', 'manager', 'superadmin']}>
+      <div className="min-h-screen bg-[hsl(var(--background))]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-[hsl(var(--foreground))]">System Analytics</h1>
           <p className="mt-2 text-[hsl(var(--muted))]">
@@ -1211,7 +1211,8 @@ export default function AnalyticsPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

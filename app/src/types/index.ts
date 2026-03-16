@@ -1,4 +1,4 @@
-export type UserRole = 'athlete' | 'manager' | 'admin';
+export type UserRole = 'athlete' | 'manager' | 'admin' | 'superadmin';
 export type ProductCategory =
   | 'accessories'
   | 'bindings'
@@ -19,7 +19,7 @@ export interface Profile {
   id: string;
   email: string;
   name?: string;
-  role: 'admin' | 'manager' | 'athlete';
+  role: 'admin' | 'manager' | 'athlete' | 'superadmin';
   organization?: string;
   phone?: string;
   address?: string;

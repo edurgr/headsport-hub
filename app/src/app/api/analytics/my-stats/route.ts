@@ -94,15 +94,10 @@ export async function GET(req: Request) {
     }
 
     // Get content stats for this athlete
-    const { data: sessions, error: _error } = await supabaseAdminClient
+    const { data: sessions } = await supabaseAdminClient
       .from('upload_sessions')
       .select('id')
       .eq('user_id', targetAthleteId);
-
-    if (_error) {
-      console.error('Error fetching content stats:', _error);
-      return NextResponse.json({ error: 'Failed to fetch content stats' }, { status: 500 });
-    }
 
     const sessionIds = (sessions || []).map((s) => s.id);
 
@@ -138,15 +133,10 @@ export async function GET(req: Request) {
     }
 
     // Get order stats for this athlete
-    const { data: orders, error: __error } = await supabaseAdminClient
+    const { data: orders } = await supabaseAdminClient
       .from('orders')
       .select('id, status, created_at')
       .eq('athlete_email', athleteProfile.email);
-
-    if (__error) {
-      console.error('Error fetching order stats:', __error);
-      return NextResponse.json({ error: 'Failed to fetch order stats' }, { status: 500 });
-    }
 
     const orderStats = {
       total_orders: orders?.length || 0,

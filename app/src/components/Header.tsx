@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import NotificationCenter from './NotificationCenter';
 
 export default function Header() {
-  const { user } = useAuth();
+  const { user, signOut, forceSignOut } = useAuth();
   const brandName = process.env.NEXT_PUBLIC_BRAND_NAME || 'HEAD Hub';
   const logoPathEnv = process.env.NEXT_PUBLIC_LOGO_PATH || '/head-logo.svg';
   const logoSrc = logoPathEnv.endsWith('.html') ? '/head-logo.svg' : logoPathEnv;
@@ -31,8 +31,21 @@ export default function Header() {
         </div>
         <div className="flex items-center gap-2">
           <NotificationCenter />
-          <button className="px-3 h-9 inline-flex items-center rounded-md bg-[var(--foreground)] text-white text-sm hover:opacity-90 transition-colors">
-            Quick Action
+          <button
+            onClick={signOut}
+            className="px-3 h-9 inline-flex items-center rounded-md bg-[var(--foreground)] text-white text-sm hover:opacity-90 transition-colors"
+            title="Sign Out"
+            aria-label="Sign Out"
+          >
+            Sign Out
+          </button>
+          <button
+            onClick={forceSignOut}
+            className="px-3 h-9 inline-flex items-center rounded-md bg-red-600 text-white text-sm hover:opacity-90 transition-colors"
+            title="Force Sign Out"
+            aria-label="Force Sign Out"
+          >
+            Force
           </button>
         </div>
       </div>

@@ -9,6 +9,14 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseServer } from '@/lib/supabase-server';
 
+interface CreateProfileRequest {
+  email: string;
+  name: string;
+  role: 'athlete' | 'manager' | 'admin';
+  organization?: string;
+  // Additional fields removed to match current DB schema
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();

@@ -1,8 +1,8 @@
-# HEAD Hub - Athlete & Equipment Management Platform
+# HEAD Sport Hub - Athlete & Equipment Management Platform
 
 ![HEAD Logo](app/public/head-logo.svg)
 
-**HEAD Hub** is a comprehensive, role-based web application designed to streamline equipment orders, content management, and team coordination for HEAD's athletes, managers, and administrators. Built with a modern, robust technology stack, it provides a centralized platform for all operational needs.
+**HEAD Sport Hub** is a comprehensive, role-based web application designed to streamline equipment orders, content management, and team coordination for HEAD's athletes, managers, and administrators. Built with a modern, robust technology stack, it provides a centralized platform for all operational needs.
 
 ---
 
@@ -39,7 +39,7 @@
     -   **Database:** PostgreSQL
     -   **Authentication:** Supabase Auth
     -   **Storage:** Supabase Storage for file uploads
--   **Email Service:** [SendGrid](https://sendgrid.com/) for transactional emails (invitations, password resets).
+-   **Email (Auth):** Supabase built-in emails for invitations and recovery.
 -   **Deployment Target:** [Cloudflare Pages](https://pages.cloudflare.com/)
 
 ---
@@ -53,7 +53,7 @@ Follow these instructions to get the project running locally for development and
 - [Node.js](https://nodejs.org/en/) (v18.x or later)
 - [npm](https://www.npmjs.com/) (v9.x or later)
 - A [Supabase](https://supabase.io/) account to create a project.
-- A [SendGrid](https://sendgrid.com/) account for sending emails.
+ 
 
 ### 1. Clone the Repository
 
@@ -79,7 +79,7 @@ The application is configured using environment variables.
    - `NEXT_PUBLIC_SUPABASE_URL`: Found in your Supabase project's *Settings > API*.
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: The `anon` `public` key from your Supabase project's API settings.
    - `SUPABASE_SERVICE_ROLE_KEY`: The `service_role` `secret` key from your Supabase project's API settings.
-   - `SENDGRID_API_KEY`: Your API key from SendGrid.
+   
 
 ### 3. Install Dependencies
 
@@ -172,11 +172,10 @@ graph TD
 
     subgraph "Backend Services"
         C[Supabase]
-        D[SendGrid]
     end
 
     B -- Interacts with --> C
-    B -- Sends Emails via --> D
+    
 
     subgraph "Supabase Services"
         C_Auth[Authentication]
@@ -193,9 +192,9 @@ graph TD
 ```
 
 1.  **Client-Side (Browser):** The user interacts with the React application built with Next.js. The client-side code communicates directly with Supabase for authentication and real-time data fetching.
-2.  **Next.js Application:** Serves the static assets and handles server-side logic via API Routes. These API routes perform secure operations, such as interacting with the Supabase database with admin privileges or sending emails via SendGrid.
+2.  **Next.js Application:** Serves the static assets and handles server-side logic via API Routes. These API routes perform secure operations, such as interacting with the Supabase database with admin privileges and sending emails via Resend.
 3.  **Supabase:** Acts as the primary backend, providing authentication, a PostgreSQL database, and file storage.
-4.  **SendGrid:** Integrated via API routes to handle all transactional emails.
+4.  **Supabase Emails:** Supabase handles auth emails (invites, recovery) out of the box.
 
 ---
 
@@ -406,10 +405,13 @@ Security / NextAuth (if applicable):
 - `NEXTAUTH_SECRET`
 - `NEXTAUTH_URL`
 
-Email / SendGrid:
-- `SENDGRID_API_KEY`
-- `SENDGRID_FROM_EMAIL`
-- `FROM_NAME`
+Auth Emails:
+  - Supabase sends recovery emails by default.
+  - Invitations are sent via Resend using the Supabase invite action link.
+
+Environment (Email):
+- `RESEND_API_KEY` (required for invitations)
+- `RESEND_FROM_EMAIL` (optional; falls back to `FROM_EMAIL`)
 
 Other:
 - `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX_REQUESTS`

@@ -7,13 +7,13 @@ import Image from 'next/image';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabaseClient } from '@/lib/supabase-client';
-import { Profile } from '@/types';
+import { Profile, Invitation } from '@/types';
 
 // Unified management hub: Profiles (admins/managers), Invitations (admins), Admin creation (admins)
 
 export default function ProfileManagementPage() {
-  const { profile, signUpWithEmail, createInvitation } = useAuth();
-  const [activeTab, setActiveTab] = useState<'profiles' | 'admins'>('profiles');
+  const { profile, createInvitation, getInvitations, deleteInvitation, signUpWithEmail } = useAuth();
+  const [activeTab, setActiveTab] = useState<'profiles' | 'invitations' | 'create-admin'>('profiles');
 
   // Profiles state
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -31,6 +31,7 @@ export default function ProfileManagementPage() {
     email: '',
     phone: '',
     organization: '',
+    role: 'athlete',
     // Performance metrics
     expectedContentUploads: '',
     costPerAthlete: '',
@@ -44,12 +45,7 @@ export default function ProfileManagementPage() {
   const [editSuccess, setEditSuccess] = useState<string | null>(null);
 
   // Admin creation state (admins only)
-  const [adminEmail, setAdminEmail] = useState('');
-  const [adminPassword, setAdminPassword] = useState('');
-  const [adminName, setAdminName] = useState('');
-  const [adminLoading, setAdminLoading] = useState(false);
-  const [adminError, setAdminError] = useState<string | null>(null);
-  const [adminInfo, setAdminInfo] = useState<string | null>(null);
+  // Admin creation removed: invitations are the single flow
 
   // Invitation state (admins only)
   const [invEmail, setInvEmail] = useState('');
@@ -59,16 +55,39 @@ export default function ProfileManagementPage() {
   const [invError, setInvError] = useState<string | null>(null);
   const [invSuccess, setInvSuccess] = useState<string | null>(null);
 
+  // Admin: Invitations list state
+  const [adminInvitations, setAdminInvitations] = useState<Invitation[]>([]);
+  const [adminInvLoading, setAdminInvLoading] = useState(false);
+  const [adminInvError, setAdminInvError] = useState<string | null>(null);
+  const [adminInvInfo, setAdminInvInfo] = useState<string | null>(null);
+
   // Delete user state
   const [deleteConfirm, setDeleteConfirm] = useState<Profile | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (profile) {
+    if ((['admin', 'manager', 'superadmin'] as any).includes(profile?.role)) {
       fetchProfiles();
     }
-  }, [profile, fetchProfiles]);
+  }, [profile]);
+
+  // Load invitations when Invitations tab is active
+  useEffect(() => {
+    if ((['admin', 'superadmin'] as any).includes(profile?.role) && activeTab === 'invitations') {
+      (async () => {
+        try {
+          setAdminInvLoading(true);
+          const invs = await getInvitations();
+          setAdminInvitations(invs);
+        } catch (e: any) {
+          setAdminInvError(e?.message || 'Failed to fetch invitations');
+        } finally {
+          setAdminInvLoading(false);
+        }
+      })();
+    }
+  }, [profile, activeTab, getInvitations]);
 
   // Filter profiles based on search term and role filter
   useEffect(() => {
@@ -80,6 +99,7 @@ export default function ProfileManagementPage() {
       filtered = filtered.filter((p) => p.role === 'athlete' || p.id === profile.id);
     }
     // Admins can see all profiles, no additional filtering needed
+    // Superadmins can also see all profiles
 
     // Filter by role
     if (roleFilter !== 'all') {
@@ -224,7 +244,6 @@ export default function ProfileManagementPage() {
       const result = await response.json();
 
       if (response.ok) {
-        setAdminInfo(`User ${userProfile.email} deleted successfully`);
         setDeleteConfirm(null);
         fetchProfiles(); // Refresh the list
       } else {
@@ -238,32 +257,7 @@ export default function ProfileManagementPage() {
     }
   };
 
-  // Admin creation handler
-  const handleCreateAdmin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAdminError(null);
-    setAdminInfo(null);
-    setAdminLoading(true);
-    try {
-      const { requiresEmailConfirmation } = await signUpWithEmail(
-        adminEmail,
-        adminPassword,
-        adminName || undefined,
-      );
-      if (requiresEmailConfirmation) {
-        setAdminInfo('Check the email inbox to confirm the new administrator account.');
-      } else {
-        setAdminInfo('Administrator account created successfully.');
-      }
-      setAdminEmail('');
-      setAdminPassword('');
-      setAdminName('');
-    } catch (err: any) {
-      setAdminError(err?.message || 'Could not create administrator account.');
-    } finally {
-      setAdminLoading(false);
-    }
-  };
+  // Admin creation removed — only invitation sending remains
 
   // Profile editing handlers
   const openEditAthlete = (profileToEdit: Profile) => {
@@ -273,6 +267,7 @@ export default function ProfileManagementPage() {
       email: profileToEdit.email || '',
       phone: profileToEdit.phone || '',
       organization: profileToEdit.organization || '',
+      role: (profileToEdit as any).role || 'athlete',
       expectedContentUploads: (profileToEdit as any).expectedContentUploads || '',
       costPerAthlete: (profileToEdit as any).costPerAthlete || '',
       competitionPerformance: (profileToEdit as any).competitionPerformance || '',
@@ -291,6 +286,7 @@ export default function ProfileManagementPage() {
       email: '',
       phone: '',
       organization: '',
+      role: 'athlete',
       expectedContentUploads: '',
       costPerAthlete: '',
       competitionPerformance: '',
@@ -326,6 +322,7 @@ export default function ProfileManagementPage() {
           email: editForm.email,
           phone: editForm.phone,
           organization: editForm.organization,
+          role: editForm.role,
           // Performance metrics
           expectedContentUploads: editForm.expectedContentUploads,
           costPerAthlete: editForm.costPerAthlete,
@@ -363,7 +360,7 @@ export default function ProfileManagementPage() {
     }
   };
 
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'manager')) {
+  if (!profile || !(['admin', 'manager', 'superadmin'] as any).includes(profile.role)) {
     return (
       <ProtectedRoute requiredRole={['admin', 'manager']}>
         <div>Access Denied</div>
@@ -373,7 +370,7 @@ export default function ProfileManagementPage() {
 
   return (
     <ProtectedRoute requiredRole={['admin', 'manager']}>
-      <div className="p-6">
+      <div className="p-6 max-w-6xl mx-auto w-full overflow-x-hidden">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-[hsl(var(--foreground))] mb-2">
             Profile Management
@@ -395,12 +392,14 @@ export default function ProfileManagementPage() {
               Profiles
             </button>
             {profile?.role === 'admin' && (
-              <button
-                className={`px-1 pb-2 border-b-2 text-sm font-medium ${activeTab === 'admins' ? 'border-[hsl(var(--foreground))] text-[hsl(var(--foreground))]' : 'border-transparent text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]'}`}
-                onClick={() => setActiveTab('admins')}
-              >
-                Admins
-              </button>
+              <>
+                <button
+                  className={`px-1 pb-2 border-b-2 text-sm font-medium ${activeTab === 'invitations' ? 'border-[hsl(var(--foreground))] text-[hsl(var(--foreground))]' : 'border-transparent text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]'}`}
+                  onClick={() => setActiveTab('invitations')}
+                >
+                  Invitations
+                </button>
+              </>
             )}
           </nav>
         </div>
@@ -462,7 +461,7 @@ export default function ProfileManagementPage() {
                 >
                   <option value="all">All Roles</option>
                   <option value="athlete">Athletes</option>
-                  {profile?.role === 'admin' && (
+                  {(['admin','superadmin'] as any).includes(profile?.role) && (
                     <>
                       <option value="manager">Managers</option>
                       <option value="admin">Admins</option>
@@ -494,9 +493,9 @@ export default function ProfileManagementPage() {
                   </button>
                 )}
 
-                {profile?.role === 'admin' && (
+                {(['admin','superadmin'] as any).includes(profile?.role) && (
                   <button
-                    onClick={() => setActiveTab('admins')}
+                    onClick={() => setActiveTab('invitations')}
                     className="btn px-6 py-2 rounded-lg font-medium flex items-center"
                   >
                     <svg
@@ -512,7 +511,7 @@ export default function ProfileManagementPage() {
                         d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                       />
                     </svg>
-                    Invite User
+                    Go to Invitations
                   </button>
                 )}
                 {profile?.role === 'manager' && (
@@ -632,7 +631,7 @@ export default function ProfileManagementPage() {
                 filteredProfiles.map((p) => (
                   <div
                     key={p.id}
-                    className="bg-white p-6 rounded-lg shadow-sm border border-gray-200"
+                    className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 w-full max-w-full overflow-hidden"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
@@ -688,16 +687,17 @@ export default function ProfileManagementPage() {
                         >
                           {p.role}
                         </span>
-                        {(profile?.role === 'manager' && p.role === 'athlete') ||
-                          (profile?.role === 'admin' && p.role !== 'admin' && (
+                {(((profile?.role === 'manager' && p.role === 'athlete') ||
+                  (profile?.role === 'admin' && p.role !== 'admin') ||
+                  (profile?.role as any) === 'superadmin')) && (
                             <button
                               onClick={() => openEditAthlete(p)}
                               className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                             >
                               Edit
                             </button>
-                          ))}
-                        {profile?.role === 'admin' && p.role !== 'admin' && (
+                          )}
+                {(((profile?.role === 'admin' && p.role !== 'admin')) || (profile?.role as any) === 'superadmin') && (
                           <button
                             onClick={() => setDeleteConfirm(p)}
                             className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
@@ -710,7 +710,7 @@ export default function ProfileManagementPage() {
                     </div>
                     <div className="mt-4">
                       <h4 className="text-sm font-semibold text-gray-900 mb-2">Recent uploads</h4>
-                      <div className="grid grid-cols-6 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                         {(recentUploadsByUser[p.id] || []).slice(0, 6).map((it: any) => (
                           <a
                             key={it.id}
@@ -763,99 +763,18 @@ export default function ProfileManagementPage() {
           </>
         )}
 
-        {activeTab === 'admins' && profile?.role === 'admin' && (
-          <div className="max-w-xl space-y-8">
+        {activeTab === 'create-admin' && (['admin','superadmin'] as any).includes(profile?.role) && (
+          <div className="max-w-6xl mx-auto w-full space-y-8">
             <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Create Administrator Account
-              </h2>
-              <form onSubmit={handleCreateAdmin} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                  <input
-                    value={adminName}
-                    onChange={(e) => setAdminName(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Administrator name"
-                    type="text"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <input
-                    value={adminEmail}
-                    onChange={(e) => setAdminEmail(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="admin@example.com"
-                    type="email"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                  <input
-                    value={adminPassword}
-                    onChange={(e) => setAdminPassword(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="••••••••"
-                    type="password"
-                    minLength={6}
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Password must be at least 6 characters long
-                  </p>
-                </div>
-                {adminError && (
-                  <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
-                    {adminError}
-                  </div>
-                )}
-                {adminInfo && (
-                  <div className="text-sm text-green-700 bg-green-50 p-3 rounded-md border border-green-200">
-                    {adminInfo}
-                  </div>
-                )}
-                <button
-                  type="submit"
-                  disabled={adminLoading}
-                  className={`w-full py-2.5 rounded-md text-white font-medium ${adminLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
-                >
-                  {adminLoading
-                    ? 'Creating Administrator Account…'
-                    : 'Create Administrator Account'}
-                </button>
-              </form>
-              <div className="mt-6 p-3 bg-blue-50 rounded-md border border-blue-200">
-                <div className="text-sm text-blue-800">
-                  <div className="flex items-center mb-1">
-                    <svg
-                      className="w-4 h-4 mr-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <span className="font-medium">Administrator Registration</span>
-                  </div>
-                  <ul className="text-xs space-y-1 ml-6">
-                    <li>• Only existing administrators can create new admin accounts</li>
-                    <li>• New administrators will have full system access</li>
-                    <li>• Email confirmation is required after registration</li>
-                    <li>• For other users, use the invitation system</li>
-                  </ul>
-                </div>
-              </div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Administrator creation disabled</h2>
+              <p className="text-sm text-gray-600">Use Invitations to create any user role (Admin, Manager, Athlete).</p>
             </div>
+          </div>
+        )}
 
-            {/* Send Invitation (Managers/Athletes) */}
+        {activeTab === 'invitations' && (['admin','superadmin'] as any).includes(profile?.role) && (
+          <div className="max-w-6xl mx-auto w-full space-y-8">
+            {/* Send Invitation */}
             <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Send Invitation</h2>
               <form
@@ -865,7 +784,11 @@ export default function ProfileManagementPage() {
                   setInvSuccess(null);
                   try {
                     setInvLoading(true);
-                    await createInvitation(invEmail.trim(), invRole, invMessage.trim() || undefined);
+                    await createInvitation(
+                      invEmail.trim(),
+                      invRole,
+                      invMessage.trim() || undefined,
+                    );
                     setInvSuccess(`Invitation sent to ${invEmail} for role: ${invRole}`);
                     setInvEmail('');
                     setInvMessage('');
@@ -920,6 +843,7 @@ export default function ProfileManagementPage() {
                     {invSuccess}
                   </div>
                 )}
+                {/* No extra link block: previous behavior restored */}
                 <button
                   type="submit"
                   disabled={invLoading}
@@ -943,6 +867,136 @@ export default function ProfileManagementPage() {
                   </ul>
                 </div>
               </div>
+            </div>
+
+            {/* Invitations List (Admins) */}
+            <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-xl font-semibold text-gray-900">Invitations</h2>
+                <button
+                  onClick={async () => {
+                    try {
+                      setAdminInvLoading(true);
+                      const invs = await getInvitations();
+                      setAdminInvitations(invs);
+                    } catch (e: any) {
+                      setAdminInvError(e?.message || 'Failed to refresh invitations');
+                    } finally {
+                      setAdminInvLoading(false);
+                    }
+                  }}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  Refresh
+                </button>
+              </div>
+
+              {adminInvError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
+                  {adminInvError}
+                </div>
+              )}
+              {adminInvInfo && (
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-700">
+                  {adminInvInfo}
+                </div>
+              )}
+
+              {adminInvLoading ? (
+                <div className="p-6 text-center text-gray-600">Loading invitations…</div>
+              ) : adminInvitations.length === 0 ? (
+                <div className="p-6 text-center text-gray-500">No invitations yet</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expires</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {adminInvitations.map((inv) => (
+                        <tr key={inv.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{inv.email}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${inv.role === 'admin' ? 'bg-purple-100 text-purple-800 border-purple-200' : inv.role === 'manager' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-green-100 text-green-800 border-green-200'}`}>
+                              {inv.role.charAt(0).toUpperCase() + inv.role.slice(1)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {(() => {
+                              const expired = new Date(inv.expires_at) < new Date();
+                              const status = inv.status === 'pending' && expired ? 'expired' : inv.status;
+                              const color = status === 'accepted' ? 'bg-green-100 text-green-800 border-green-200' : status === 'expired' ? 'bg-red-100 text-red-800 border-red-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                              const text = status.charAt(0).toUpperCase() + status.slice(1);
+                              return (
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${color}`}>{text}</span>
+                              );
+                            })()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(inv.expires_at).toLocaleDateString()}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(inv.created_at).toLocaleDateString()}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              {inv.status === 'pending' && (
+                                <button
+                                  onClick={() => {
+                                    const link = `${window.location.origin}/accept-invite?token=${inv.token}`;
+                                    navigator.clipboard.writeText(link);
+                                    setAdminInvInfo('Invitation link copied to clipboard!');
+                                  }}
+                                  className="text-blue-600 hover:text-blue-900"
+                                  title="Copy invitation link"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                </button>
+                              )}
+                              {inv.status === 'expired' && (
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      await createInvitation(inv.email, inv.role);
+                                      setAdminInvInfo(`Invitation renewed for ${inv.email}`);
+                                      const invs = await getInvitations();
+                                      setAdminInvitations(invs);
+                                    } catch (e: any) {
+                                      setAdminInvError(e?.message || 'Failed to renew invitation');
+                                    }
+                                  }}
+                                  className="text-blue-600 hover:text-blue-900"
+                                  title="Renew expired invitation"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                              )}
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await deleteInvitation(inv.id);
+                                    setAdminInvInfo('Invitation deleted successfully');
+                                    const invs = await getInvitations();
+                                    setAdminInvitations(invs);
+                                  } catch (e: any) {
+                                    setAdminInvError(e?.message || 'Failed to delete invitation');
+                                  }
+                                }}
+                                className="text-red-600 hover:text-red-900"
+                                title="Delete invitation"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>) )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1019,6 +1073,21 @@ export default function ProfileManagementPage() {
                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
+                  {(['admin','superadmin'] as any).includes(profile?.role) && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                      <select
+                        value={editForm.role}
+                        onChange={(e) => setEditForm({ ...editForm, role: e.target.value as any })}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="athlete">Athlete</option>
+                        <option value="manager">Manager</option>
+                        <option value="admin">Admin</option>
+                        <option value="superadmin">Superadmin</option>
+                      </select>
+                    </div>
+                  )}
                   </div>
 
                   {/* Performance Metrics - Only for Athletes */}

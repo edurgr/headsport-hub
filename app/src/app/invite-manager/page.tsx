@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,36 +9,34 @@ import { Invitation } from '@/types';
 export default function InviteManagerPage() {
   const { profile, createInvitation, getInvitations, deleteInvitation } = useAuth();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [actionLink, setActionLink] = useState<string | null>(null);
 
   // Form state
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<'manager' | 'athlete'>('athlete');
+  const [role, setRole] = useState<'admin' | 'manager' | 'athlete'>('athlete');
   const [message, setMessage] = useState('');
 
-  const fetchInvitations = useCallback(async () => {
+  useEffect(() => {
+    if (profile?.role === 'admin' || profile?.role === 'manager') {
+      fetchInvitations();
+    }
+  }, [profile]);
+
+  const fetchInvitations = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       const data = await getInvitations();
       setInvitations(data);
     } catch (err: any) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An unexpected error occurred while fetching invitations.',
-      );
+      setError(err.message || 'Failed to fetch invitations');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, [getInvitations]);
-
-  useEffect(() => {
-    if (profile) {
-      fetchInvitations();
-    }
-  }, [profile, fetchInvitations]);
+  };
 
   const checkExistingInvitation = (email: string) => {
     const existing = invitations.find(
@@ -72,12 +70,22 @@ export default function InviteManagerPage() {
     }
 
     try {
+      setIsCreating(true);
       setError(null);
       setSuccess(null);
 
-      await createInvitation(email.trim(), role, message.trim() || undefined);
+      const res = await createInvitation(email.trim(), role, message.trim() || undefined);
 
-      setSuccess(`Invitation sent to ${email} for role: ${role}`);
+      if (res?.emailSent) {
+        setSuccess(`Invitation sent to ${email} for role: ${role}`);
+        setActionLink(null);
+      } else if (res?.actionLink) {
+        setSuccess(`Invitation created. Email not sent by provider. Share the link below manually.`);
+        setActionLink(res.actionLink);
+      } else {
+        setSuccess(`Invitation created for ${email}.`);
+        setActionLink(null);
+      }
       setEmail('');
       setMessage('');
 
@@ -98,6 +106,8 @@ export default function InviteManagerPage() {
       }
 
       setError(errorMessage);
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -146,6 +156,19 @@ export default function InviteManagerPage() {
     }
 
     return { text: 'Pending', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'accepted':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'expired':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
   };
 
   const getRoleColor = (role: string) => {
@@ -228,27 +251,31 @@ export default function InviteManagerPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                 <select
                   value={role}
-                  onChange={(e) => setRole(e.target.value as 'manager' | 'athlete')}
+                  onChange={(e) => setRole(e.target.value as 'admin' | 'manager' | 'athlete')}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   disabled={profile?.role === 'manager'}
                 >
                   <option value="athlete">Athlete</option>
                   {profile?.role === 'admin' && <option value="manager">Manager</option>}
+                  {profile?.role === 'admin' && <option value="admin">Admin</option>}
                 </select>
                 {profile?.role === 'manager' && (
                   <p className="text-xs text-gray-500 mt-1">Managers can only invite athletes</p>
                 )}
               </div>
 
-              <div className="flex items-end">
+              <div>
+                <label className="block text-sm font-medium text-transparent mb-1 select-none">
+                  Placeholder
+                </label>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={isCreating}
                   className={`w-full py-2 px-4 rounded-md text-white font-medium ${
-                    loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                    isCreating ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
                   }`}
                 >
-                  {loading ? 'Sending...' : 'Send Invitation'}
+                  {isCreating ? 'Sending...' : 'Send Invitation'}
                 </button>
               </div>
             </div>
@@ -321,6 +348,28 @@ export default function InviteManagerPage() {
               </svg>
               {success}
             </div>
+            {actionLink && (
+              <div className="mt-3 bg-white border border-green-200 rounded p-3">
+                <div className="text-xs text-gray-700 mb-2">Invitation Link (Supabase):</div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    className="flex-1 text-xs border border-gray-300 rounded px-2 py-1"
+                    readOnly
+                    value={actionLink}
+                    onFocus={(e) => e.currentTarget.select()}
+                  />
+                  <button
+                    type="button"
+                    className="text-xs px-3 py-1 bg-blue-600 text-white rounded"
+                    onClick={() => {
+                      navigator.clipboard.writeText(actionLink);
+                    }}
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -358,7 +407,7 @@ export default function InviteManagerPage() {
             </div>
           </div>
 
-          {loading ? (
+          {isLoading ? (
             <div className="p-6 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
               <p className="text-gray-600 mt-2">Loading invitations...</p>
@@ -484,28 +533,70 @@ export default function InviteManagerPage() {
                             </>
                           )}
                           {invitation.status === 'accepted' && (
-                            <span className="text-green-600 text-xs">✓ Accepted</span>
+                            <>
+                              <span className="text-green-600 text-xs">✓ Accepted</span>
+                              <button
+                                onClick={() => handleDeleteInvitation(invitation.id)}
+                                className="ml-2 text-red-600 hover:text-red-900"
+                                title="Delete invitation"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  />
+                                </svg>
+                              </button>
+                            </>
                           )}
                           {invitation.status === 'expired' && (
-                            <button
-                              onClick={() => handleRenewInvitation(invitation.id)}
-                              className="text-blue-600 hover:text-blue-900"
-                              title="Renew expired invitation"
-                            >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                            <>
+                              <button
+                                onClick={() => handleRenewInvitation(invitation.id)}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="Renew expired invitation"
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                            </button>
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteInvitation(invitation.id)}
+                                className="ml-2 text-red-600 hover:text-red-900"
+                                title="Delete invitation"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  />
+                                </svg>
+                              </button>
+                            </>
                           )}
                         </div>
                       </td>

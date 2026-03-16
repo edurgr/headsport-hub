@@ -424,7 +424,7 @@ export class ContentModerationService {
 
   // Get moderation history
   static async getModerationHistory(
-    _fileId?: string,
+    fileId?: string,
     _limit = 50,
     _offset = 0,
   ): Promise<{ history: ModerationHistory[]; total: number }> {

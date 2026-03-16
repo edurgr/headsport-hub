@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Product } from '@/types';
 
@@ -15,6 +15,7 @@ export default function ProductSearch({ onSelect, selectedProduct }: ProductSear
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -24,35 +25,6 @@ export default function ProductSearch({ onSelect, selectedProduct }: ProductSear
     fetchCategories();
   }, []);
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    try {
-      let url = '/api/equipment?';
-      if (selectedCategory !== 'all') {
-        url += `category=${selectedCategory}&`;
-      }
-      if (searchQuery.trim()) {
-        url += `q=${encodeURIComponent(searchQuery.trim())}&`;
-      }
-      url += 'limit=100';
-
-      const response = await fetch(url, { cache: 'no-store', credentials: 'include' });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-
-      if (data.items) {
-        setFilteredProducts(data.items);
-      }
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      setFilteredProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedCategory, searchQuery]);
-
   // Fetch products when category or search changes
   useEffect(() => {
     if (searchQuery.trim() || selectedCategory !== 'all') {
@@ -60,7 +32,7 @@ export default function ProductSearch({ onSelect, selectedProduct }: ProductSear
     } else {
       setFilteredProducts([]);
     }
-  }, [searchQuery, selectedCategory, fetchProducts]);
+  }, [searchQuery, selectedCategory]);
 
   const fetchCategories = async () => {
     try {
@@ -92,6 +64,35 @@ export default function ProductSearch({ onSelect, selectedProduct }: ProductSear
         'snowboards',
       ]);
       setSelectedCategory('skis');
+    }
+  };
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      let url = '/api/equipment?';
+      if (selectedCategory !== 'all') {
+        url += `category=${selectedCategory}&`;
+      }
+      if (searchQuery.trim()) {
+        url += `q=${encodeURIComponent(searchQuery.trim())}&`;
+      }
+      url += 'limit=100';
+
+      const response = await fetch(url, { cache: 'no-store', credentials: 'include' });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+
+      if (data.items) {
+        setFilteredProducts(data.items);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setFilteredProducts([]);
+    } finally {
+      setLoading(false);
     }
   };
 

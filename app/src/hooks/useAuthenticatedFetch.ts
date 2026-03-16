@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabaseClient } from '@/lib/supabase-client';
 
 export function useAuthenticatedFetch() {
-  const { session } = useAuth();
+  const { session, forceSignOut } = useAuth();
 
   const authenticatedFetch = useCallback(async (url: string, options: RequestInit = {}) => {
     // Obtener el token de la sesión actual
@@ -51,14 +51,26 @@ export function useAuthenticatedFetch() {
     console.log('📤 useAuthenticatedFetch: Realizando request con headers:', Object.keys(headers));
 
     // Realizar la request con autenticación
-    return fetch(url, {
+    const response = await fetch(url, {
       cache: 'no-store',
       redirect: 'follow',
       ...options,
       headers,
       credentials: 'include',
     });
-  }, [session]);
+
+    // Si el servidor indica no autorizado/permisos, forzar logout
+    if (response.status === 401 || response.status === 403) {
+      console.warn('🔒 useAuthenticatedFetch: respuesta no autorizada, forzando sign out');
+      try {
+        await forceSignOut();
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    return response;
+  }, [session?.access_token, forceSignOut]);
 
   return { authenticatedFetch };
 }

@@ -1,25 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@/contexts/AuthContext';
-// import { supabaseClient } from '@/lib/supabase-client';
+import { supabaseClient } from '@/lib/supabase-client';
 
 export default function Home() {
-  const { user, profile, session } = useAuth();
   const router = useRouter();
-  const [linkMsg, ] = useState('');
+  const { user, profile, loading, hydrated, signInWithEmail } = useAuth();
+  const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [linkMsg, setLinkMsg] = useState<string | null>(null);
+  const brandName = process.env.NEXT_PUBLIC_BRAND_NAME || 'HEAD Hub';
 
   useEffect(() => {
-    if (!session) {
-      router.push('/login');
-    }
-  }, [session, router, email]);
+    setMounted(true);
+  }, []);
 
   // If Supabase recovery link lands on root (/) with hash tokens, forward to /auth/callback
   useEffect(() => {

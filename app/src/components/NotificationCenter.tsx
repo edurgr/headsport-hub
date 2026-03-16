@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -23,7 +23,17 @@ export default function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const fetchNotifications = useCallback(async () => {
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+      // Poll for new notifications every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+    return undefined;
+  }, [user]);
+
+  const fetchNotifications = async () => {
     if (!user) return;
 
     try {
@@ -39,17 +49,7 @@ export default function NotificationCenter() {
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
-      fetchNotifications();
-      // Poll for new notifications every 30 seconds
-      const interval = setInterval(fetchNotifications, 30000);
-      return () => clearInterval(interval);
-    }
-    return undefined;
-  }, [user, fetchNotifications]);
+  };
 
   const markAsRead = async (notificationId: string) => {
     try {

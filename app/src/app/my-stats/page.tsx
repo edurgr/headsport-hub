@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 
 import { CheckCircle, Clock, FileImage, Package, ShoppingCart, Video, XCircle } from 'lucide-react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
@@ -39,9 +39,27 @@ export default function MyStatsPage() {
   const [stats, setStats] = useState<AthleteStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
 
-  const fetchMyStats = useCallback(async () => {
+  useEffect(() => {
+    if (!loading && user && profile) {
+      fetchMyStats();
+    }
+  }, [user, profile, loading]);
+
+  // Auto-refresh stats every 30 seconds
+  useEffect(() => {
+    if (!loading && user && profile) {
+      const interval = setInterval(() => {
+        fetchMyStats();
+      }, 30000); // 30 seconds
+
+      return () => clearInterval(interval);
+    }
+    return undefined;
+  }, [user, profile, loading]);
+
+  const fetchMyStats = async () => {
+    setLoadingStats(true);
     try {
-      setLoadingStats(true);
       // Pass the current user's ID as a parameter
       const athleteId = user?.id;
       const url = athleteId
@@ -54,37 +72,21 @@ export default function MyStatsPage() {
         redirect: 'follow',
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch stats');
+        console.error('API error status:', response.status);
+        return;
       }
       const data = await response.json();
       if (data.success) {
         setStats(data.data);
       } else {
-        throw new Error('Failed to fetch stats');
+        console.error('API error:', data.error);
       }
-    } catch (err) {
+    } catch (error) {
+      console.error('Error fetching my stats:', error);
     } finally {
       setLoadingStats(false);
     }
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (profile) {
-      fetchMyStats();
-    }
-  }, [profile, fetchMyStats]);
-
-  // Auto-refresh stats every 30 seconds
-  useEffect(() => {
-    if (!loading && user && profile) {
-      const interval = setInterval(() => {
-        fetchMyStats();
-      }, 30000); // 30 seconds
-
-      return () => clearInterval(interval);
-    }
-    return undefined;
-  }, [user, profile, loading, fetchMyStats]);
+  };
 
   if (loading || loadingStats) {
     return (

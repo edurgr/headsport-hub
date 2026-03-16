@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     clearCookie(res, 'sb:token');
     clearCookie(res, 'supabase-auth-token');
     return res;
-  } catch {
+  } catch (e) {
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 }

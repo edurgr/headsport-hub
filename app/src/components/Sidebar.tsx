@@ -7,9 +7,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { supabaseClient } from '@/lib/supabase-client';
 
 export default function Sidebar() {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, forceSignOut } = useAuth();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const pathname = usePathname();
   const [isCollapsed, setCollapsed] = useState(false);
   // Auto-collapse on small screens to save space
@@ -29,13 +31,35 @@ export default function Sidebar() {
   const logoPathEnv = process.env.NEXT_PUBLIC_LOGO_PATH || '/head-logo.svg';
   const logoSrc = logoPathEnv.endsWith('.html') ? '/head-logo.svg' : logoPathEnv;
 
+  useEffect(() => {
+    const loadAvatar = async () => {
+      try {
+        const bucket = (process.env.NEXT_PUBLIC_UPLOADS_BUCKET as string) || 'content';
+        const avatarPath = (profile as any)?.avatar_path || null;
+        if (!avatarPath) {
+          setAvatarUrl(null);
+          return;
+        }
+        const { data, error } = await supabaseClient.storage
+          .from(bucket)
+          .createSignedUrl(avatarPath, 60 * 60);
+        if (!error && data?.signedUrl) return setAvatarUrl(data.signedUrl);
+        const pub = supabaseClient.storage.from(bucket).getPublicUrl(avatarPath);
+        if (pub?.data?.publicUrl) setAvatarUrl(pub.data.publicUrl);
+      } catch {
+        setAvatarUrl(null);
+      }
+    };
+    loadAvatar();
+  }, [profile?.id, (profile as any)?.avatar_path]);
+
   const navigationItems = [
     // Put Admin Dashboard first and hide generic dashboard for admins
     {
       name: 'Admin Dashboard',
       href: '/admin/dashboard',
       icon: 'grid',
-      roles: ['admin'],
+      roles: ['admin', 'superadmin'],
     },
     {
       name: 'Dashboard',
@@ -47,13 +71,13 @@ export default function Sidebar() {
       name: 'Content',
       href: '/content',
       icon: 'box',
-      roles: ['athlete', 'manager', 'admin'],
+      roles: ['athlete', 'manager', 'admin', 'superadmin'],
     },
     {
       name: 'Orders',
       href: '/orders',
       icon: 'checkmark-box',
-      roles: ['athlete', 'manager', 'admin'],
+      roles: ['athlete', 'manager', 'admin', 'superadmin'],
     },
     {
       name: 'My Stats',
@@ -65,7 +89,7 @@ export default function Sidebar() {
       name: 'Analytics',
       href: '/analytics',
       icon: 'trending-up',
-      roles: ['admin', 'manager'],
+      roles: ['admin', 'manager', 'superadmin'],
     },
     // Pending Orders merged into Orders page for managers/admin
     // Removed explicit Profile link; avatar area links to /profile for a cleaner sidebar
@@ -75,19 +99,19 @@ export default function Sidebar() {
       name: 'Profile Management',
       href: '/profile-management',
       icon: 'users',
-      roles: ['admin', 'manager'],
+      roles: ['admin', 'manager', 'superadmin'],
     },
     {
       name: 'Product Management',
       href: '/admin/product-management',
       icon: 'box',
-      roles: ['admin'],
+      roles: ['admin', 'superadmin'],
     },
     {
       name: 'Content Moderation',
       href: '/admin/content-moderation',
       icon: 'shield-check',
-      roles: ['admin'],
+      roles: ['admin', 'superadmin'],
     },
     // Consolidated: invitations and admin creation live inside Profile Management
   ].filter((item) => !profile || item.roles.includes(profile.role));
@@ -246,6 +270,23 @@ export default function Sidebar() {
                   </svg>
                 </button>
               </div>
+              <div className="flex justify-center">
+                <button
+                  onClick={forceSignOut}
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-white/5 text-red-300"
+                  title="Force sign out"
+                  aria-label="Force sign out"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v8m4-4H8m12 0a8 8 0 11-16 0 8 8 0 0116 0z"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
@@ -255,19 +296,28 @@ export default function Sidebar() {
                   className="flex items-center space-x-3 flex-1 min-w-0 rounded-lg p-2 hover:bg-white/5"
                   style={{ border: '1px solid hsl(var(--sidebar-contrast) / 0.12)' }}
                 >
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: 'hsl(var(--sidebar-contrast) / 0.12)' }}
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
-                  </div>
+                  {avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={avatarUrl}
+                      alt="avatar"
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: 'hsl(var(--sidebar-contrast) / 0.12)' }}
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">
                       {profile.name || profile.email?.split('@')[0] || 'User'}
@@ -307,6 +357,23 @@ export default function Sidebar() {
                   />
                 </svg>
                 <span>Sign Out</span>
+              </button>
+              <button
+                onClick={forceSignOut}
+                className="w-full mt-2 px-3 py-2 text-sm rounded-lg flex items-center space-x-2 hover:bg-white/5 text-red-300"
+                style={{ border: '1px solid hsl(var(--sidebar-contrast) / 0.12)' }}
+                title="Force sign out"
+                aria-label="Force sign out"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v8m4-4H8m12 0a8 8 0 11-16 0 8 8 0 0116 0z"
+                  />
+                </svg>
+                <span>Force Sign Out</span>
               </button>
             </div>
           )}

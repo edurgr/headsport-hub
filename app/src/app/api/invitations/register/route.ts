@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { createClient } from '@supabase/supabase-js';
+import { sendResendEmail } from '@/lib/resend-email';
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, name, token } = await req.json();
+    let { email, password, name, token } = await req.json();
+    email = (email || '').trim().toLowerCase();
+    password = (password || '').trim();
+    name = (name || '').trim();
 
     if (!email || !password || !name || !token) {
       return NextResponse.json(
@@ -90,6 +94,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Determine invited role upfront (works for new/existing users)
+    const invitedRoleRaw = (invite.role_preset || invite.role || '').toLowerCase();
+    const invitedRole = ['admin', 'manager', 'athlete'].includes(invitedRoleRaw)
+      ? invitedRoleRaw
+      : 'athlete';
+
     // 2. Create user using admin API
     const { data: userData, error: userError } = await supabase.auth.admin.createUser({
       email,
@@ -113,29 +123,84 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // If user already exists, respond with specific code to redirect to Login
-      if (/already\s*registered|already\s*exists/i.test(userError.message || '')) {
-        // User already exists: send recovery link to set password and accept invitation
-        const { error: linkError } = await supabase.auth.admin.generateLink({
-          type: 'recovery',
-          email,
-          options: { redirectTo: `${baseUrl}/auth/callback?invite_token=${token}` },
-        });
-        if (linkError) {
-          return NextResponse.json(
-            {
-              success: false,
-              code: 'user_exists',
-              error: 'User exists. Use Forgot password to continue.',
-            },
-            { status: 409 },
-          );
+      // If user already exists (e.g., created at invite time), or profile already present,
+      // initiate recovery flow and return 200 so the UI continues
+      const looksLikeExisting =
+        /already\s*registered|already\s*exists|duplicate|conflict/i.test(
+          userError.message || '',
+        );
+      const existingProfile = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+      if (looksLikeExisting || existingProfile.data) {
+        // Try to set the submitted password directly for the existing user (no email flow)
+        let targetUserId: string | null = existingProfile.data?.id || null;
+        try {
+          if (!targetUserId) {
+            const list = await supabase.auth.admin.listUsers();
+            const found = (list?.data?.users || []).find((u: any) => (u.email || '').toLowerCase() === email);
+            targetUserId = found?.id || null;
+          }
+          if (targetUserId) {
+            await supabase.auth.admin.updateUserById(targetUserId, { password, email_confirm: true } as any);
+          }
+        } catch (_) {}
+
+        // Ensure profile has the invited role
+        try {
+          await supabase
+            .from('profiles')
+            .upsert(
+              {
+                id: targetUserId || undefined,
+                email,
+                name,
+                role: invitedRole,
+                updated_at: new Date().toISOString(),
+              } as any,
+              { onConflict: 'email' } as any,
+            );
+        } catch (_) {}
+        let actionLink: string | null = null;
+        try {
+          const { data: linkData } = await supabase.auth.admin.generateLink({
+            type: 'recovery',
+            email,
+            options: { redirectTo: `${baseUrl}/auth/callback?invite_token=${token}` },
+          });
+          actionLink = (linkData as any)?.properties?.action_link || null;
+        } catch (_) {
+          // ignore, we'll still return instructions
         }
+
+        // Try to send recovery email via Resend if configured
+        if (actionLink) {
+          const subject = 'HEAD Hub — Set your password';
+          const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #111827;">Finish setting up your HEAD Hub account</h2>
+              <p>Click the button below to set your password and complete your invitation.</p>
+              <p style="margin-top: 16px;">
+                <a href="${actionLink}" style="display:inline-block;background:#111827;color:#ffffff;padding:12px 18px;text-decoration:none;border-radius:8px;">Set my password</a>
+              </p>
+              <p style="font-size:12px;color:#6b7280;margin-top:16px;">If the button doesn't work, copy and paste this link in your browser:</p>
+              <p style="font-size:12px;word-break: break-all;"><a href="${actionLink}">${actionLink}</a></p>
+            </div>`;
+          try { await sendResendEmail({ to: email, subject, html }); } catch {}
+        }
+
+        const loginUrl = `${baseUrl}/login?email=${encodeURIComponent(email)}&invite_token=${encodeURIComponent(
+          token,
+        )}`;
         return NextResponse.json({
           success: true,
-          action: 'recovery_link_sent',
-          message: 'We sent you an email to set your password and finish accepting the invitation.',
-          // Nota: en dev podríamos incluir linkData.properties.action_link
+          action: 'password_set',
+          message:
+            'Account already existed. Password set (if possible) and role applied. You can sign in now.',
+          loginUrl,
+          ...(actionLink ? { actionLink } : {}),
         });
       }
 
@@ -145,19 +210,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Update/create profile (DB trigger already creates profile; here we update data and role)
+    // 3. Create or update profile with the role from invitation (force correct role)
+
     const { error: profileError } = await supabase
       .from('profiles')
-      .update({
-        email: email,
-        name: name,
-        role: invite.role_preset || invite.role,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', userData.user.id);
+      .upsert(
+        {
+          id: userData.user.id,
+          email: email,
+          name: name,
+          role: invitedRole,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' },
+      );
 
     if (profileError) {
-      console.error('❌ Error creating profile:', profileError);
+      console.error('❌ Error upserting profile:', profileError);
       // Don't fail if profile can't be created, user already exists
     }
 
@@ -185,7 +255,7 @@ export async function POST(req: NextRequest) {
       user: {
         id: userData.user.id,
         email: userData.user.email,
-        role: invite.role_preset || invite.role,
+        role: invitedRole,
       },
       requiresEmailConfirmation: false,
     });

@@ -130,17 +130,17 @@ export default function ContentModerationPage() {
 
   // Initial load when profile is available
   useEffect(() => {
-    if (profile?.role === 'admin') {
+    if (profile?.role === 'admin' || profile?.role === 'superadmin') {
       fetchData();
     }
-  }, [profile?.role, fetchData]);
+  }, [profile?.role]); // Only depend on role, not the entire profile object
 
   // Fetch data when tab changes
   useEffect(() => {
-    if (profile?.role === 'admin') {
+    if (profile?.role === 'admin' || profile?.role === 'superadmin') {
       fetchData();
     }
-  }, [activeTab, fetchData]);
+  }, [activeTab]); // Only depend on activeTab, not fetchData
 
   // Cleanup abort controller on unmount
   useEffect(() => {
@@ -250,7 +250,7 @@ export default function ContentModerationPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  if (!profile || profile.role !== 'admin') {
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin')) {
     return (
       <div className="p-6">
         <div className="alert alert-error text-center">

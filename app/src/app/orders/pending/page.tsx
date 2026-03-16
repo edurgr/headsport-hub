@@ -50,7 +50,11 @@ export default function PendingOrdersPage() {
   );
 
   useEffect(() => {
-    if (profile?.role === 'manager' || profile?.role === 'admin') {
+    if (
+      profile?.role === 'manager' ||
+      profile?.role === 'admin' ||
+      profile?.role === 'superadmin'
+    ) {
       fetchPendingOrders();
     }
   }, [profile]);
@@ -150,7 +154,7 @@ export default function PendingOrdersPage() {
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requiredRole={['admin', 'manager', 'superadmin']}>
       <div className="p-6">
         {/* Page Header */}
         <div className="mb-8">

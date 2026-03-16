@@ -131,7 +131,7 @@ export async function verifyAdminAccess(req: NextRequest): Promise<
       .from('profiles')
       .select('id, email, role, name')
       .eq('id', user.id)
-      .eq('role', 'admin')
+      .in('role', ['admin', 'superadmin'])
       .single();
 
     if (profileError || !profile) {
@@ -224,8 +224,9 @@ export async function verifyManagerOrAdminAccess(req: NextRequest): Promise<
     });
     const {
       data: { user },
+      error: authError,
     } = await testSupabase.auth.getUser();
-    if (!user) {
+    if (authError || !user) {
       return { success: false, error: 'Invalid authentication token', status: 401 };
     }
 
@@ -236,7 +237,7 @@ export async function verifyManagerOrAdminAccess(req: NextRequest): Promise<
       .from('profiles')
       .select('id, email, role, name')
       .eq('id', user.id)
-      .in('role', ['admin', 'manager'])
+      .in('role', ['admin', 'manager', 'superadmin'])
       .single();
 
     if (profileError || !profile) {
@@ -251,7 +252,7 @@ export async function verifyManagerOrAdminAccess(req: NextRequest): Promise<
       success: true,
       user: { id: profile.id, email: profile.email, role: profile.role, name: profile.name },
     };
-  } catch {
+  } catch (error) {
     return { success: false, error: 'Internal server error', status: 500 };
   }
 }

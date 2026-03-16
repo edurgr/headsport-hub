@@ -6,7 +6,7 @@ import { verifyAdminAccess } from '@/lib/admin-auth-secure';
 
 export async function POST(request: NextRequest) {
   try {
-    // Check admin access
+    // Check admin/superadmin access
     const adminResult = await verifyAdminAccess(request);
     if (!adminResult.success) {
       return NextResponse.json({ error: adminResult.error }, { status: adminResult.status });
@@ -28,6 +28,19 @@ export async function POST(request: NextRequest) {
 
     const admin = createClient(supabaseUrl, serviceKey);
     const normalized = email.trim().toLowerCase();
+    // If requester is only admin, block deleting admins/superadmins
+    try {
+      const { data: targetProfile } = await admin
+        .from('profiles')
+        .select('role')
+        .ilike('email', normalized)
+        .maybeSingle();
+      const targetRole = (targetProfile as any)?.role || null;
+      const requesterRole = adminResult.success ? adminResult.user.role : null;
+      if (targetRole && ['admin', 'superadmin'].includes(targetRole) && requesterRole !== 'superadmin') {
+        return NextResponse.json({ error: 'Only superadmin can delete admins' }, { status: 403 });
+      }
+    } catch {}
 
     const result: any = {
       email: normalized,

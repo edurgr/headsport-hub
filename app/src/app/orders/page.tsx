@@ -20,15 +20,13 @@ export default function OrdersPage() {
   const download = useDownload();
 
   useEffect(() => {
-    if (profile) {
-      fetchOrders();
-    }
-  }, [profile, fetchOrders]);
+    if (user?.email || profile?.role) fetchOrders();
+  }, [user?.email, profile?.role, filter]);
 
   async function fetchOrders() {
     try {
       let url = '/api/orders';
-      if (profile?.role === 'manager' || profile?.role === 'admin') {
+      if (profile?.role === 'manager' || profile?.role === 'admin' || profile?.role === 'superadmin') {
         if (filter === 'pending') url += '?scope=pending';
         else if (filter === 'approved') url += '?scope=approved';
         else if (filter === 'mine' && user?.email)
@@ -280,7 +278,7 @@ export default function OrdersPage() {
           {/* Filters removed for athletes (history view). Manager/admin have dedicated scope filter below */}
 
           {/* Manager/Admin Controls: Filters */}
-          {profile?.role === 'manager' || profile?.role === 'admin' ? (
+          {profile?.role === 'manager' || profile?.role === 'admin' || profile?.role === 'superadmin' ? (
             <div
               className="mb-6 p-3 sm:p-4 rounded-lg"
               style={{
@@ -414,7 +412,7 @@ export default function OrdersPage() {
                     >
                       {order.status}
                     </span>
-                    {(profile?.role === 'manager' || profile?.role === 'admin') &&
+                    {(profile?.role === 'manager' || profile?.role === 'admin' || profile?.role === 'superadmin') &&
                       order.status === 'pending_approval' && (
                         <button
                           onClick={async () => {
@@ -440,7 +438,7 @@ export default function OrdersPage() {
                           Approve
                         </button>
                       )}
-                    {(profile?.role === 'manager' || profile?.role === 'admin') &&
+                    {(profile?.role === 'manager' || profile?.role === 'admin' || profile?.role === 'superadmin') &&
                       order.status === 'pending_approval' && (
                         <button
                           onClick={async () => {
@@ -552,7 +550,7 @@ export default function OrdersPage() {
                         </div>
                       </div>
                     ))}
-                    {(profile?.role === 'manager' || profile?.role === 'admin') && (
+                    {(profile?.role === 'manager' || profile?.role === 'admin' || profile?.role === 'superadmin') && (
                       <button
                         onClick={() => {
                           download.begin('Preparing order CSV…');

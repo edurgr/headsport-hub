@@ -85,7 +85,7 @@ export default function AdminDashboard() {
       } else {
         setError(data.error || 'Failed to fetch dashboard data');
       }
-    } catch {
+    } catch (_error) {
       setError('Error fetching dashboard data');
     } finally {
       setLoading(false);
@@ -93,7 +93,7 @@ export default function AdminDashboard() {
   }, [authenticatedFetch, selectedPeriod]);
 
   useEffect(() => {
-    if (profile?.role === 'admin') {
+    if (profile?.role === 'admin' || profile?.role === 'superadmin') {
       fetchDashboardData();
     }
   }, [profile?.role, fetchDashboardData]);
@@ -157,7 +157,7 @@ export default function AdminDashboard() {
     </div>
   );
 
-  if (!profile || profile.role !== 'admin') {
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin')) {
     return (
       <div className="p-6">
         <div className="alert alert-error text-center">

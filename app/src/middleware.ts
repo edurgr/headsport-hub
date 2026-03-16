@@ -45,7 +45,7 @@ export function middleware(request: NextRequest) {
     '/auth/callback',
     '/forgot-password',
   ];
-  if (publicRoutes.includes(pathname)) {
+  if (publicRoutes.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 

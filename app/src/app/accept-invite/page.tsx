@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { supabaseClient } from '@/lib/supabase-client';
 
 export default function AcceptInvitePage() {
   const router = useRouter();
@@ -125,8 +126,34 @@ export default function AcceptInvitePage() {
       }
 
       if (data.success) {
-        setInfo('✅ Account created. You can now sign in with your password.');
-        setTimeout(() => router.push('/'), 1500);
+        if (data.action === 'recovery_link_sent' || data.action === 'recovery_initiated') {
+          setInfo(
+            '✅ We sent you a secure link to set your password. Check your inbox and then sign in to finish the invitation.',
+          );
+          const loginUrl = data.loginUrl || `/login?email=${encodeURIComponent(email)}&invite_token=${encodeURIComponent(token)}`;
+          setTimeout(() => router.push(loginUrl), 1500);
+          return;
+        }
+        // New user flow: sign in immediately with provided password
+        try {
+          const { error: signInErr } = await supabaseClient.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (signInErr) {
+            // If sign-in fails, fall back to redirect to login with email prefilled
+            const loginUrl = `/login?email=${encodeURIComponent(email)}`;
+            setInfo('Account created. Please sign in to continue.');
+            setTimeout(() => router.push(loginUrl), 1200);
+            return;
+          }
+          setInfo('✅ Account created. Redirecting to your dashboard...');
+          setTimeout(() => router.push('/'), 1000);
+        } catch {
+          const loginUrl = `/login?email=${encodeURIComponent(email)}`;
+          setInfo('Account created. Please sign in to continue.');
+          setTimeout(() => router.push(loginUrl), 1200);
+        }
       } else {
         setError(data.error || 'Could not create account with invitation.');
       }

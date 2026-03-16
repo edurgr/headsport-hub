@@ -27,12 +27,13 @@ interface AuthContextType {
     invitationToken: string,
   ) => Promise<{ requiresEmailConfirmation: boolean }>;
   signOut: () => Promise<void>;
+  forceSignOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   createInvitation: (
     email: string,
     role: 'admin' | 'manager' | 'athlete',
     personalMessage?: string,
-  ) => Promise<void>;
+  ) => Promise<{ emailSent: boolean; actionLink?: string; invitationLink?: string }>;
   getInvitations: () => Promise<Invitation[]>;
   deleteInvitation: (invitationId: string) => Promise<void>;
 }
@@ -378,9 +379,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string,
     role: 'admin' | 'manager' | 'athlete',
     personalMessage?: string,
-  ): Promise<void> {
-    if (!profile || profile.role !== 'admin') {
-      throw new Error('Only administrators can create invitations');
+  ): Promise<{ emailSent: boolean; actionLink?: string; invitationLink?: string }> {
+    if (!profile || (profile.role !== 'admin' && profile.role !== 'manager' && profile.role !== 'superadmin')) {
+      throw new Error('Only administrators and managers can create invitations');
+    }
+
+    // Managers can only invite athletes
+    if (profile.role === 'manager' && role !== 'athlete') {
+      throw new Error('Managers can only invite athletes');
     }
 
     try {
@@ -396,24 +402,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Failed to check existing invitation');
       }
 
+      const roleSanitized: 'admin' | 'manager' | 'athlete' =
+        (['admin', 'manager', 'athlete'].includes(role) ? role : 'athlete') as any;
+
       if (existingInvitation) {
-        // If an invitation already exists, check its status
         if (existingInvitation.status === 'pending') {
-          // If pending, check if it hasn't expired
           if (new Date(existingInvitation.expires_at) > new Date()) {
             throw new Error(
               `An invitation for ${email} already exists and is still valid. It expires on ${new Date(existingInvitation.expires_at).toLocaleDateString()}.`,
             );
           } else {
-            // If expired, update the existing invitation
             const token = crypto.randomUUID();
             const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + 7); // Expires in 7 days
+            expiresAt.setDate(expiresAt.getDate() + 7);
 
             const { error: updateError } = await supabaseClient
               .from('invitations')
               .update({
-                role: role,
+                role: roleSanitized,
                 invited_by: user!.id,
                 token: token,
                 expires_at: expiresAt.toISOString(),
@@ -427,14 +433,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               throw new Error('Failed to update expired invitation');
             }
 
-            // Send email with new invitation
-            await sendInvitationEmail(email, role, token, personalMessage);
-            return; // Invitation updated successfully
+            const result = await sendInvitationEmail(email, roleSanitized, token, personalMessage);
+            return { emailSent: !!result?.emailSent, actionLink: result?.actionLink, invitationLink: result?.invitationLink };
           }
         } else if (existingInvitation.status === 'accepted') {
           throw new Error(`User ${email} has already accepted an invitation and has an account.`);
         } else {
-          // Si está expirada, actualizarla
           const token = crypto.randomUUID();
           const expiresAt = new Date();
           expiresAt.setDate(expiresAt.getDate() + 7);
@@ -442,7 +446,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const { error: updateError } = await supabaseClient
             .from('invitations')
             .update({
-              role: role,
+              role: roleSanitized,
               invited_by: user!.id,
               token: token,
               expires_at: expiresAt.toISOString(),
@@ -456,20 +460,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             throw new Error('Failed to update expired invitation');
           }
 
-          // Send email with new invitation
-          await sendInvitationEmail(email, role, token, personalMessage);
-          return; // Invitation updated successfully
+          const result = await sendInvitationEmail(email, roleSanitized, token, personalMessage);
+          return { emailSent: !!result?.emailSent, actionLink: result?.actionLink, invitationLink: result?.invitationLink };
         }
       }
 
-      // If it doesn't exist or can be reused, create a new one
       const token = crypto.randomUUID();
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7); // Expires in 7 days
+      expiresAt.setDate(expiresAt.getDate() + 7);
 
       const { error } = await supabaseClient.from('invitations').insert({
         email,
-        role,
+        role: roleSanitized,
         invited_by: user!.id,
         token,
         expires_at: expiresAt.toISOString(),
@@ -481,8 +483,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
 
-      // Send email with new invitation
-      await sendInvitationEmail(email, role, token, personalMessage);
+      const result = await sendInvitationEmail(email, roleSanitized, token, personalMessage);
+      return { emailSent: !!result?.emailSent, actionLink: result?.actionLink, invitationLink: result?.invitationLink };
     } catch (error) {
       console.error('Failed to create invitation:', error);
       throw error;
@@ -513,13 +515,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to send invitation email');
+        let errorMessage = 'Failed to send invitation email';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.details || errorData.error || errorMessage;
+          console.warn('Invitation email API error:', errorData);
+        } catch (_) {
+          // ignore json parse errors
+        }
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
 
-      // Mostrar información en consola para desarrollo
+      // Development-only logs
+      if (process.env.NODE_ENV !== 'production') {
       console.log('=== INVITATION EMAIL SENT ===');
       console.log('To:', email);
       console.log('Role:', role);
@@ -527,7 +537,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('Email Service:', result.emailService);
       console.log('Service Status:', result.serviceStatus);
       console.log('Sent At:', result.sentAt);
+        if (typeof result.emailSent !== 'undefined') {
+          console.log('Email Sent:', result.emailSent);
+        }
+        // Avoid logging provider errors to keep console clean in dev
       console.log('=============================');
+      }
+
+      if (result && result.emailSent === false) {
+        // Treat as success; if actionLink exists, caller may show/copy it.
+        return result;
+      }
 
       return result;
     } catch (error) {
@@ -549,19 +569,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select('*')
         .order('created_at', { ascending: false });
 
-      // For managers, only show athlete invitations
-      // For admins, show all invitations
       if (profile.role === 'manager') {
-        query = query.eq('role', 'athlete');
+        query = query.eq('role', 'athlete').eq('invited_by', user!.id);
       }
 
       const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching invitations:', error);
-        throw error;
-      }
-
+      if (error) throw error;
       return data || [];
     } catch (error) {
       console.error('Failed to fetch invitations:', error);
@@ -570,16 +583,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function deleteInvitation(invitationId: string): Promise<void> {
-    if (!profile || profile.role !== 'admin') {
-      throw new Error('Only administrators can delete invitations');
+    if (!profile || (profile.role !== 'admin' && profile.role !== 'manager')) {
+      throw new Error('Only administrators and managers can delete invitations');
     }
 
     try {
-      const { error } = await supabaseClient.from('invitations').delete().eq('id', invitationId);
-
-      if (error) {
-        console.error('Error deleting invitation:', error);
-        throw error;
+      const resp = await fetch('/api/invitations/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invitationId, requestedBy: user!.id }),
+      });
+      if (!resp.ok) {
+        let msg = 'Failed to delete invitation';
+        try { const data = await resp.json(); msg = data.error || msg; } catch {}
+        throw new Error(msg);
       }
     } catch (error) {
       console.error('Failed to delete invitation:', error);
@@ -606,6 +623,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Sign out error:', error);
       throw error;
+    }
+  }
+
+  async function forceSignOut() {
+    try {
+      // Try revoke session server-side
+      try {
+        await supabaseClient.auth.signOut();
+      } catch (e) {
+        // ignore
+      }
+
+      // Clear client storage defensively
+      try {
+        if (typeof window !== 'undefined') {
+          window.localStorage.clear();
+          window.sessionStorage.clear();
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // Clear context state and server cookies
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      await syncAuthCookies(null);
+    } catch (error) {
+      console.error('Force sign out error:', error);
+    } finally {
+      if (typeof window !== 'undefined') {
+        window.location.replace('/login');
+      }
     }
   }
 
@@ -656,6 +706,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signUpWithEmail,
     signUpWithInvitation,
     signOut,
+    forceSignOut,
     updateProfile,
     createInvitation,
     getInvitations,

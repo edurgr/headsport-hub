@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-import { emailService } from '@/lib/email-service';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseServer } from '@/lib/supabase-server';
 
@@ -62,44 +61,14 @@ export async function POST(req: Request) {
         { status: 500 },
       );
 
-    // Optional email sending is controlled by env toggle
+    // Optional emails disabled. Log summary instead.
     if (process.env.NEXT_PUBLIC_ORDER_EMAILS_ENABLED === 'true') {
-      const subject = `Order ${action === 'approve' ? 'Approved' : 'Rejected'} — ${updated.athlete_email}`;
-      const itemsHtml = (updated.order_items || [])
-        .map((it: any) => {
-          const parts: string[] = [];
-          parts.push(`${it.quantity}x ${it.product_name}`);
-          if (it.product_sku) parts.push(`SKU: ${it.product_sku}`);
-          if (it.length_cm) parts.push(`Length: ${it.length_cm}cm`);
-          if (it.boot_size) parts.push(`Boot Size: ${it.boot_size}`);
-          if (it.binding_color) parts.push(`Color: ${it.binding_color}`);
-          return `<li>${parts.join(' — ')}</li>`;
-        })
-        .join('');
-
-      const html = `
-        <h2>Order ${action === 'approve' ? 'Approved' : 'Rejected'}</h2>
-        <p>Athlete: ${updated.athlete_name || updated.athlete_email}</p>
-        <p>Status: ${updated.status}</p>
-        <h3>Items</h3>
-        <ul>${itemsHtml}</ul>
-        ${managerNotes ? `<p><strong>Manager Notes:</strong> ${managerNotes}</p>` : ''}
-      `;
-
-      // Send ONLY to the approving manager (from auth cookie)
-      const sbUser = await supabaseServer();
-      const { data: userData } = await sbUser.auth.getUser();
-      const approverEmail = userData?.user?.email || null;
-
-      const envRecipients = (process.env.NEXT_PUBLIC_ORDER_NOTIFICATION_EMAILS || '')
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
-      // Primary: approver email; Fallback: env recipients (if approver email not available)
-      const recipients = approverEmail ? [approverEmail] : envRecipients;
-      for (const to of recipients) {
-        await emailService.sendEmail({ to, subject, html });
-      }
+      console.log('Order notification (email disabled):', {
+        orderId,
+        action,
+        approverEmail,
+        managerNotes: managerNotes || null,
+      });
     }
 
     return NextResponse.json({ success: true, order: updated });
