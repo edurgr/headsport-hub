@@ -384,106 +384,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error('Only administrators and managers can create invitations');
     }
 
-    // Managers can only invite athletes
     if (profile.role === 'manager' && role !== 'athlete') {
       throw new Error('Managers can only invite athletes');
     }
 
     try {
-      // First check if an invitation already exists for this email
-      const { data: existingInvitation, error: checkError } = await supabaseClient
-        .from('invitations')
-        .select('*')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (checkError) {
-        console.error('Error checking existing invitation:', checkError);
-        throw new Error('Failed to check existing invitation');
-      }
-
-      const roleSanitized: 'admin' | 'manager' | 'athlete' =
-        (['admin', 'manager', 'athlete'].includes(role) ? role : 'athlete') as any;
-
-      if (existingInvitation) {
-        if (existingInvitation.status === 'pending') {
-          if (new Date(existingInvitation.expires_at) > new Date()) {
-            throw new Error(
-              `An invitation for ${email} already exists and is still valid. It expires on ${new Date(existingInvitation.expires_at).toLocaleDateString()}.`,
-            );
-          } else {
-            const token = crypto.randomUUID();
-            const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + 7);
-
-            const { error: updateError } = await supabaseClient
-              .from('invitations')
-              .update({
-                role: roleSanitized,
-                invited_by: user!.id,
-                token: token,
-                expires_at: expiresAt.toISOString(),
-                status: 'pending',
-                updated_at: new Date().toISOString(),
-              })
-              .eq('id', existingInvitation.id);
-
-            if (updateError) {
-              console.error('Error updating expired invitation:', updateError);
-              throw new Error('Failed to update expired invitation');
-            }
-
-            const result = await sendInvitationEmail(email, roleSanitized, token, personalMessage);
-            return { emailSent: !!result?.emailSent, actionLink: result?.actionLink, invitationLink: result?.invitationLink };
-          }
-        } else if (existingInvitation.status === 'accepted') {
-          throw new Error(`User ${email} has already accepted an invitation and has an account.`);
-        } else {
-          const token = crypto.randomUUID();
-          const expiresAt = new Date();
-          expiresAt.setDate(expiresAt.getDate() + 7);
-
-          const { error: updateError } = await supabaseClient
-            .from('invitations')
-            .update({
-              role: roleSanitized,
-              invited_by: user!.id,
-              token: token,
-              expires_at: expiresAt.toISOString(),
-              status: 'pending',
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', existingInvitation.id);
-
-          if (updateError) {
-            console.error('Error updating expired invitation:', updateError);
-            throw new Error('Failed to update expired invitation');
-          }
-
-          const result = await sendInvitationEmail(email, roleSanitized, token, personalMessage);
-          return { emailSent: !!result?.emailSent, actionLink: result?.actionLink, invitationLink: result?.invitationLink };
-        }
-      }
-
-      const token = crypto.randomUUID();
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7);
-
-      const { error } = await supabaseClient.from('invitations').insert({
-        email,
-        role: roleSanitized,
-        invited_by: user!.id,
-        token,
-        expires_at: expiresAt.toISOString(),
-        status: 'pending',
-      });
-
-      if (error) {
-        console.error('Error creating invitation:', error);
-        throw error;
-      }
-
-      const result = await sendInvitationEmail(email, roleSanitized, token, personalMessage);
+      // All DB writes happen server-side (service role key bypasses RLS)
+      const result = await sendInvitationEmail(email, role, personalMessage);
       return { emailSent: !!result?.emailSent, actionLink: result?.actionLink, invitationLink: result?.invitationLink };
     } catch (error) {
       console.error('Failed to create invitation:', error);
@@ -495,11 +402,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function sendInvitationEmail(
     email: string,
     role: string,
-    token: string,
     personalMessage?: string,
   ) {
     try {
-      // Call API route to send email
+      // Call API route to send email — DB record creation happens there (service role key)
       const response = await fetch('/api/invitations/send', {
         method: 'POST',
         headers: {
@@ -508,7 +414,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({
           email,
           role,
-          token,
           invitedBy: user!.id,
           personalMessage,
         }),

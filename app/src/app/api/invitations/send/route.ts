@@ -35,11 +35,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const { email, role, token, invitedBy, personalMessage } = await request.json();
+    const { email, role, invitedBy, personalMessage } = await request.json();
 
-    if (!email || !role || !token || !invitedBy) {
+    if (!email || !role || !invitedBy) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
+
+    const roleSanitized: 'admin' | 'manager' | 'athlete' =
+      (['admin', 'manager', 'athlete'].includes(role) ? role : 'athlete') as 'admin' | 'manager' | 'athlete';
 
     // Verify inviter permissions: admins can invite any role; managers can only invite athletes
     if (supabaseAdmin && hasServiceKey) {
@@ -53,20 +56,90 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
       }
 
-      if (inviter.role === 'manager' && role !== 'athlete') {
+      if (inviter.role === 'manager' && roleSanitized !== 'athlete') {
         return NextResponse.json(
           { error: 'Unauthorized: Managers can only send athlete invitations' },
           { status: 403 },
         );
       }
 
-      if (inviter.role !== 'admin' && inviter.role !== 'manager') {
+      if (inviter.role !== 'admin' && inviter.role !== 'manager' && inviter.role !== 'superadmin') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
       }
     } else {
       // No service key available: skip inviter role check to avoid blocking tests.
-      // Keep logs for visibility.
       console.warn('Inviter role check skipped (no service key). Proceeding without server-side role verification.');
+    }
+
+    // Manage invitation record in DB (using service role key to bypass RLS)
+    let token: string;
+    if (supabaseAdmin && hasServiceKey) {
+      const { data: existingInvitation } = await supabaseAdmin
+        .from('invitations')
+        .select('*')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (existingInvitation) {
+        if (existingInvitation.status === 'accepted') {
+          return NextResponse.json(
+            { error: `User ${email} has already accepted an invitation and has an account.` },
+            { status: 409 },
+          );
+        }
+        if (
+          existingInvitation.status === 'pending' &&
+          new Date(existingInvitation.expires_at) > new Date()
+        ) {
+          return NextResponse.json(
+            {
+              error: `An invitation for ${email} already exists and is still valid. It expires on ${new Date(existingInvitation.expires_at).toLocaleDateString()}.`,
+            },
+            { status: 409 },
+          );
+        }
+        // Expired or revoked — refresh with a new token
+        token = crypto.randomUUID();
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+        const { error: updateError } = await supabaseAdmin
+          .from('invitations')
+          .update({
+            role: roleSanitized,
+            invited_by: invitedBy,
+            token,
+            expires_at: expiresAt.toISOString(),
+            status: 'pending',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingInvitation.id);
+        if (updateError) {
+          console.error('Error updating invitation:', updateError);
+          return NextResponse.json({ error: 'Failed to update invitation' }, { status: 500 });
+        }
+      } else {
+        // New invitation
+        token = crypto.randomUUID();
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+        const { error: insertError } = await supabaseAdmin
+          .from('invitations')
+          .insert({
+            email,
+            role: roleSanitized,
+            invited_by: invitedBy,
+            token,
+            expires_at: expiresAt.toISOString(),
+            status: 'pending',
+          });
+        if (insertError) {
+          console.error('Error creating invitation:', insertError);
+          return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 });
+        }
+      }
+    } else {
+      // No service key — generate token without a DB record
+      token = crypto.randomUUID();
     }
 
     // Generate the invitation link
