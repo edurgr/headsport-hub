@@ -86,11 +86,12 @@ export default function ContentPage() {
           return ((a.file_size || 0) - (b.file_size || 0)) * dir;
         case 'file_type':
           return a.file_type.localeCompare(b.file_type) * dir;
-        case 'rating':
+        case 'rating': {
           // Ensure metadata exists and has rating, default to 0
           const ratingA = (a.metadata as any)?.rating || 0;
           const ratingB = (b.metadata as any)?.rating || 0;
           return (ratingA - ratingB) * dir;
+        }
         case 'created_at':
         default:
           return (
@@ -131,10 +132,10 @@ export default function ContentPage() {
   const getSelectedIds = () => Object.entries(selected).filter(([_, v]) => v).map(([k]) => k);
   const selectedCount = getSelectedIds().length;
 
-  const addToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+  const addToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
     const id = Date.now() + Math.random();
     setToasts((prev) => [...prev, { id, message, type }]);
-  };
+  }, []);
 
   useEffect(() => {
     const onKeyDown = async (e: KeyboardEvent) => {
@@ -243,14 +244,14 @@ export default function ContentPage() {
                   .from(String(bucket))
                   .createSignedUrl(f.file_path, 60 * 60);
                 url = data?.signedUrl || null;
-              } catch {}
+              } catch { /* signed URL generation is best-effort */ }
               if (f.thumbnail_path) {
                 try {
                   const { data } = await supabaseClient.storage
                     .from(String(bucket))
                     .createSignedUrl(f.thumbnail_path, 60 * 60);
                   thumbnail_url = data?.signedUrl || null;
-                } catch {}
+                } catch { /* thumbnail URL generation is best-effort */ }
               }
 
               return {
@@ -381,14 +382,14 @@ export default function ContentPage() {
                   .from(String(bucket))
                   .createSignedUrl(f.file_path, 60 * 60);
                 url = data?.signedUrl || null;
-              } catch {}
+              } catch { /* signed URL generation is best-effort */ }
               if (f.thumbnail_path) {
                 try {
                   const { data } = await supabaseClient.storage
                     .from(String(bucket))
                     .createSignedUrl(f.thumbnail_path, 60 * 60);
                   thumbnail_url = data?.signedUrl || null;
-                } catch {}
+                } catch { /* thumbnail URL generation is best-effort */ }
               }
               return {
                 id: f.id,
@@ -427,6 +428,7 @@ export default function ContentPage() {
 
   return (
     <ProtectedRoute>
+      {/* eslint-disable-next-line react/no-unknown-property */}
       <style jsx>{`
         /* Styles remain unchanged */
         .mobile-scroll {

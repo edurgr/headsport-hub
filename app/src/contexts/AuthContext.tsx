@@ -520,7 +520,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const errorData = await response.json();
           errorMessage = errorData.details || errorData.error || errorMessage;
           console.warn('Invitation email API error:', errorData);
-        } catch (_) {
+        } catch {
           // ignore json parse errors
         }
         throw new Error(errorMessage);
@@ -595,7 +595,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       if (!resp.ok) {
         let msg = 'Failed to delete invitation';
-        try { const data = await resp.json(); msg = data.error || msg; } catch {}
+        try { const data = await resp.json(); msg = data.error || msg; } catch { /* ignore JSON parse errors */ }
         throw new Error(msg);
       }
     } catch (error) {
@@ -631,7 +631,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Try revoke session server-side
       try {
         await supabaseClient.auth.signOut();
-      } catch (e) {
+      } catch {
         // ignore
       }
 
@@ -641,7 +641,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           window.localStorage.clear();
           window.sessionStorage.clear();
         }
-      } catch (e) {
+      } catch {
         // ignore
       }
 

@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: Request) {
   try {
-    const { token, userId } = await req.json();
+    const { token } = await req.json();
 
     if (!token) {
       return NextResponse.json(

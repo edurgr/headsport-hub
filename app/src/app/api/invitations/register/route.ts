@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
           if (targetUserId) {
             await supabase.auth.admin.updateUserById(targetUserId, { password, email_confirm: true } as any);
           }
-        } catch (_) {}
+        } catch { /* best-effort user lookup */ }
 
         // Ensure profile has the invited role
         try {
@@ -162,7 +162,7 @@ export async function POST(req: NextRequest) {
               } as any,
               { onConflict: 'email' } as any,
             );
-        } catch (_) {}
+        } catch { /* best-effort profile upsert */ }
         let actionLink: string | null = null;
         try {
           const { data: linkData } = await supabase.auth.admin.generateLink({
@@ -171,7 +171,7 @@ export async function POST(req: NextRequest) {
             options: { redirectTo: `${baseUrl}/auth/callback?invite_token=${token}` },
           });
           actionLink = (linkData as any)?.properties?.action_link || null;
-        } catch (_) {
+        } catch {
           // ignore, we'll still return instructions
         }
 
@@ -188,7 +188,7 @@ export async function POST(req: NextRequest) {
               <p style="font-size:12px;color:#6b7280;margin-top:16px;">If the button doesn't work, copy and paste this link in your browser:</p>
               <p style="font-size:12px;word-break: break-all;"><a href="${actionLink}">${actionLink}</a></p>
             </div>`;
-          try { await sendResendEmail({ to: email, subject, html }); } catch {}
+          try { await sendResendEmail({ to: email, subject, html }); } catch { /* email sending is best-effort */ }
         }
 
         const loginUrl = `${baseUrl}/login?email=${encodeURIComponent(email)}&invite_token=${encodeURIComponent(

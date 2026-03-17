@@ -79,7 +79,6 @@ export async function verifyAdminAccess(req: NextRequest): Promise<
 
     // Verificar el token obtenido
     let user = null;
-    let authError = null;
 
     try {
       const testSupabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -97,14 +96,11 @@ export async function verifyAdminAccess(req: NextRequest): Promise<
 
       if (!testError && testUser) {
         user = testUser;
-        authError = null;
         console.log('✅ Token válido encontrado para usuario:', testUser.email);
       } else {
-        authError = testError;
         console.log('❌ Token inválido:', testError?.message);
       }
     } catch (error) {
-      authError = error;
       console.log('❌ Error verificando token:', error);
     }
 
@@ -252,7 +248,7 @@ export async function verifyManagerOrAdminAccess(req: NextRequest): Promise<
       success: true,
       user: { id: profile.id, email: profile.email, role: profile.role, name: profile.name },
     };
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Internal server error', status: 500 };
   }
 }

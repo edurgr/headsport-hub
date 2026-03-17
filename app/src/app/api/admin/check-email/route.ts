@@ -34,7 +34,7 @@ export async function GET(req: Request) {
         profilesResult.found = true;
         profilesResult.rows = data;
       }
-    } catch {}
+    } catch { /* table may not exist */ }
 
     // Check invitations/invites tables
     const invitationsResult: any = { found: false, rows: [] as any[] };
@@ -44,7 +44,7 @@ export async function GET(req: Request) {
         invitationsResult.found = true;
         invitationsResult.rows = data;
       }
-    } catch {}
+    } catch { /* table may not exist */ }
 
     try {
       const { data, error } = await admin.from('invites').select('*').ilike('email', email);
@@ -52,7 +52,7 @@ export async function GET(req: Request) {
         invitationsResult.found = true;
         invitationsResult.rows = [...invitationsResult.rows, ...data];
       }
-    } catch {}
+    } catch { /* table may not exist */ }
 
     // Check auth users via Admin API (paginate)
     const authResult: any = { found: false, user: null as any };
@@ -77,7 +77,7 @@ export async function GET(req: Request) {
         if (users.length < perPage) break; // no more pages
         page += 1;
       }
-    } catch {}
+    } catch { /* best-effort search */ }
 
     const foundAnywhere = authResult.found || profilesResult.found || invitationsResult.found;
     return NextResponse.json({

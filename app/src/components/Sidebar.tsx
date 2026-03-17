@@ -32,11 +32,12 @@ export default function Sidebar() {
   const logoPathEnv = process.env.NEXT_PUBLIC_LOGO_PATH || '/head-logo.svg';
   const logoSrc = logoPathEnv.endsWith('.html') ? '/head-logo.svg' : logoPathEnv;
 
+  const profileAvatarPath = (profile as any)?.avatar_path as string | undefined;
   useEffect(() => {
     const loadAvatar = async () => {
       try {
         const bucket = (process.env.NEXT_PUBLIC_UPLOADS_BUCKET as string) || 'content';
-        const avatarPath = (profile as any)?.avatar_path || null;
+        const avatarPath = profileAvatarPath || null;
         if (!avatarPath) {
           setAvatarUrl(null);
           return;
@@ -52,7 +53,7 @@ export default function Sidebar() {
       }
     };
     loadAvatar();
-  }, [profile?.id, (profile as any)?.avatar_path]);
+  }, [profile?.id, profileAvatarPath]);
 
   const navigationItems = [
     // Put Admin Dashboard first and hide generic dashboard for admins

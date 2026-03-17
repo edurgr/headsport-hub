@@ -10,7 +10,6 @@ export async function GET() {
     const checks = {
       environment:
         !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      uptime: process.uptime() > 5, // Application has been running for at least 5 seconds
     };
 
     const isReady = Object.values(checks).every(Boolean);

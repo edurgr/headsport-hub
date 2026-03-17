@@ -15,12 +15,6 @@ export async function PATCH(req: Request) {
       phone,
       organization,
       role,
-      expectedContentUploads,
-      costPerAthlete,
-      competitionPerformance,
-      festivalAchievements,
-      awards,
-      notes,
     } = body;
 
     if (!id) {
@@ -66,7 +60,7 @@ export async function PATCH(req: Request) {
             }
           }
         }
-      } catch (_) {
+      } catch {
         // ignore: if we can't verify admin, do not allow role change
       }
     }

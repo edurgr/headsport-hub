@@ -68,7 +68,7 @@ export default function UploadPage() {
       // Using multipart/form-data here causes a 400 from the storage API.
       try {
         if (file.type) xhr.setRequestHeader('Content-Type', file.type);
-      } catch {}
+      } catch { /* setRequestHeader may fail in some environments */ }
       xhr.send(file);
     });
   }
@@ -169,7 +169,7 @@ export default function UploadPage() {
       setSmoothProgress(0);
       setEtaText('');
       startProgressAnimation();
-    } catch {}
+    } catch { /* progress setup is best-effort */ }
 
     try {
       // Create upload session
@@ -510,6 +510,7 @@ export default function UploadPage() {
       <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">Upload content</h1>
 
       <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md border border-gray-200 space-y-4 sm:space-y-6 w-full max-w-full overflow-hidden">
+        {/* eslint-disable-next-line react/no-unknown-property */}
         <style jsx>{`
           @media (max-width: 640px) {
             .fix-mobile-overflow * {

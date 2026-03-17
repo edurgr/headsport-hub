@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       if (targetRole && ['admin', 'superadmin'].includes(targetRole) && requesterRole !== 'superadmin') {
         return NextResponse.json({ error: 'Only superadmin can delete admins' }, { status: 403 });
       }
-    } catch {}
+    } catch { /* role check failed, proceed without restriction */ }
 
     const result: any = {
       email: normalized,
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         }
         page += 1;
       }
-    } catch {}
+    } catch { /* best-effort user lookup */ }
 
     // Delete auth user
     if (userId) {
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
           result.auth.deleted = true;
           result.auth.userId = userId;
         }
-      } catch {}
+      } catch { /* ignore delete errors */ }
     }
 
     // Delete profile rows
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
         const { error } = await admin.from('profiles').delete().in('id', ids);
         if (!error) result.profiles.deletedCount += ids.length;
       }
-    } catch {}
+    } catch { /* ignore delete errors */ }
 
     // Delete invitations in either schema
     try {
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
           );
         if (!error) result.invitations.deletedCount += inv1.length;
       }
-    } catch {}
+    } catch { /* table may not exist */ }
     try {
       const { data: inv2 } = await admin.from('invites').select('id').ilike('email', normalized);
       if (inv2 && inv2.length > 0) {
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
           );
         if (!error) result.invitations.deletedCount += inv2.length;
       }
-    } catch {}
+    } catch { /* table may not exist */ }
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {

@@ -176,7 +176,7 @@ export async function POST(req: Request) {
       }
       try {
         await (sb as any).from('content_moderation_queue').delete().eq('file_id', fileId);
-      } catch {}
+      } catch { /* queue table is optional */ }
       return NextResponse.json({ success: true });
     }
 
@@ -204,7 +204,7 @@ export async function POST(req: Request) {
       }
       try {
         await (sb as any).from('content_moderation_queue').delete().in('file_id', fileIds);
-      } catch {}
+      } catch { /* queue table is optional */ }
       return NextResponse.json({ success: true });
     }
 

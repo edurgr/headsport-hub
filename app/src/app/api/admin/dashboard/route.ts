@@ -411,7 +411,7 @@ async function getBackupStats() {
   };
 }
 
-async function getNotificationStats(supabase: any, userId: string) {
+async function getNotificationStats(_supabase: any, _userId: string) {
   // Por ahora, devolver stats mock ya que las tablas de notificaciones no existen
   return {
     unread_count: 0,

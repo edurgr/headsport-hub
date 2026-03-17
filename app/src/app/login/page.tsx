@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { ReactElement } from 'react';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -17,7 +17,6 @@ export default function LoginPage(): ReactElement {
 
   const { signInWithEmail, signUpWithEmail, user, profile } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   // Redirect if already authenticated
   useEffect(() => {

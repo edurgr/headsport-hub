@@ -167,13 +167,12 @@ export function handleApiError(error: unknown, context?: ErrorContext): NextResp
  */
 function getSupabaseErrorStatusCode(code: string): number {
   switch (code) {
-    case 'PGRST301': // Row not found
     case 'PGRST116': // No rows found
       return 404;
     case 'PGRST202': // Invalid request
     case 'PGRST203': // Invalid range
       return 400;
-    case 'PGRST301': // Insufficient privileges
+    case 'PGRST301': // JWT expired / insufficient privileges
       return 403;
     case 'PGRST204': // Invalid body
       return 422;

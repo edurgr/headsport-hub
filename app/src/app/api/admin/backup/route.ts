@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     const { action } = body;
 
     if (action === 'create') {
-      const { type, tables_included } = body;
+      const { type, tables_included: _tables_included } = body;
 
       if (!type) {
         return NextResponse.json({ error: 'Backup type is required' }, { status: 400 });

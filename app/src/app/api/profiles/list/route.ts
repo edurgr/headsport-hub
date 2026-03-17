@@ -45,13 +45,13 @@ export async function GET(req: Request) {
         const payloadJson = decodeBase64ToUtf8(base64);
         const payload = JSON.parse(payloadJson);
         requesterId = payload.sub || payload.user_id || null;
-      } catch {}
+      } catch { /* ignore JWT parse errors */ }
     }
     if (!requesterId) {
       try {
         const { data: authInfo } = await (sb as any).auth.getUser();
         requesterId = authInfo?.user?.id || null;
-      } catch {}
+      } catch { /* ignore auth errors */ }
     }
 
     let requesterRole: 'athlete' | 'manager' | 'admin' | null = null;
@@ -64,7 +64,7 @@ export async function GET(req: Request) {
           .eq('id', requesterId)
           .single();
         requesterRole = (me?.role as any) || null;
-      } catch {}
+      } catch { /* ignore role lookup errors */ }
     }
 
     // Use service role client for managers/admins to avoid RLS misconfig issues

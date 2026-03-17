@@ -12,7 +12,7 @@ import { Profile, Invitation } from '@/types';
 // Unified management hub: Profiles (admins/managers), Invitations (admins), Admin creation (admins)
 
 export default function ProfileManagementPage() {
-  const { profile, createInvitation, getInvitations, deleteInvitation, signUpWithEmail } = useAuth();
+  const { profile, createInvitation, getInvitations, deleteInvitation } = useAuth();
   const [activeTab, setActiveTab] = useState<'profiles' | 'invitations' | 'create-admin'>('profiles');
 
   // Profiles state
@@ -21,7 +21,7 @@ export default function ProfileManagementPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [recentUploadsByUser, setRecentUploadsByUser] = useState<Record<string, any[]>>({});
 
   // Athlete editing state
@@ -70,6 +70,7 @@ export default function ProfileManagementPage() {
     if ((['admin', 'manager', 'superadmin'] as any).includes(profile?.role)) {
       fetchProfiles();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
   // Load invitations when Invitations tab is active
@@ -192,7 +193,7 @@ export default function ProfileManagementPage() {
       const map: Record<string, any[]> = {};
       for (const [id, items] of entries) map[id] = items;
       setRecentUploadsByUser(map);
-    } catch (e) {
+    } catch {
       // ignore
     }
   }

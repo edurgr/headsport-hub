@@ -48,6 +48,10 @@ const eslintConfig = [
     languageOptions: {
       globals: {
         ...globals.browser,
+        // React is available as a global type via @types/react
+        React: 'readonly',
+        // Next.js replaces process.env.NEXT_PUBLIC_* and process.env.NODE_ENV at build time
+        process: 'readonly',
       },
     },
   },
@@ -75,7 +79,12 @@ const eslintConfig = [
       
       // Custom rules
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-unused-vars': ['warn', {
+        varsIgnorePattern: '^_',
+        argsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+        destructuredArrayIgnorePattern: '^_',
+      }],
       'react/no-unescaped-entities': 'off',
       'react-hooks/exhaustive-deps': 'warn',
       '@next/next/no-html-link-for-pages': 'off', // Disabled as we use App Router

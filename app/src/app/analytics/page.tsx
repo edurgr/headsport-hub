@@ -236,7 +236,7 @@ export default function AnalyticsPage() {
     { name: 'Rejected', value: globalOrderStats?.rejected_orders || 0, color: CHART_COLORS[2] },
   ];
 
-  const athleteContentChartData = athleteContentStats.map((athlete) => ({
+  const _athleteContentChartData = athleteContentStats.map((athlete) => ({
     name: athlete.athlete_name,
     photos: athlete.photos,
     videos: athlete.videos,
@@ -740,7 +740,7 @@ export default function AnalyticsPage() {
                           ))}
                         </Pie>
                         <Tooltip
-                          formatter={(value, name) => [value, 'Quantity']}
+                          formatter={(value, _name) => [value, 'Quantity']}
                           labelFormatter={(label, payload) => {
                             if (payload && payload[0] && payload[0].payload) {
                               return payload[0].payload.fullName;
@@ -779,7 +779,7 @@ export default function AnalyticsPage() {
                                 <Cell key={`cell-${index}`} fill={entry.color} />
                               ))}
                             </Pie>
-                            <Tooltip formatter={(value, name) => [value, 'Quantity']} />
+                            <Tooltip formatter={(value, _name) => [value, 'Quantity']} />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
@@ -806,7 +806,7 @@ export default function AnalyticsPage() {
                                 <Cell key={`cell-${index}`} fill={entry.color} />
                               ))}
                             </Pie>
-                            <Tooltip formatter={(value, name) => [value, 'Orders']} />
+                            <Tooltip formatter={(value, _name) => [value, 'Orders']} />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
@@ -1108,7 +1108,7 @@ export default function AnalyticsPage() {
                                           <Cell key={`cell-${index}`} fill={entry.color} />
                                         ))}
                                     </Pie>
-                                    <Tooltip formatter={(value, name) => [value, 'Quantity']} />
+                                    <Tooltip formatter={(value, _name) => [value, 'Quantity']} />
                                   </PieChart>
                                 </ResponsiveContainer>
                               </div>

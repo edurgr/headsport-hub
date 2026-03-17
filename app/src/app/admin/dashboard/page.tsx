@@ -102,7 +102,7 @@ export default function AdminDashboard() {
     title,
     value,
     icon: Icon,
-    color = 'blue',
+    color: _color = 'blue',
     subtitle,
     trend,
   }: {

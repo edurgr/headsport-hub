@@ -130,9 +130,9 @@ export default function AuthCallbackPage(): ReactElement {
       // Clear hash to avoid re-triggering recovery on back/refresh
       try {
         window.history.replaceState({}, '', window.location.pathname + window.location.search);
-      } catch {}
+      } catch { /* ignore history API errors */ }
       setTimeout(() => router.push('/'), 1500);
-    } catch (_err) {
+    } catch {
       setFormError('Unexpected error updating password');
     } finally {
       setUpdating(false);

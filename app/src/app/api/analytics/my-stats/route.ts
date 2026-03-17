@@ -39,7 +39,7 @@ export async function GET(req: Request) {
         currentUserId = authData.user.id;
         targetAthleteId = targetAthleteId || currentUserId;
       }
-    } catch (error) {
+    } catch {
       console.log('Could not get user from session, trying header auth');
     }
 
@@ -55,7 +55,7 @@ export async function GET(req: Request) {
           const payload = JSON.parse(payloadJson);
           currentUserId = payload.sub || payload.user_id || null;
           targetAthleteId = targetAthleteId || currentUserId;
-        } catch (error) {
+        } catch {
           console.log('Could not decode token');
         }
       }

@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export function useAddresses(userIdOverride?: string) {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
   const { user } = useAuth();
   const userId = userIdOverride ?? user?.id;
 

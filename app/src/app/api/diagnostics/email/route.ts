@@ -52,7 +52,7 @@ export async function GET() {
       env: envDump,
       timestamp: new Date().toISOString(),
     });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 }

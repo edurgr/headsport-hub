@@ -123,18 +123,20 @@ export default function ProductManagementPage() {
       setPage(1);
       fetchProducts(1, true);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.role]); // Only depend on role, not the entire profile object
 
   // Debounced search and filter changes
   useEffect(() => {
     if (profile?.role !== 'admin' && profile?.role !== 'superadmin') return;
-    
+
     const timeoutId = setTimeout(() => {
       setPage(1);
       fetchProducts(1, true);
     }, 500); // Increased debounce time to 500ms
 
     return () => clearTimeout(timeoutId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, categoryFilter]); // Removed profile and fetchProducts from deps
 
   useEffect(() => {
@@ -182,7 +184,7 @@ export default function ProductManagementPage() {
         const data = await response.json();
         setError(data.error || 'Failed to delete product');
       }
-    } catch (err) {
+    } catch {
       setError('Error deleting product');
     }
   };
@@ -211,7 +213,7 @@ export default function ProductManagementPage() {
         const data = await response.json();
         setError(data.error || 'Failed to create product');
       }
-    } catch (err) {
+    } catch {
       setError('Error creating product');
     }
   };
@@ -238,7 +240,7 @@ export default function ProductManagementPage() {
         const data = await response.json();
         setError(data.error || 'Failed to update product');
       }
-    } catch (err) {
+    } catch {
       setError('Error updating product');
     }
   };
@@ -261,12 +263,12 @@ export default function ProductManagementPage() {
         const data = await response.json();
         setError(data.error || 'Failed to update product');
       }
-    } catch (err) {
+    } catch {
       setError('Error updating product');
     }
   };
 
-  const getCategoryColor = (category: string) => {
+  const _getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
       accessories: 'bg-gray-100 text-gray-800',
       bindings: 'bg-blue-100 text-blue-800',

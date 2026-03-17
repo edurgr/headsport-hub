@@ -60,7 +60,7 @@ export async function GET(req: Request) {
               .single();
             role = (prof?.role as any) || 'athlete';
           }
-        } catch {}
+        } catch { /* ignore JWT parse errors */ }
       }
     }
 

@@ -4,6 +4,7 @@ import { supabaseClient } from '@/lib/supabase-client';
 
 export function useAuthenticatedFetch() {
   const { session, forceSignOut } = useAuth();
+  const sessionAccessToken = session?.access_token;
 
   const authenticatedFetch = useCallback(async (url: string, options: RequestInit = {}) => {
     // Obtener el token de la sesión actual
@@ -12,11 +13,11 @@ export function useAuthenticatedFetch() {
     console.log('🔍 useAuthenticatedFetch: Iniciando request a', url);
     console.log(
       '🔍 useAuthenticatedFetch: Session del contexto:',
-      session ? 'disponible' : 'no disponible',
+      sessionAccessToken ? 'disponible' : 'no disponible',
     );
 
-    if (session?.access_token) {
-      token = session.access_token;
+    if (sessionAccessToken) {
+      token = sessionAccessToken;
       console.log('✅ useAuthenticatedFetch: Token obtenido del contexto');
     } else {
       console.log('⚠️ useAuthenticatedFetch: No hay sesión en contexto, obteniendo de Supabase...');
@@ -64,13 +65,13 @@ export function useAuthenticatedFetch() {
       console.warn('🔒 useAuthenticatedFetch: respuesta no autorizada, forzando sign out');
       try {
         await forceSignOut();
-      } catch (e) {
+      } catch {
         // ignore
       }
     }
 
     return response;
-  }, [session?.access_token, forceSignOut]);
+  }, [sessionAccessToken, forceSignOut]);
 
   return { authenticatedFetch };
 }
