@@ -363,28 +363,40 @@ async function getRecentActivity(supabase: any) {
 }
 
 async function getSystemHealth(supabase: any) {
-  // Database health
-  const { data: dbHealth } = await supabase.from('profiles').select('id').limit(1);
-
-  // Storage health (check if storage is accessible)
-  let storageHealth = true;
   try {
-    const { data: storageTest } = await supabase.storage
-      .from('user-uploads')
-      .list('', { limit: 1 });
+    // Database health
+    const { data: dbHealth } = await supabase.from('profiles').select('id').limit(1);
+
+    // Storage health (check if storage is accessible)
+    let storageHealth = true;
+    try {
+      await supabase.storage.from('user-uploads').list('', { limit: 1 });
+    } catch {
+      storageHealth = false;
+    }
+
+    // Uptime: `process.uptime()` is not available on Edge runtimes (Cloudflare Workers).
+    // Use `performance.now()` when available.
+    const uptimeSeconds =
+      typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? Math.round(performance.now() / 1000)
+        : null;
+
+    return {
+      database_healthy: !!dbHealth,
+      storage_healthy: storageHealth,
+      uptime_seconds: uptimeSeconds,
+      uptime_hours: uptimeSeconds === null ? null : Math.round((uptimeSeconds / 3600) * 100) / 100,
+    };
   } catch (error) {
-    storageHealth = false;
+    console.error('Error in getSystemHealth:', error);
+    return {
+      database_healthy: false,
+      storage_healthy: false,
+      uptime_seconds: null,
+      uptime_hours: null,
+    };
   }
-
-  // System uptime (simplified)
-  const uptime = process.uptime();
-
-  return {
-    database_healthy: !!dbHealth,
-    storage_healthy: storageHealth,
-    uptime_seconds: uptime,
-    uptime_hours: Math.round((uptime / 3600) * 100) / 100,
-  };
 }
 
 async function getBackupStats() {
