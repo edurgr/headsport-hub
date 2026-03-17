@@ -53,6 +53,32 @@ export interface Equipment {
   updated_at: string;
 }
 
+export type UploadSessionStatus = 'active' | 'archived' | 'deleted' | 'processing' | 'completed' | 'failed';
+
+export interface UploadSession {
+  id: string;
+  user_id: string;
+  title: string;
+  description?: string | null;
+  status?: UploadSessionStatus;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface UploadFile {
+  id: string;
+  session_id: string;
+  filename: string;
+  file_path: string;
+  file_size: number | null;
+  file_type: FileType;
+  mime_type: string | null;
+  thumbnail_path?: string | null;
+  metadata?: Record<string, unknown> | null;
+  created_at: string;
+  updated_at?: string;
+}
+
 export interface Order {
   id: string;
   user_id: string;
@@ -90,6 +116,14 @@ export interface OrderItem {
   unit_price?: string;
   total_price?: string;
 }
+
+export type OrderRow = {
+  product: any | null;
+  length_cm: string;
+  quantity: number;
+  boot_size: string;
+  binding_color: string;
+};
 
 export interface ProductCategoryInfo {
   id: string;

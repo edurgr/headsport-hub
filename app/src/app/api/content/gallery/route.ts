@@ -12,6 +12,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: authResult.error }, { status: authResult.status });
   }
   const { user } = authResult;
+  if (!supabaseAdmin) {
+    return NextResponse.json({ error: 'Supabase admin client not configured' }, { status: 500 });
+  }
   const supabase = supabaseAdmin; // Use the admin client for elevated privileges
 
   const { searchParams } = new URL(req.url);

@@ -1,20 +1,21 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
 
 import type { FC, ReactNode } from 'react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import Header from './Header';
-import Sidebar from './Sidebar';
+import SidebarContainer from './SidebarContainer';
 import { DownloadProvider } from '@/contexts/DownloadContext';
 import DownloadOverlay from './DownloadOverlay';
 
+type LayoutWrapperProps = {
+  children: ReactNode;
+};
+
 const LayoutWrapper: FC<LayoutWrapperProps> = ({ children }) => {
-  const { user, profile, loading, isAdmin } = useAuth();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const { user, profile } = useAuth();
   const pathname = usePathname();
 
   // Páginas públicas que no necesitan sidebar ni layout especial
@@ -44,7 +45,7 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ children }) => {
   return (
     <DownloadProvider>
       <div className="flex h-screen w-full">
-        <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} user={user} profile={profile} />
+        <SidebarContainer />
         <div className="flex flex-1 flex-col">
           <Header />
           <main className="flex-1 overflow-y-auto p-6">{children}</main>

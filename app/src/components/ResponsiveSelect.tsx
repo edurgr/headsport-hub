@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 type Option = { value: string; label: string };
 
 export default function ResponsiveSelect({
+  id,
   value,
   onChange,
   options,
@@ -12,6 +13,7 @@ export default function ResponsiveSelect({
   className,
   ariaLabel,
 }: {
+  id?: string;
   value: string;
   onChange: (v: string) => void;
   options: Option[];
@@ -39,6 +41,7 @@ export default function ResponsiveSelect({
   if (!isMobile) {
     return (
       <select
+        id={id}
         aria-label={ariaLabel}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -57,6 +60,7 @@ export default function ResponsiveSelect({
   return (
     <>
       <button
+        id={id}
         type="button"
         aria-label={ariaLabel}
         onClick={() => setOpen(true)}

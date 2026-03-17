@@ -637,7 +637,6 @@ export default function ContentPage() {
                   <button
                     disabled={deleting}
                     onClick={() => setShowDeleteSelectedModal(true)}
-                    }}
                     className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
                   >
                     {deleting ? 'Deleting…' : `Delete Selected (${Object.values(selected).filter(Boolean).length})`}

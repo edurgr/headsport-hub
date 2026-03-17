@@ -1,4 +1,3 @@
-export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { createClient } from '@supabase/supabase-js';
@@ -123,7 +122,6 @@ export async function POST(request: NextRequest) {
           invitationLink,
           actionLink,
           sentAt: new Date().toISOString(),
-          ...(resend.id ? { providerId: resend.id } : {}),
           ...(resend.error ? { providerNote: resend.error } : {}),
         });
       }

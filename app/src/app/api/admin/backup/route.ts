@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Backup type is required' }, { status: 400 });
       }
 
-      const backupId = await BackupService.createBackup(type, tables_included, user.id);
+      const backupId = await BackupService.createBackup(type, user.id);
 
       // Log the action
       // const requestInfo = getRequestInfo(req);
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
       // );
 
       // Start backup process asynchronously
-      BackupService.performBackup(backupId, type, tables_included).catch((error) => {
+      BackupService.performBackup(backupId, type).catch((error) => {
         console.error('Backup process failed:', error);
       });
 

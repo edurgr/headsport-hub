@@ -1,4 +1,3 @@
-export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
@@ -76,7 +75,6 @@ export async function POST(req: NextRequest) {
       message: resend.sent ? 'Invitation email sent via Resend' : 'Invitation created (email not sent)',
       emailSent: resend.sent,
       actionLink,
-      ...(resend.id ? { providerId: resend.id } : {}),
       ...(resend.error ? { providerNote: resend.error } : {}),
     });
   }

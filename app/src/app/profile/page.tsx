@@ -441,8 +441,7 @@ export default function ProfilePage() {
           <p className="text-sm text-gray-600 mb-6">
             Manage shipping addresses for orders. Add multiple and set one as preferred.
           </p>
-           {/* Pass user ID only if needed by AddressManager */}
-          <AddressManager useDatabase={true} userId={user?.id} />
+          <AddressManager useDatabase={true} />
         </div>
 
 
