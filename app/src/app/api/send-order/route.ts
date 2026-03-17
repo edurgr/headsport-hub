@@ -4,6 +4,7 @@ import {
   addSecurityHeaders,
   createSecureErrorResponse,
   sanitizeOrderItem,
+  sanitizeShippingAddress,
   schemas,
   validateRequest,
 } from '@/lib/security';
@@ -60,7 +61,8 @@ export async function POST(req: Request) {
 
     // Validate shipping address
     console.log('🔍 Validating shipping address format...');
-    const addressValidation = validateRequest(schemas.shippingAddress, shippingAddress);
+    const sanitizedAddress = sanitizeShippingAddress(shippingAddress);
+    const addressValidation = validateRequest(schemas.shippingAddress, sanitizedAddress);
     if (!addressValidation.success) {
       console.log('❌ Address validation failed:', addressValidation.error);
       return addSecurityHeaders(createSecureErrorResponse('Invalid shipping address', 400));
@@ -128,7 +130,7 @@ export async function POST(req: Request) {
         athlete_email: athleteEmail,
         athlete_name: (athlete && athlete.name) || athleteEmail.split('@')[0],
         status: 'pending_approval', // Changed from 'pending' to 'pending_approval'
-        shipping_address: shippingAddress,
+        shipping_address: sanitizedAddress,
         notes: `Order with ${rows.length} items - Pending manager approval`,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

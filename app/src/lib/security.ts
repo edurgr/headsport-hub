@@ -149,14 +149,18 @@ export function sanitizeOrderItem(item: any) {
 export function sanitizeShippingAddress(address: any) {
   return {
     name: sanitizeString(address.name || ''),
-    addressLine1: sanitizeString(address.addressLine1 || address.address || ''),
-    addressLine2: address.addressLine2 ? sanitizeString(address.addressLine2) : null,
+    addressLine1: sanitizeString(
+      address.addressLine1 || address.address_line1 || address.address || '',
+    ),
+    addressLine2: (address.addressLine2 || address.address_line2)
+      ? sanitizeString(address.addressLine2 || address.address_line2)
+      : null,
     city: sanitizeString(address.city || ''),
     state: sanitizeString(address.state || ''),
-    postalCode: sanitizeString(address.postalCode || ''),
+    postalCode: sanitizeString(address.postalCode || address.postal_code || ''),
     country: sanitizeString(address.country || 'US'),
     phone: address.phone ? sanitizeString(address.phone) : null,
-    isPreferred: address.isPreferred || false,
+    isPreferred: address.isPreferred || address.is_preferred || false,
   };
 }
 

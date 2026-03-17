@@ -199,7 +199,7 @@ export default function ProductSearch({ onSelect, selectedProduct }: ProductSear
           onBlur={() => setTimeout(() => setIsOpen(false), 150)} // Close dropdown on blur with delay
           placeholder="Search by name or article #"
            // Use theme classes or consistent styling
-          className="w-full input input-bordered pl-10"
+          className="w-full input input-bordered !pl-10 pr-10"
         />
          {searchQuery && ( // Clear button inside input
             <button
