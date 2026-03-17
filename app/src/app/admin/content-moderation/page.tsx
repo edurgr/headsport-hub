@@ -250,19 +250,18 @@ export default function ContentModerationPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin')) {
-    return (
-      <div className="p-6">
-        <div className="alert alert-error text-center">
-          <h1 className="text-2xl font-bold text-[hsl(var(--foreground))] mb-2">Access Denied</h1>
-          <p>Only administrators can access this page.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <ProtectedRoute requiredRole={['admin']}>
+    <ProtectedRoute
+      requiredRole={['admin', 'superadmin']}
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      }
+    >
       <div className="p-6 max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-[hsl(var(--foreground))] mb-2">
