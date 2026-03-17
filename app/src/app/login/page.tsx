@@ -53,8 +53,8 @@ export default function LoginPage(): ReactElement {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--background))] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full card space-y-8 p-8">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[hsl(var(--background))] px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md card space-y-8 p-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-[hsl(var(--foreground))]">
             {isSignUp ? 'Create your account' : 'Sign in to your account'}

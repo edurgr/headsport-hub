@@ -4,6 +4,8 @@ import { usePathname } from 'next/navigation';
 
 import type { FC, ReactNode } from 'react';
 
+import { useAuth } from '@/contexts/AuthContext';
+
 import Header from './Header';
 import SidebarContainer from './SidebarContainer';
 import DownloadOverlay from './DownloadOverlay';
@@ -13,6 +15,7 @@ type LayoutWrapperProps = {
 };
 
 const LayoutWrapper: FC<LayoutWrapperProps> = ({ children }) => {
+  const { user, profile, loading } = useAuth();
   const pathname = usePathname();
   const effectivePath =
     pathname || (typeof window !== 'undefined' ? window.location.pathname : null);
@@ -27,9 +30,18 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ children }) => {
     '/forgot-password',
   ];
 
+  // Important: `/` renders a login form when unauthenticated (see `app/page.tsx`).
+  // So treat `/` as public ONLY when the user is not authenticated; otherwise render the app shell.
+  const isRoot = effectivePath === '/';
+  const isAuthed = !!user || !!profile;
+
   // `usePathname()` can be null briefly during hydration; treat it as public to avoid flashing the app shell.
   const isPublicPage =
-    !effectivePath || publicPages.some((page) => effectivePath.startsWith(page));
+    !effectivePath ||
+    publicPages.some((page) => effectivePath.startsWith(page)) ||
+    (isRoot && !isAuthed) ||
+    // While auth is loading on `/`, keep it public to avoid shell flash.
+    (isRoot && loading);
 
   if (isPublicPage) {
     return (
