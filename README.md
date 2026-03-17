@@ -204,7 +204,7 @@ The application uses a role-based routing system to control access to different 
 
 ```mermaid
 graph LR
-    App[HEAD Hub] --> Public
+    App[HEAD Sport Hub] --> Public
     App --> Authenticated
 
     subgraph Public

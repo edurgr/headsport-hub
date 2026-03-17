@@ -15,3 +15,5 @@ export async function GET() {
 
   return NextResponse.json({ sessions: data || [] });
 }
+
+export const runtime = 'edge';

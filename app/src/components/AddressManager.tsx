@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import type { ReactElement } from 'react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useAddresses } from '@/hooks/useAddresses';
@@ -34,7 +35,7 @@ export default function AddressManager({
   onSelectAddress,
   selectMode = false,
   useDatabase = false,
-}: AddressManagerProps) {
+}: AddressManagerProps): ReactElement {
   const { user } = useAuth();
   const {
     addresses: dbAddresses,

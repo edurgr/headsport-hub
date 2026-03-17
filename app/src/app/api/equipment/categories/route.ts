@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 
-// Ensure Node runtime and disable static optimization/caching for correctness
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export async function GET() {
   // Always expose the full, normalized category list so the UI can offer all options

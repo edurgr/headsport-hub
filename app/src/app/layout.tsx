@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
 import { Geist, Geist_Mono } from 'next/font/google';
 
 import LayoutWrapper from '@/components/LayoutWrapper';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { DownloadProvider } from '@/contexts/DownloadContext';
 
 import './globals.css';
 
@@ -17,20 +19,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'HEAD Hub',
-  description: 'Athlete management platform tailored for HEAD GmbH',
+  title: 'HEAD Sport Hub',
+  description: 'Content and order management for HEAD athletes and managers.',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { readonly children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
-          <LayoutWrapper>{children}</LayoutWrapper>
+          <DownloadProvider>
+            <LayoutWrapper>{children}</LayoutWrapper>
+          </DownloadProvider>
         </AuthProvider>
       </body>
     </html>

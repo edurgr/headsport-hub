@@ -4,9 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 
 import { supabaseServer } from '@/lib/supabase-server';
 
-// Ensure Node runtime and prevent static optimization to avoid redirect loops in dev
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);

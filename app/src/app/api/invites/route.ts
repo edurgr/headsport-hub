@@ -90,3 +90,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, message: 'Invitation created (manual share)', emailSent: false, actionLink, providerNote: e instanceof Error ? e.message : 'Supabase mailer failed' });
   }
 }
+export const runtime = 'edge';

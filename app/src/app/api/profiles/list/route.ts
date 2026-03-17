@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 
 import { supabaseAdmin as serviceClient } from '@/lib/supabase-admin';
 import { supabaseServer } from '@/lib/supabase-server';
+import { decodeBase64ToUtf8 } from '@/lib/edge-compat';
 
 export async function GET(req: Request) {
   try {
@@ -41,7 +42,7 @@ export async function GET(req: Request) {
       try {
         const payloadB64 = token.split('.')[1];
         const base64 = payloadB64.replace(/-/g, '+').replace(/_/g, '/');
-        const payloadJson = Buffer.from(base64, 'base64').toString('utf8');
+        const payloadJson = decodeBase64ToUtf8(base64);
         const payload = JSON.parse(payloadJson);
         requesterId = payload.sub || payload.user_id || null;
       } catch {}
@@ -183,3 +184,4 @@ export async function GET(req: Request) {
     );
   }
 }
+export const runtime = 'edge';

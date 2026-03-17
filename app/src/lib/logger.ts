@@ -1,5 +1,5 @@
 /**
- * Structured logging utility for Athlete Hub
+ * Structured logging utility for HEAD Sport Hub
  * Provides consistent logging across the application
  */
 

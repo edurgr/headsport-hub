@@ -1,4 +1,4 @@
--- HEAD Hub Database Schema
+-- HEAD Sport Hub Database Schema
 -- Complete schema with all product tables, role-based access control, and business logic
 -- Based on CSV data structures and application requirements
 
@@ -834,11 +834,11 @@ BEGIN
     END IF;
     
     -- Create demo users
-    PERFORM create_test_user('admin@headhub.com', 'admin', 'Demo Admin', 'HEAD Hub');
-PERFORM create_test_user('manager@headhub.com', 'manager', 'Demo Manager', 'HEAD Hub');
-PERFORM create_test_user('athlete@headhub.com', 'athlete', 'Demo Athlete', 'HEAD Hub');
+    PERFORM create_test_user('admin@headsport-hub.com', 'admin', 'Demo Admin', 'HEAD Sport Hub');
+PERFORM create_test_user('manager@headsport-hub.com', 'manager', 'Demo Manager', 'HEAD Sport Hub');
+PERFORM create_test_user('athlete@headsport-hub.com', 'athlete', 'Demo Athlete', 'HEAD Sport Hub');
     
-    result := 'Demo data created successfully: admin@headhub.com, manager@headhub.com, athlete@headhub.com';
+    result := 'Demo data created successfully: admin@headsport-hub.com, manager@headsport-hub.com, athlete@headsport-hub.com';
     RETURN result;
 END;
 $$;
@@ -858,12 +858,12 @@ BEGIN
         RAISE EXCEPTION 'Only admins can cleanup demo data';
     END IF;
     
-    -- Delete all profiles with @headhub.com emails
-DELETE FROM profiles WHERE email LIKE '%@headhub.com';
+    -- Delete all profiles with @headsport-hub.com emails
+DELETE FROM profiles WHERE email LIKE '%@headsport-hub.com';
     GET DIAGNOSTICS deleted_count = ROW_COUNT;
     
     -- Also delete any related invites
-    DELETE FROM invites WHERE email LIKE '%@headhub.com';
+    DELETE FROM invites WHERE email LIKE '%@headsport-hub.com';
     
     RETURN 'Demo data cleanup completed. Deleted ' || deleted_count || ' profiles.';
 END;

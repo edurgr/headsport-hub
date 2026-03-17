@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Script de verificación para HEAD Hub
-echo "🔍 Verificando configuración de HEAD Hub..."
+# Script de verificación para HEAD Sport Hub
+echo "🔍 Verificando configuración de HEAD Sport Hub..."
 
 # Colores para output
 RED='\033[0;31m'

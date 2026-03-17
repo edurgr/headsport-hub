@@ -97,3 +97,4 @@ export async function GET(req: Request) {
     );
   }
 }
+export const runtime = 'edge';

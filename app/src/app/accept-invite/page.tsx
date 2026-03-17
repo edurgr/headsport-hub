@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { ReactElement } from 'react';
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabaseClient } from '@/lib/supabase-client';
 
-export default function AcceptInvitePage() {
+export default function AcceptInvitePage(): ReactElement {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');

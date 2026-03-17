@@ -1,184 +1,167 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import { Address } from '@/components/AddressManager';
 import { supabaseClient } from '@/lib/supabase-client';
+import { useAuth } from '@/contexts/AuthContext';
 
-export function useAddresses(userId?: string) {
+export function useAddresses() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
-  const fetchAddresses = async () => {
-    if (!userId) {
-      setAddresses([]);
-      setLoading(false);
-      return;
-    }
-
+  const fetchAddresses = useCallback(async () => {
+    if (!user?.id) return;
+    setLoading(true);
     try {
-      setLoading(true);
-      setError(null);
-
-      const { data, error: fetchError } = await supabaseClient
+      const { data, error } = await supabaseClient
         .from('addresses')
         .select('*')
-        .eq('user_id', userId)
-        .order('is_preferred', { ascending: false })
-        .order('created_at', { ascending: false });
-
-      if (fetchError) {
-        throw fetchError;
-      }
-
-      const formattedAddresses: Address[] = (data || []).map((addr) => ({
-        id: addr.id,
-        name: addr.name,
-        addressLine1: addr.address_line1,
-        addressLine2: addr.address_line2,
-        city: addr.city,
-        state: addr.state,
-        postalCode: addr.postal_code,
-        country: addr.country,
-        phone: addr.phone,
-        isPreferred: addr.is_preferred,
-      }));
-
-      setAddresses(formattedAddresses);
-    } catch (err) {
+        .eq('user_id', user.id);
+      if (error) throw error;
+      setAddresses(data || []);
+    } catch (err: any) {
       console.error('Error fetching addresses:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch addresses');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
-  const saveAddress = async (address: Omit<Address, 'id'>) => {
-    if (!userId) {
-      throw new Error('User ID is required');
-    }
-
-    try {
-      const { data, error: saveError } = await supabaseClient
-        .from('addresses')
-        .insert({
-          user_id: userId,
-          name: address.name,
-          address_line1: address.addressLine1,
-          address_line2: address.addressLine2,
-          city: address.city,
-          state: address.state,
-          postal_code: address.postalCode,
-          country: address.country,
-          phone: address.phone,
-          is_preferred: address.isPreferred,
-        })
-        .select()
-        .single();
-
-      if (saveError) {
-        throw saveError;
+  const saveAddress = useCallback(
+    async (address: Omit<Address, 'id'>) => {
+      if (!user?.id) {
+        throw new Error('User ID is required');
       }
 
-      // Refresh addresses
-      await fetchAddresses();
-      return data;
-    } catch (err) {
-      console.error('Error saving address:', err);
-      throw err;
-    }
-  };
+      try {
+        const { data, error: saveError } = await supabaseClient
+          .from('addresses')
+          .insert({
+            user_id: user.id,
+            name: address.name,
+            address_line1: address.addressLine1,
+            address_line2: address.addressLine2,
+            city: address.city,
+            state: address.state,
+            postal_code: address.postalCode,
+            country: address.country,
+            phone: address.phone,
+            is_preferred: address.isPreferred,
+          })
+          .select()
+          .single();
 
-  const updateAddress = async (addressId: string, updates: Partial<Omit<Address, 'id'>>) => {
-    if (!userId) {
-      throw new Error('User ID is required');
-    }
+        if (saveError) {
+          throw saveError;
+        }
 
-    try {
-      const updateData: any = {};
+        await fetchAddresses();
+        return data;
+      } catch (err) {
+        console.error('Error saving address:', err);
+        throw err;
+      }
+    },
+    [user?.id, fetchAddresses],
+  );
 
-      if (updates.name !== undefined) updateData.name = updates.name;
-      if (updates.addressLine1 !== undefined) updateData.address_line1 = updates.addressLine1;
-      if (updates.addressLine2 !== undefined) updateData.address_line2 = updates.addressLine2;
-      if (updates.city !== undefined) updateData.city = updates.city;
-      if (updates.state !== undefined) updateData.state = updates.state;
-      if (updates.postalCode !== undefined) updateData.postal_code = updates.postalCode;
-      if (updates.country !== undefined) updateData.country = updates.country;
-      if (updates.phone !== undefined) updateData.phone = updates.phone;
-      if (updates.isPreferred !== undefined) updateData.is_preferred = updates.isPreferred;
-
-      const { error: updateError } = await supabaseClient
-        .from('addresses')
-        .update(updateData)
-        .eq('id', addressId)
-        .eq('user_id', userId);
-
-      if (updateError) {
-        throw updateError;
+  const updateAddress = useCallback(
+    async (addressId: string, updates: Partial<Omit<Address, 'id'>>) => {
+      if (!user?.id) {
+        throw new Error('User ID is required');
       }
 
-      // Refresh addresses
-      await fetchAddresses();
-    } catch (err) {
-      console.error('Error updating address:', err);
-      throw err;
-    }
-  };
+      try {
+        const updateData: any = {};
 
-  const deleteAddress = async (addressId: string) => {
-    if (!userId) {
-      throw new Error('User ID is required');
-    }
+        if (updates.name !== undefined) updateData.name = updates.name;
+        if (updates.addressLine1 !== undefined) updateData.address_line1 = updates.addressLine1;
+        if (updates.addressLine2 !== undefined) updateData.address_line2 = updates.addressLine2;
+        if (updates.city !== undefined) updateData.city = updates.city;
+        if (updates.state !== undefined) updateData.state = updates.state;
+        if (updates.postalCode !== undefined) updateData.postal_code = updates.postalCode;
+        if (updates.country !== undefined) updateData.country = updates.country;
+        if (updates.phone !== undefined) updateData.phone = updates.phone;
+        if (updates.isPreferred !== undefined) updateData.is_preferred = updates.isPreferred;
 
-    try {
-      const { error: deleteError } = await supabaseClient
-        .from('addresses')
-        .delete()
-        .eq('id', addressId)
-        .eq('user_id', userId);
+        const { error: updateError } = await supabaseClient
+          .from('addresses')
+          .update(updateData)
+          .eq('id', addressId)
+          .eq('user_id', user.id);
 
-      if (deleteError) {
-        throw deleteError;
+        if (updateError) {
+          throw updateError;
+        }
+
+        await fetchAddresses();
+      } catch (err) {
+        console.error('Error updating address:', err);
+        throw err;
+      }
+    },
+    [user?.id, fetchAddresses],
+  );
+
+  const deleteAddress = useCallback(
+    async (addressId: string) => {
+      if (!user?.id) {
+        throw new Error('User ID is required');
       }
 
-      // Refresh addresses
-      await fetchAddresses();
-    } catch (err) {
-      console.error('Error deleting address:', err);
-      throw err;
-    }
-  };
+      try {
+        const { error: deleteError } = await supabaseClient
+          .from('addresses')
+          .delete()
+          .eq('id', addressId)
+          .eq('user_id', user.id);
 
-  const setPreferredAddress = async (addressId: string) => {
-    if (!userId) {
-      throw new Error('User ID is required');
-    }
+        if (deleteError) {
+          throw deleteError;
+        }
 
-    try {
-      // First, unset all preferred addresses for this user
-      await supabaseClient.from('addresses').update({ is_preferred: false }).eq('user_id', userId);
+        await fetchAddresses();
+      } catch (err) {
+        console.error('Error deleting address:', err);
+        throw err;
+      }
+    },
+    [user?.id, fetchAddresses],
+  );
 
-      // Then set the selected address as preferred
-      const { error: updateError } = await supabaseClient
-        .from('addresses')
-        .update({ is_preferred: true })
-        .eq('id', addressId)
-        .eq('user_id', userId);
-
-      if (updateError) {
-        throw updateError;
+  const setPreferredAddress = useCallback(
+    async (addressId: string) => {
+      if (!user?.id) {
+        throw new Error('User ID is required');
       }
 
-      // Refresh addresses
-      await fetchAddresses();
-    } catch (err) {
-      console.error('Error setting preferred address:', err);
-      throw err;
-    }
-  };
+      try {
+        // First, unset all preferred addresses for this user
+        await supabaseClient.from('addresses').update({ is_preferred: false }).eq('user_id', user.id);
+
+        // Then set the selected address as preferred
+        const { error: updateError } = await supabaseClient
+          .from('addresses')
+          .update({ is_preferred: true })
+          .eq('id', addressId)
+          .eq('user_id', user.id);
+
+        if (updateError) {
+          throw updateError;
+        }
+
+        await fetchAddresses();
+      } catch (err) {
+        console.error('Error setting preferred address:', err);
+        throw err;
+      }
+    },
+    [user?.id, fetchAddresses],
+  );
 
   useEffect(() => {
     fetchAddresses();
-  }, [userId]);
+  }, [fetchAddresses]);
 
   return {
     addresses,

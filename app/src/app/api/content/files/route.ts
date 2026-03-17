@@ -208,6 +208,8 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
+export const runtime = 'edge';
+
 // POST /api/content/files
 // Body: { session_id, filename, file_path, file_size, file_type, mime_type, thumbnail_path?, metadata? }
 export async function POST(req: NextRequest) {

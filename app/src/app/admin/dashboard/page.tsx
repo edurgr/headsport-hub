@@ -80,13 +80,13 @@ export default function AdminDashboard() {
       const data = await response.json();
 
       if (response.ok) {
-        setDashboardData(data);
+        setDashboardData(data.data);
         setError(null);
       } else {
-        setError(data.error || 'Failed to fetch dashboard data');
+        setError(data.error || 'Failed to fetch dashboard data.');
       }
-    } catch (_error) {
-      setError('Error fetching dashboard data');
+    } catch {
+      setError('Failed to fetch dashboard data.');
     } finally {
       setLoading(false);
     }

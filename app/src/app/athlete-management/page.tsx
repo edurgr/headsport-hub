@@ -25,42 +25,15 @@ export default function AthleteManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalAthletes, setTotalAthletes] = useState(0);
-  const [selectedAthlete, setSelectedAthlete] = useState<AthleteData | null>(null);
-  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   // Check if user has permission to access this page
   const hasPermission =
     profile?.role === 'manager' || profile?.role === 'admin' || profile?.role === 'superadmin';
 
   useEffect(() => {
-    if (hasPermission) {
-      fetchAthletes();
-    }
-  }, [hasPermission, currentPage]);
-
-  // Filter athletes based on search term and role filter
-  useEffect(() => {
-    let filtered = [...athletes];
-
-    // Filter by role
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter((athlete) => athlete.role === roleFilter);
-    }
-
-    // Filter by search term
-    if (searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (athlete) =>
-          athlete.name?.toLowerCase().includes(searchLower) ||
-          (athlete.email?.toLowerCase() || '').includes(searchLower) ||
-          athlete.organization?.toLowerCase().includes(searchLower) ||
-          athlete.phone?.toLowerCase().includes(searchLower),
-      );
-    }
-
-    setFilteredAthletes(filtered);
-  }, [athletes, searchTerm, roleFilter]);
+    setIsDemoMode(process.env.NEXT_PUBLIC_DEMO_MODE === 'true');
+  }, []);
 
   const fetchAthletes = useCallback(async () => {
     try {
@@ -114,6 +87,36 @@ export default function AthleteManagementPage() {
       setLoading(false);
     }
   }, [currentPage]);
+
+  useEffect(() => {
+    if (hasPermission) {
+      fetchAthletes();
+    }
+  }, [hasPermission, fetchAthletes]);
+
+  // Filter athletes based on search term and role filter
+  useEffect(() => {
+    let filtered = [...athletes];
+
+    // Filter by role
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter((athlete) => athlete.role === roleFilter);
+    }
+
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (athlete) =>
+          athlete.name?.toLowerCase().includes(searchLower) ||
+          (athlete.email?.toLowerCase() || '').includes(searchLower) ||
+          athlete.organization?.toLowerCase().includes(searchLower) ||
+          athlete.phone?.toLowerCase().includes(searchLower),
+      );
+    }
+
+    setFilteredAthletes(filtered);
+  }, [athletes, searchTerm, roleFilter]);
 
   // Role colors handled via badge tokens in UI
 
@@ -182,7 +185,7 @@ export default function AthleteManagementPage() {
       <div className="min-h-screen bg-[hsl(var(--background))] flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-[hsl(var(--foreground))] mb-4">Access Denied</h1>
-          <p className="text-[hsl(var(--muted))">You don't have permission to access this page.</p>
+          <p className="text-[hsl(var(--muted))]">You don't have permission to access this page.</p>
         </div>
       </div>
     );
@@ -200,8 +203,7 @@ export default function AthleteManagementPage() {
             Manage and monitor all athletes in the platform
           </p>
 
-          {/* Demo Mode Notice */}
-          {!process.env.NEXT_PUBLIC_SUPABASE_URL && (
+          {isDemoMode && (
             <div
               className="mt-4 p-4 rounded-lg"
               style={{
@@ -818,7 +820,7 @@ export default function AthleteManagementPage() {
                               {athlete.role}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-[hsl(var(--foreground))]">
+                          <td className="px-6 py-4 whitespace-nowactrap text-sm text-[hsl(var(--foreground))]">
                             {athlete.organization || '-'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-[hsl(var(--foreground))]">
@@ -853,8 +855,8 @@ export default function AthleteManagementPage() {
                             <div className="flex space-x-2">
                               <button
                                 onClick={() => {
-                                  setSelectedAthlete(athlete);
-                                  setShowProfileModal(true);
+                                  // setSelectedAthlete(athlete); // Removed
+                                  // setShowProfileModal(true); // Removed
                                 }}
                                 className="hover:opacity-80"
                                 style={{ color: 'hsl(var(--info))' }}

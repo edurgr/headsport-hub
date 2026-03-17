@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import type { ReactElement } from 'react';
 
 import { useRouter } from 'next/navigation';
 
 import { supabaseClient } from '@/lib/supabase-client';
 
-export default function AuthCallbackPage() {
+export default function AuthCallbackPage(): ReactElement {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
   const [isRecovery, setIsRecovery] = useState(false);
@@ -49,7 +50,7 @@ export default function AuthCallbackPage() {
           }, 2000);
         } else {
           setStatus('error');
-          setMessage('No HEAD Hub session found. Please try signing in again.');
+          setMessage('No HEAD Sport Hub session found. Please try signing in again.');
         }
       } catch (error) {
         console.error('Unexpected error in auth callback:', error);
@@ -103,10 +104,10 @@ export default function AuthCallbackPage() {
         setFormError('Passwords do not match');
         return;
       }
-      const { data: upd, error: updErr } = await supabaseClient.auth.updateUser({ password });
-      if (updErr) {
-        console.error('updateUser error:', updErr);
-        setFormError(updErr.message || 'Failed to update password');
+      const { error } = await supabaseClient.auth.updateUser({ password });
+      if (error) {
+        console.error('updateUser error:', error);
+        setFormError(error.message || 'Failed to update password');
         return;
       }
       setMessage('Password updated successfully! Redirecting...');
@@ -121,7 +122,9 @@ export default function AuthCallbackPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token: inviteToken }),
           });
-        } catch {}
+        } catch {
+          // It's safe to ignore this error, as it's just a sync call
+        }
       }
 
       // Clear hash to avoid re-triggering recovery on back/refresh
@@ -129,7 +132,7 @@ export default function AuthCallbackPage() {
         window.history.replaceState({}, '', window.location.pathname + window.location.search);
       } catch {}
       setTimeout(() => router.push('/'), 1500);
-    } catch (err) {
+    } catch (_err) {
       setFormError('Unexpected error updating password');
     } finally {
       setUpdating(false);

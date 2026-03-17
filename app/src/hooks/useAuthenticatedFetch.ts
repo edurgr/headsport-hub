@@ -74,3 +74,4 @@ export function useAuthenticatedFetch() {
 
   return { authenticatedFetch };
 }
+

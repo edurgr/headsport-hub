@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react'; // Import useCallback
 
 import Image from 'next/image';
 
@@ -69,7 +69,7 @@ export default function ContentPage() {
   const nextViewer = () => setViewerIndex((i) => (i + 1) % viewerItems.length);
 
   // Selection helpers
-  const getDisplayedItems = (): GalleryItem[] => {
+  const getDisplayedItems = useCallback((): GalleryItem[] => {
     if (viewMode === 'grid') {
       return activeAuthorId ? items.filter((it) => it.author_id === activeAuthorId) : items;
     }
@@ -78,7 +78,7 @@ export default function ContentPage() {
     const filtered =
       tableFilter.type === 'all' ? base : base.filter((it) => it.file_type === tableFilter.type);
     const sorted = [...filtered].sort((a, b) => {
-      const dir = -1; // descending
+      const dir = tableSort.dir === 'asc' ? 1 : -1;
       switch (tableSort.key) {
         case 'filename':
           return a.filename.localeCompare(b.filename) * dir;
@@ -87,7 +87,10 @@ export default function ContentPage() {
         case 'file_type':
           return a.file_type.localeCompare(b.file_type) * dir;
         case 'rating':
-          return ((((a.metadata as any)?.rating || 0) - ((b.metadata as any)?.rating || 0)) * dir);
+          // Ensure metadata exists and has rating, default to 0
+          const ratingA = (a.metadata as any)?.rating || 0;
+          const ratingB = (b.metadata as any)?.rating || 0;
+          return (ratingA - ratingB) * dir;
         case 'created_at':
         default:
           return (
@@ -96,9 +99,9 @@ export default function ContentPage() {
       }
     });
     return sorted;
-  };
+  }, [viewMode, activeAuthorId, items, tableFilter.type, tableSort.key, tableSort.dir]);
 
-  const toggleMasterForDisplayed = (checked: boolean) => {
+  const toggleMasterForDisplayed = useCallback((checked: boolean) => {
     const displayed = getDisplayedItems();
     const displayedIds = new Set(displayed.map((it) => it.id));
     setSelected((prev) => {
@@ -114,7 +117,7 @@ export default function ContentPage() {
       }
       return next;
     });
-  };
+  }, [getDisplayedItems]);
 
   const selectAllForAuthor = (authorId: string) => {
     const list = items.filter((it) => it.author_id === authorId);
@@ -147,14 +150,18 @@ export default function ContentPage() {
         addToast('Selection cleared', 'info');
         return;
       }
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedCount > 0 && (role === 'admin' || role === 'manager' || role === 'superadmin')) {
+      if (
+        (e.key === 'Delete' || e.key === 'Backspace') &&
+        selectedCount > 0 &&
+        (role === 'admin' || role === 'manager' || role === 'superadmin')
+      ) {
         e.preventDefault();
         setShowDeleteSelectedModal(true);
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [selectedCount, role]);
+  }, [selectedCount, role, toggleMasterForDisplayed, addToast]);
 
   async function downloadFromSignedUrls(entries: { url: string; filename: string }[]) {
     const total = entries.length || 1;
@@ -192,19 +199,19 @@ export default function ContentPage() {
         console.log('Session token:', token ? 'present' : 'missing');
 
         // Fetch user role
-        let role: 'athlete' | 'manager' | 'admin' | 'superadmin' = 'athlete';
+        let userRole: 'athlete' | 'manager' | 'admin' | 'superadmin' = 'athlete';
         if (user) {
           const { data: prof } = await supabaseClient
             .from('profiles')
             .select('role,name')
             .eq('id', user.id)
             .single();
-          if (prof?.role) role = prof.role;
+          if (prof?.role) userRole = prof.role;
         }
-        setRole(role);
+        setRole(userRole);
 
         // Athlete: fetch directly from Supabase with RLS and sign URLs client-side
-        if (role === 'athlete') {
+        if (userRole === 'athlete') {
           console.log('Fetching content client-side for athlete');
           const { data: files, error } = await supabaseClient
             .from('upload_files')
@@ -227,7 +234,7 @@ export default function ContentPage() {
           const itemsLocal: GalleryItem[] = await Promise.all(
             (files || []).map(async (f) => {
               const session = sessionMap.get(f.session_id);
-              const authorName = session ? '' : '';
+              const authorName = session ? '' : ''; // Logic for author name seems incomplete
               let url: string | null = null;
               let thumbnail_url: string | null = null;
 
@@ -287,7 +294,7 @@ export default function ContentPage() {
     };
 
     fetchItems();
-  }, []);
+  }, []); // Initial fetch runs only once
 
   const openEdit = (item: GalleryItem) => {
     setEditing(item);
@@ -335,21 +342,22 @@ export default function ContentPage() {
         return;
       }
       // Refresh list using the same logic as on mount
+      // NOTE: This re-fetches everything. A more efficient way would be to update the item in state.
       setIsLoading(true);
       try {
         const { data: sessionData } = await supabaseClient.auth.getSession();
         const user = sessionData.session?.user || null;
         const token = sessionData.session?.access_token;
-        let role: 'athlete' | 'manager' | 'admin' = 'athlete';
+        let userRole: 'athlete' | 'manager' | 'admin' = 'athlete'; // Renamed
         if (user) {
           const { data: prof } = await supabaseClient
             .from('profiles')
             .select('role')
             .eq('id', user.id)
             .single();
-          if (prof?.role) role = prof.role;
+          if (prof?.role) userRole = prof.role;
         }
-        if (role === 'athlete') {
+        if (userRole === 'athlete') {
           const { data: files } = await supabaseClient
             .from('upload_files')
             .select('*')
@@ -412,7 +420,7 @@ export default function ContentPage() {
         setIsLoading(false);
       }
       setEditing(null);
-    } catch (e) {
+    } catch {
       alert('Failed to save');
     }
   };
@@ -420,6 +428,7 @@ export default function ContentPage() {
   return (
     <ProtectedRoute>
       <style jsx>{`
+        /* Styles remain unchanged */
         .mobile-scroll {
           -webkit-overflow-scrolling: touch;
           overflow-x: auto;
@@ -627,33 +636,7 @@ export default function ContentPage() {
                 {Object.values(selected).some(Boolean) && (
                   <button
                     disabled={deleting}
-                    onClick={async () => {
-                      try {
-                        setDeleting(true);
-                        const ids = Object.entries(selected)
-                          .filter(([_, v]) => v)
-                          .map(([k]) => k);
-                        const { data: sessionData } = await supabaseClient.auth.getSession();
-                        const token = sessionData.session?.access_token;
-                        const res = await fetch('/api/content/files', {
-                          method: 'DELETE',
-                          headers: {
-                            'Content-Type': 'application/json',
-                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                          },
-                          body: JSON.stringify({ ids }),
-                        });
-                        if (!res.ok) {
-                          const j = await res.json().catch(() => ({}));
-                          alert(j.error || 'Failed to delete selected');
-                          return;
-                        }
-                        addToast('Selected items deleted', 'success');
-                        // Refresh list
-                        window.location.reload();
-                      } finally {
-                        setDeleting(false);
-                      }
+                    onClick={() => setShowDeleteSelectedModal(true)}
                     }}
                     className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
                   >

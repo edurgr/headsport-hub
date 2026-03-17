@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { ReactElement } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function SignupPage() {
+export default function SignUpPage(): ReactElement {
   const { signUpWithEmail, profile } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');

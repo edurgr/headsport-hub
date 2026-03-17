@@ -26,3 +26,4 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ item: data });
 }
+export const runtime = 'edge';

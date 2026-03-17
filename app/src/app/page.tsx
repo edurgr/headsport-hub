@@ -1,24 +1,22 @@
 'use client';
 
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { supabaseClient } from '@/lib/supabase-client';
 
 export default function Home() {
   const router = useRouter();
-  const { user, profile, loading, hydrated, signInWithEmail } = useAuth();
+  const { user, profile, loading, signInWithEmail } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [linkMsg, setLinkMsg] = useState<string | null>(null);
-  const brandName = process.env.NEXT_PUBLIC_BRAND_NAME || 'HEAD Hub';
+  const brandName = process.env.NEXT_PUBLIC_BRAND_NAME || 'HEAD Sport Hub';
 
   useEffect(() => {
     setMounted(true);
@@ -127,11 +125,6 @@ export default function Home() {
             {error && (
               <div className="alert alert-error">
                 <div className="text-sm">{error}</div>
-              </div>
-            )}
-            {linkMsg && (
-              <div className="alert alert-success">
-                <div className="text-sm">{linkMsg}</div>
               </div>
             )}
             <div className="rounded-md shadow-sm -space-y-px">

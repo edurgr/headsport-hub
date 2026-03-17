@@ -4,7 +4,6 @@ import {
   addSecurityHeaders,
   createSecureErrorResponse,
   sanitizeOrderItem,
-  sanitizeShippingAddress,
   schemas,
   validateRequest,
 } from '@/lib/security';
@@ -23,21 +22,6 @@ interface OrderItem {
   quantity: number;
   boot_size: string;
   binding_color?: string;
-}
-
-interface OrderRequest {
-  rows: OrderItem[];
-  athleteEmail: string;
-  shippingAddress: {
-    name: string;
-    addressLine1: string;
-    addressLine2?: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-    phone?: string;
-  };
 }
 
 export async function POST(req: Request) {
@@ -86,7 +70,7 @@ export async function POST(req: Request) {
     // Sanitize and validate each order item
     console.log('🔍 Validating order items...');
     const validationErrors: string[] = [];
-    const sanitizedRows = rows
+    rows
       .map((row: any, index: number) => {
         try {
           console.log(`🔍 Validating item ${index + 1}:`, JSON.stringify(row, null, 2));
@@ -154,7 +138,7 @@ export async function POST(req: Request) {
 
     if (orderError) {
       return NextResponse.json(
-        { error: 'Failed to create HEAD Hub order: ' + orderError.message },
+        { error: 'Failed to create HEAD Sport Hub order: ' + orderError.message },
         { status: 500 },
       );
     }
@@ -180,7 +164,7 @@ export async function POST(req: Request) {
       // Rollback order creation if items fail
       await sb.from('orders').delete().eq('id', order.id);
       return NextResponse.json(
-        { error: 'Failed to create HEAD Hub order items: ' + itemsError.message },
+        { error: 'Failed to create HEAD Sport Hub order items: ' + itemsError.message },
         { status: 500 },
       );
     }
@@ -223,3 +207,4 @@ export async function POST(req: Request) {
     );
   }
 }
+export const runtime = 'edge';

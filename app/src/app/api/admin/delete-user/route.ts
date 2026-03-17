@@ -57,14 +57,21 @@ export async function POST(request: NextRequest) {
       const maxPages = 20;
       while (page <= maxPages) {
         const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
-        if (error) break;
-        const users = data?.users || [];
-        const match = users.find((u: any) => (u.email || '').toLowerCase() === normalized);
-        if (match) {
-          userId = match.id;
-          break;
+        if (error) {
+          // It's fine if the user doesn't exist in 'users' table, they might only be in 'auth.users'
+          if (error.code !== 'PGRST116') {
+            throw error;
+          }
+        } else if (data) {
+          // User exists in 'users' table, proceed with caution
+          const users = data?.users || [];
+          const match = users.find((u: any) => (u.email || '').toLowerCase() === normalized);
+          if (match) {
+            userId = match.id;
+            break;
+          }
+          if (users.length < perPage) break;
         }
-        if (users.length < perPage) break;
         page += 1;
       }
     } catch {}
@@ -141,3 +148,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+export const runtime = 'edge';

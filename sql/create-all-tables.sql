@@ -1,4 +1,4 @@
--- HEAD Hub Database Schema - Complete Product Tables
+-- HEAD Sport Hub Database Schema - Complete Product Tables
 -- Creates all product tables based on CSV structure
 -- Safe to run multiple times (IF NOT EXISTS guards)
 
