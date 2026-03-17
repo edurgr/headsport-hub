@@ -4,7 +4,6 @@ import { usePathname } from 'next/navigation';
 
 import type { FC, ReactNode } from 'react';
 
-import { useAuth } from '@/contexts/AuthContext';
 import Header from './Header';
 import SidebarContainer from './SidebarContainer';
 import DownloadOverlay from './DownloadOverlay';
@@ -14,8 +13,9 @@ type LayoutWrapperProps = {
 };
 
 const LayoutWrapper: FC<LayoutWrapperProps> = ({ children }) => {
-  const { user, profile } = useAuth();
   const pathname = usePathname();
+  const effectivePath =
+    pathname || (typeof window !== 'undefined' ? window.location.pathname : null);
 
   // Páginas públicas que no necesitan sidebar ni layout especial
   const publicPages = [
@@ -28,7 +28,8 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ children }) => {
   ];
 
   // `usePathname()` can be null briefly during hydration; treat it as public to avoid flashing the app shell.
-  const isPublicPage = !pathname || publicPages.some((page) => pathname.startsWith(page));
+  const isPublicPage =
+    !effectivePath || publicPages.some((page) => effectivePath.startsWith(page));
 
   if (isPublicPage) {
     return (
