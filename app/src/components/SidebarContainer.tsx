@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function SidebarContainer() {
   const { profile, signOut, forceSignOut, user } = useAuth();
+  const showForceSignOut = process.env.NODE_ENV !== 'production';
 
   if (!profile) {
     // Fallback header actions when the sidebar is hidden due to missing profile
@@ -20,14 +21,16 @@ export default function SidebarContainer() {
             Sign Out
           </button>
         )}
-        <button
-          onClick={forceSignOut}
-          className="px-3 h-9 inline-flex items-center rounded-md bg-red-600 text-white text-sm hover:opacity-90 transition-colors"
-          title="Force Sign Out"
-          aria-label="Force Sign Out"
-        >
-          Force Sign Out
-        </button>
+        {showForceSignOut ? (
+          <button
+            onClick={forceSignOut}
+            className="px-3 h-9 inline-flex items-center rounded-md bg-red-600 text-white text-sm hover:opacity-90 transition-colors"
+            title="Force Sign Out"
+            aria-label="Force Sign Out"
+          >
+            Force Sign Out
+          </button>
+        ) : null}
       </div>
     );
   }

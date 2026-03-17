@@ -7,7 +7,6 @@ import type { FC, ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from './Header';
 import SidebarContainer from './SidebarContainer';
-import { DownloadProvider } from '@/contexts/DownloadContext';
 import DownloadOverlay from './DownloadOverlay';
 
 type LayoutWrapperProps = {
@@ -28,31 +27,28 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ children }) => {
     '/forgot-password',
   ];
 
-  const isPublicPage = publicPages.some((page) => pathname?.startsWith(page));
+  // `usePathname()` can be null briefly during hydration; treat it as public to avoid flashing the app shell.
+  const isPublicPage = !pathname || publicPages.some((page) => pathname.startsWith(page));
 
   if (isPublicPage) {
     return (
       <div className="min-h-screen">
-        <DownloadProvider>
-          {children}
-          <DownloadOverlay />
-        </DownloadProvider>
+        {children}
+        <DownloadOverlay />
       </div>
     );
   }
 
   // Páginas protegidas con sidebar
   return (
-    <DownloadProvider>
-      <div className="flex h-screen w-full">
-        <SidebarContainer />
-        <div className="flex flex-1 flex-col">
-          <Header />
-          <main className="flex-1 overflow-y-auto p-6">{children}</main>
-        </div>
+    <div className="flex h-screen w-full">
+      <SidebarContainer />
+      <div className="flex flex-1 flex-col">
+        <Header />
+        <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
       <DownloadOverlay />
-    </DownloadProvider>
+    </div>
   );
 };
 

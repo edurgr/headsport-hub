@@ -11,6 +11,7 @@ import NotificationCenter from './NotificationCenter';
 export default function Header() {
   const [isDemoMode, setIsDemoMode] = useState(false);
   const { user, signOut, forceSignOut } = useAuth();
+  const showForceSignOut = process.env.NODE_ENV !== 'production';
 
   useEffect(() => {
     setIsDemoMode(process.env.NEXT_PUBLIC_DEMO_MODE === 'true');
@@ -47,14 +48,16 @@ export default function Header() {
             >
               Sign Out
             </button>
-            <button
-              onClick={forceSignOut}
-              className="px-3 h-9 inline-flex items-center rounded-md bg-red-600 text-white text-sm hover:opacity-90 transition-colors"
-              title="Force Sign Out"
-              aria-label="Force Sign Out"
-            >
-              Force
-            </button>
+            {showForceSignOut ? (
+              <button
+                onClick={forceSignOut}
+                className="px-3 h-9 inline-flex items-center rounded-md bg-red-600 text-white text-sm hover:opacity-90 transition-colors"
+                title="Force Sign Out"
+                aria-label="Force Sign Out"
+              >
+                Force
+              </button>
+            ) : null}
           </>
         ) : null}
       </div>

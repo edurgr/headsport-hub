@@ -11,6 +11,7 @@ import { supabaseClient } from '@/lib/supabase-client';
 
 export default function Sidebar() {
   const { profile, signOut, forceSignOut } = useAuth();
+  const showForceSignOut = process.env.NODE_ENV !== 'production';
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const pathname = usePathname();
   const [isCollapsed, setCollapsed] = useState(false);
@@ -270,23 +271,25 @@ export default function Sidebar() {
                   </svg>
                 </button>
               </div>
-              <div className="flex justify-center">
-                <button
-                  onClick={forceSignOut}
-                  className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-white/5 text-red-300"
-                  title="Force sign out"
-                  aria-label="Force sign out"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v8m4-4H8m12 0a8 8 0 11-16 0 8 8 0 0116 0z"
-                    />
-                  </svg>
-                </button>
-              </div>
+              {showForceSignOut ? (
+                <div className="flex justify-center">
+                  <button
+                    onClick={forceSignOut}
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-white/5 text-red-300"
+                    title="Force sign out"
+                    aria-label="Force sign out"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v8m4-4H8m12 0a8 8 0 11-16 0 8 8 0 0116 0z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              ) : null}
             </div>
           ) : (
             <div className="space-y-3">
@@ -358,23 +361,25 @@ export default function Sidebar() {
                 </svg>
                 <span>Sign Out</span>
               </button>
-              <button
-                onClick={forceSignOut}
-                className="w-full mt-2 px-3 py-2 text-sm rounded-lg flex items-center space-x-2 hover:bg-white/5 text-red-300"
-                style={{ border: '1px solid hsl(var(--sidebar-contrast) / 0.12)' }}
-                title="Force sign out"
-                aria-label="Force sign out"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v8m4-4H8m12 0a8 8 0 11-16 0 8 8 0 0116 0z"
-                  />
-                </svg>
-                <span>Force Sign Out</span>
-              </button>
+              {showForceSignOut ? (
+                <button
+                  onClick={forceSignOut}
+                  className="w-full mt-2 px-3 py-2 text-sm rounded-lg flex items-center space-x-2 hover:bg-white/5 text-red-300"
+                  style={{ border: '1px solid hsl(var(--sidebar-contrast) / 0.12)' }}
+                  title="Force sign out"
+                  aria-label="Force sign out"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v8m4-4H8m12 0a8 8 0 11-16 0 8 8 0 0116 0z"
+                    />
+                  </svg>
+                  <span>Force Sign Out</span>
+                </button>
+              ) : null}
             </div>
           )}
         </div>
