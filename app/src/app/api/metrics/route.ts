@@ -27,12 +27,11 @@ export async function GET() {
   try {
     const startTime = Date.now();
 
-    // Memory usage
-    const memoryUsage = process.memoryUsage();
+    // Memory usage — process.memoryUsage() is not available in edge runtime
     const memoryData = {
-      used: Math.round((memoryUsage.heapUsed / 1024 / 1024) * 100) / 100, // MB
-      total: Math.round((memoryUsage.heapTotal / 1024 / 1024) * 100) / 100, // MB
-      percentage: Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100),
+      used: 0,
+      total: 0,
+      percentage: 0,
     };
 
     // Database metrics
@@ -65,7 +64,7 @@ export async function GET() {
 
     const metrics: SystemMetrics = {
       timestamp: new Date().toISOString(),
-      uptime: Math.round(process.uptime()),
+      uptime: Math.round(performance.now() / 1000),
       memory: memoryData,
       database: dbMetrics,
       application: {
