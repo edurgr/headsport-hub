@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "cf:build": "npx @opennextjs/cloudflare@latest build && cp .open-next/worker.js .open-next/_worker.js",
+    "cf:build": "opennextjs-cloudflare build && cp .open-next/worker.js .open-next/_worker.js",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -37,6 +37,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@opennextjs/cloudflare": "^1.17.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
