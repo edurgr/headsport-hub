@@ -155,85 +155,24 @@ export async function POST(request: NextRequest) {
 
     const invitationLink = `${baseUrl}/accept-invite?token=${token}`;
 
-    if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: 'Supabase configuration is missing' },
-        { status: 500 },
-      );
-    }
+    // Send invitation email via Resend with the app invitation link.
+    // The accept-invite page uses the token from the invitations table directly —
+    // no Supabase auth magic link is needed.
+    const resend = await sendResendInvitationEmail({
+      to: email,
+      inviteUrl: invitationLink,
+      role,
+      personalMessage,
+    });
 
-    // Always use Supabase to create invitation link, then try to send email
-    try {
-      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-        type: 'invite',
-        email,
-        options: { redirectTo: invitationLink },
-      });
-      const actionLink: string | null = (linkData as any)?.properties?.action_link || null;
-      if (linkError || !actionLink) {
-        const details = linkError?.message || 'Unknown error creating invite link';
-        return NextResponse.json(
-          { success: false, emailSent: false, error: details, inviteMethod: 'supabase' },
-          { status: 500 },
-        );
-      }
-
-      // Prefer Resend if configured; otherwise fallback to Supabase mailer
-      const hasResendKey = !!(process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_RESEND_API_KEY);
-      if (hasResendKey) {
-        const resend = await sendResendInvitationEmail({
-          to: email,
-          inviteUrl: actionLink,
-          role,
-          personalMessage,
-        });
-
-        return NextResponse.json({
-          success: true,
-          emailSent: resend.sent,
-          inviteMethod: 'resend',
-          invitationLink,
-          actionLink,
-          sentAt: new Date().toISOString(),
-          ...(resend.error ? { providerNote: resend.error } : {}),
-        });
-      }
-
-      // Fallback: use Supabase's built-in mailer
-      try {
-        const { error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-          redirectTo: invitationLink,
-        });
-        const sent = !inviteErr;
-        return NextResponse.json({
-          success: true,
-          emailSent: sent,
-          inviteMethod: 'supabase_mailer',
-          invitationLink,
-          actionLink,
-          sentAt: new Date().toISOString(),
-          ...(inviteErr ? { supabaseError: inviteErr.message || String(inviteErr) } : {}),
-        });
-      } catch (e) {
-        // Last resort: provide link for manual sharing
-        return NextResponse.json({
-          success: true,
-          emailSent: false,
-          inviteMethod: 'manual',
-          invitationLink,
-          actionLink,
-          sentAt: new Date().toISOString(),
-          providerNote: e instanceof Error ? e.message : 'Supabase mailer failed',
-        });
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      console.error('Supabase invite exception:', msg);
-      return NextResponse.json(
-        { success: false, emailSent: false, error: msg, inviteMethod: 'supabase' },
-        { status: 500 },
-      );
-    }
+    return NextResponse.json({
+      success: true,
+      emailSent: resend.sent,
+      inviteMethod: 'resend',
+      invitationLink,
+      sentAt: new Date().toISOString(),
+      ...(resend.error ? { providerNote: resend.error } : {}),
+    });
   } catch (error) {
     console.error('Error sending invitation email:', error);
     return NextResponse.json(
