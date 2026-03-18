@@ -14,4 +14,3 @@ export async function GET(req: Request) {
 
   return NextResponse.json({ valid: true, email: data.email, rolePreset: data.role_preset });
 }
-export const runtime = 'edge';

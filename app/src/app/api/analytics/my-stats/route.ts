@@ -6,7 +6,6 @@ import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseServer } from '@/lib/supabase-server';
 
-export const runtime = 'edge';
 
 export async function GET(req: Request) {
   try {

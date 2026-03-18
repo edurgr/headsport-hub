@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge';
 
 export async function GET() {
   // Always expose the full, normalized category list so the UI can offer all options

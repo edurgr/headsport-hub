@@ -4,7 +4,6 @@ import { createClient } from '@supabase/supabase-js';
 
 import { supabaseServer } from '@/lib/supabase-server';
 
-export const runtime = 'edge';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);

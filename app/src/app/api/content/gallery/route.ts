@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { verifyManagerOrAdminAccess } from '@/lib/admin-auth-secure';
 
-export const runtime = 'edge';
 
 // GET /api/content/gallery?limit=50
 export async function GET(req: NextRequest) {
