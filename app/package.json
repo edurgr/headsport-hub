@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "cf:build": "opennextjs-cloudflare build && cp -r .open-next/cloudflare .open-next/middleware .open-next/server-functions .open-next/assets/ && cp .open-next/worker.js .open-next/assets/_worker.js",
+    "cf:build": "opennextjs-cloudflare build && find .open-next -maxdepth 1 -mindepth 1 ! -name 'assets' ! -name 'worker.js' -exec cp -r {} .open-next/assets/ \\; && cp .open-next/worker.js .open-next/assets/_worker.js",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
