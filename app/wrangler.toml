@@ -2,3 +2,8 @@ name = "headsport-hub"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat_v2"]
 pages_build_output_dir = ".open-next/assets"
+
+[vars]
+NEXT_PUBLIC_SUPABASE_URL = "https://iiyavhodskjhqmycivus.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpeWF2aG9kc2tqaHFteWNpdnVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ5NDk1MDYsImV4cCI6MjA3MDUyNTUwNn0.cslKbK7iPfMgf5yTyI-QaHLMRFj9C4mdLjro8zZVIyA"
+NEXT_PUBLIC_APP_URL = "https://headsport-hub.pages.dev"
