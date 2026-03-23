@@ -48,26 +48,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
   const [hydrated, setHydrated] = useState(false); // Estado inicial de hidratación
 
-  async function syncAuthCookies(currentSession: Session | null) {
-    try {
-      if (currentSession?.access_token) {
-        const headers: Record<string, string> = {
-          Authorization: `Bearer ${currentSession.access_token}`,
-        };
-        if (currentSession.refresh_token) {
-          headers['X-Refresh-Token'] = currentSession.refresh_token;
-        }
-        await fetch('/api/auth/sync', {
-          method: 'POST',
-          headers,
-        });
-      } else {
-        await fetch('/api/auth/sync', { method: 'POST' });
-      }
-    } catch (e) {
-      // Best-effort cookie sync; do not block UI
-      console.warn('Auth cookie sync failed', e);
+  function syncAuthCookies(currentSession: Session | null): void {
+    // Best-effort, fire-and-forget — must never block auth initialization.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    const fetchOptions: RequestInit = { method: 'POST', signal: controller.signal };
+    if (currentSession?.access_token) {
+      fetchOptions.headers = {
+        Authorization: `Bearer ${currentSession.access_token}`,
+        ...(currentSession.refresh_token
+          ? { 'X-Refresh-Token': currentSession.refresh_token }
+          : {}),
+      };
     }
+
+    fetch('/api/auth/sync', fetchOptions)
+      .catch((e) => {
+        if (e?.name !== 'AbortError') {
+          console.warn('Auth cookie sync failed', e);
+        }
+      })
+      .finally(() => clearTimeout(timeout));
   }
 
   useEffect(() => {
@@ -79,10 +81,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         await fetchProfile(session.user.id);
       }
-      // Ensure SSR/middleware can see the session
-      await syncAuthCookies(session ?? null);
       setLoading(false);
       setHydrated(true); // Marcar como hidratado después de la carga inicial
+      // Best-effort: sync cookies after UI is unblocked
+      syncAuthCookies(session ?? null);
     });
 
     // Listen for auth changes
@@ -96,10 +98,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setProfile(null);
       }
-      // Keep cookies in sync on every auth state change
-      await syncAuthCookies(session ?? null);
       setLoading(false);
       setHydrated(true); // Asegurarse de que esté hidratado en cambios de auth
+      // Best-effort: sync cookies after UI is unblocked
+      syncAuthCookies(session ?? null);
     });
 
     return () => subscription.unsubscribe();
