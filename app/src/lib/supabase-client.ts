@@ -4,12 +4,15 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    'Supabase env vars missing: set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your environment',
+  console.error(
+    '[Supabase] NEXT_PUBLIC_SUPABASE_URL and/or NEXT_PUBLIC_SUPABASE_ANON_KEY are not set. ' +
+      'The app will not be able to authenticate. Set these variables in your Cloudflare Pages environment.',
   );
 }
 
+// Use real values only — placeholder URLs cause getSession() to hang forever,
+// leaving the app stuck in skeleton loading state.
 export const supabaseClient = createBrowserClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-anon-key',
+  supabaseUrl || 'https://localhost',
+  supabaseAnonKey || 'missing-key',
 );

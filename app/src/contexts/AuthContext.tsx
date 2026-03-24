@@ -74,18 +74,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    // Real Supabase authentication only
-    supabaseClient.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchProfile(session.user.id);
-      }
+
+    // Safety net: if Supabase never responds (paused project, wrong env vars,
+    // network issue), unblock the UI after 8 seconds instead of staying stuck.
+    const safetyTimeout = setTimeout(() => {
       setLoading(false);
-      setHydrated(true); // Marcar como hidratado después de la carga inicial
-      // Best-effort: sync cookies after UI is unblocked
-      syncAuthCookies(session ?? null);
-    });
+      setHydrated(true);
+    }, 8000);
+
+    // Real Supabase authentication only
+    supabaseClient.auth
+      .getSession()
+      .then(async ({ data: { session } }) => {
+        clearTimeout(safetyTimeout);
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        }
+        setLoading(false);
+        setHydrated(true); // Marcar como hidratado después de la carga inicial
+        // Best-effort: sync cookies after UI is unblocked
+        syncAuthCookies(session ?? null);
+      })
+      .catch((err) => {
+        clearTimeout(safetyTimeout);
+        console.error('AuthContext: getSession failed, unblocking UI', err);
+        setLoading(false);
+        setHydrated(true);
+      });
 
     // Listen for auth changes
     const {
@@ -104,7 +121,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       syncAuthCookies(session ?? null);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(safetyTimeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function fetchProfile(userId: string) {
