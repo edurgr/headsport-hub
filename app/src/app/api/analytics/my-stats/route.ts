@@ -20,13 +20,6 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Configuration error' }, { status: 500 });
     }
 
-    const supabaseAdminClient =
-      supabaseAdmin ?? (serviceRoleKey ? createClient(supabaseUrl, serviceRoleKey) : null);
-
-    if (!supabaseAdminClient) {
-      return NextResponse.json({ error: 'Admin access required for analytics' }, { status: 500 });
-    }
-
     let targetAthleteId = athleteId;
     let currentUserId: string | null = null;
 
@@ -43,12 +36,13 @@ export async function GET(req: Request) {
     }
 
     // Fallback to Authorization header
+    let bearerToken: string | null = null;
     if (!currentUserId) {
       const authHeader = req.headers.get('authorization');
       if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.substring(7);
+        bearerToken = authHeader.substring(7);
         try {
-          const payloadB64 = token.split('.')[1];
+          const payloadB64 = bearerToken.split('.')[1];
           const base64 = payloadB64.replace(/-/g, '+').replace(/_/g, '/');
           const payloadJson = decodeBase64ToUtf8(base64);
           const payload = JSON.parse(payloadJson);
@@ -58,6 +52,23 @@ export async function GET(req: Request) {
           console.log('Could not decode token');
         }
       }
+    }
+
+    // Build admin client (service role) or fall back to user-scoped client (RLS)
+    const supabaseAdminClient =
+      supabaseAdmin ??
+      (serviceRoleKey ? createClient(supabaseUrl, serviceRoleKey) : null) ??
+      (bearerToken
+        ? createClient(supabaseUrl, supabaseAnonKey, {
+            global: { headers: { Authorization: `Bearer ${bearerToken}` } },
+          })
+        : null);
+
+    if (!supabaseAdminClient) {
+      return NextResponse.json(
+        { error: 'Authentication required. Please sign in to view stats.' },
+        { status: 401 },
+      );
     }
 
     // If still no athlete ID, try to get from query params or use first athlete for demo

@@ -98,6 +98,12 @@ export default function Sidebar() {
 
     // Only for managers and administrators
     {
+      name: 'Athlete Management',
+      href: '/athlete-management',
+      icon: 'users',
+      roles: ['admin', 'manager', 'superadmin'],
+    },
+    {
       name: 'Profile Management',
       href: '/profile-management',
       icon: 'users',

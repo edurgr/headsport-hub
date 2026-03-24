@@ -28,6 +28,7 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ children }) => {
     '/auth/callback',
     '/onboarding',
     '/forgot-password',
+    '/reset-password',
   ];
 
   // Important: `/` renders a login form when unauthenticated (see `app/page.tsx`).

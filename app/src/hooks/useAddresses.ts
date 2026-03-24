@@ -12,7 +12,10 @@ export function useAddresses(userIdOverride?: string) {
   const userId = userIdOverride ?? user?.id;
 
   const fetchAddresses = useCallback(async () => {
-    if (!userId) return;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const { data, error } = await supabaseClient

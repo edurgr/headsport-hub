@@ -281,7 +281,7 @@ export default function Home() {
         </Link>
 
         {/* Athletes card: visible solo a managers/admin */}
-        {profile?.role !== 'athlete' && (
+        {['manager', 'admin', 'superadmin'].includes(profile?.role ?? '') && (
           <Link
             href="/athlete-management"
             className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
