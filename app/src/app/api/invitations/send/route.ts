@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 
 import { getSupabaseConfig } from '@/lib/supabase-config';
 import { sendResendInvitationEmail } from '@/lib/resend-email';
+import { verifyManagerOrAdminAccess } from '@/lib/admin-auth-secure';
 
 // Configure Supabase client with service role key for administrative operations
 let supabaseAdmin: any = null;
@@ -33,6 +34,12 @@ export async function POST(request: NextRequest) {
           { status: 500 },
         );
       }
+    }
+
+    // Verify caller is authenticated and has manager or admin role
+    const authResult = await verifyManagerOrAdminAccess(request);
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
     const { email, role, invitedBy, personalMessage } = await request.json();

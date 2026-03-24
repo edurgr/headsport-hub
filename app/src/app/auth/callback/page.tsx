@@ -59,7 +59,12 @@ export default function AuthCallbackPage(): ReactElement {
       }
     };
 
-    handleAuthCallback();
+    // Safety net: if auth callback hangs for 10s, redirect to home
+    const safetyTimer = window.setTimeout(() => {
+      router.replace('/');
+    }, 10000);
+
+    handleAuthCallback().finally(() => clearTimeout(safetyTimer));
 
     // Set up a listener for PASSWORD_RECOVERY as a fallback
     const {

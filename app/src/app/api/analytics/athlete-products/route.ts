@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { requireAuth } from '@/lib/admin-auth-secure';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const authResult = await requireAuth(req);
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
     const supabaseAdminClient = getSupabaseAdmin();
 
     if (!supabaseAdminClient) {

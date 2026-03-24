@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { requireAuth } from '@/lib/admin-auth-secure';
 
 export async function GET(req: Request) {
   try {
+    const authResult = await requireAuth(req);
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
     const url = new URL(req.url);
     const groupBy = url.searchParams.get('group_by') || 'global';
 

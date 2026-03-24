@@ -3,6 +3,11 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: false },
+  async redirects() {
+    return [
+      { source: '/dashboard', destination: '/admin/dashboard', permanent: false },
+    ];
+  },
   images: {
     remotePatterns: [
       {

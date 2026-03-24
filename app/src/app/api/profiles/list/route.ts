@@ -67,6 +67,10 @@ export async function GET(req: Request) {
       } catch { /* ignore role lookup errors */ }
     }
 
+    if (!requesterId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Use service role client for managers/admins to avoid RLS misconfig issues
     const client =
       serviceClient && (requesterRole === 'admin' || requesterRole === 'manager')

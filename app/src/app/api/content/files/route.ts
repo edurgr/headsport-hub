@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseServer } from '@/lib/supabase-server';
-import { verifyAdminAccess, verifyManagerOrAdminAccess } from '@/lib/admin-auth-secure';
+import { verifyAdminAccess, verifyManagerOrAdminAccess, requireAuth } from '@/lib/admin-auth-secure';
 
 async function getClientFromRequest(req: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string | undefined;
@@ -24,6 +24,10 @@ async function getClientFromRequest(req: Request) {
 
 // GET /api/content/files?session_id=...
 export async function GET(req: Request) {
+  const authResult = await requireAuth(req);
+  if (!authResult.success) {
+    return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+  }
   const { searchParams } = new URL(req.url);
   const sessionId = searchParams.get('session_id');
   const sb = await getClientFromRequest(req);

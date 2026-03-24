@@ -278,3 +278,52 @@ export async function isUserAdmin(userId: string): Promise<boolean> {
     return false;
   }
 }
+
+// Lightweight auth check — only verifies the caller is authenticated, no role requirement.
+// Checks Authorization header first, then Supabase auth cookies.
+export async function requireAuth(req: Request): Promise<
+  | { success: true; userId: string }
+  | { success: false; error: string; status: number }
+> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return { success: false, error: 'Server configuration error', status: 500 };
+  }
+
+  // 1. Try Authorization header
+  const authHeader = req.headers.get('authorization') ?? '';
+  if (authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    try {
+      const sb = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data: { user } } = await sb.auth.getUser();
+      if (user) return { success: true, userId: user.id };
+    } catch { /* ignore */ }
+  }
+
+  // 2. Try Supabase auth cookies
+  try {
+    const cookieStore = await cookies();
+    for (const name of [
+      'sb-access-token',
+      'sb:token',
+      'sb-iiyavhodskjhqmycivus-auth-token',
+      'sb-localhost-auth-token',
+      'supabase-auth-token',
+    ]) {
+      const val = cookieStore.get(name)?.value;
+      if (val) {
+        const sb = createClient(supabaseUrl, supabaseAnonKey, {
+          global: { headers: { Authorization: `Bearer ${val}` } },
+        });
+        const { data: { user } } = await sb.auth.getUser();
+        if (user) return { success: true, userId: user.id };
+      }
+    }
+  } catch { /* ignore cookie errors in edge runtime */ }
+
+  return { success: false, error: 'Unauthorized', status: 401 };
+}
