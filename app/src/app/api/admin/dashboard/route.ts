@@ -36,15 +36,25 @@ export async function GET(req: NextRequest) {
     const adminUser = adminResult.user;
     console.log('Admin access granted for:', adminUser.email);
 
-    // Use service role key for admin operations
+    // Use service role key for admin operations; fall back to user-scoped client if unavailable
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    if (!supabaseUrl || !supabaseServiceKey) {
+    if (!supabaseUrl || !supabaseAnonKey) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Prefer service role key (bypasses RLS); fall back to user-scoped client
+    const supabase = supabaseServiceKey
+      ? createClient(supabaseUrl, supabaseServiceKey)
+      : (() => {
+          const authHeader = req.headers.get('authorization') ?? '';
+          const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+          return createClient(supabaseUrl, supabaseAnonKey, {
+            global: { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+          });
+        })();
 
     const url = new URL(req.url);
     const period = url.searchParams.get('period') || '30'; // days
