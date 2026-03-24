@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
+import { ReactNode, createContext, useContext, useEffect, useRef, useState } from 'react';
 
 import { Session, User } from '@supabase/supabase-js';
 
@@ -47,6 +47,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [hydrated, setHydrated] = useState(false); // Estado inicial de hidratación
+
+  // Track the last user ID for which we successfully fetched (or confirmed missing) a profile.
+  // This prevents re-fetching (and potentially nulling) the profile on every token refresh.
+  const lastFetchedUserIdRef = useRef<string | null>(null);
 
   function syncAuthCookies(currentSession: Session | null): void {
     // Best-effort, fire-and-forget — must never block auth initialization.
@@ -111,8 +115,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        await fetchProfile(session.user.id);
+        // Skip re-fetching the profile when it's just a token refresh for the same user.
+        // Without this guard, every TOKEN_REFRESHED / INITIAL_SESSION event triggers a
+        // redundant fetchProfile that can race with the initial getSession() call and
+        // temporarily null-out the profile, causing the sidebar to vanish.
+        if (lastFetchedUserIdRef.current !== session.user.id) {
+          await fetchProfile(session.user.id);
+        }
       } else {
+        lastFetchedUserIdRef.current = null;
         setProfile(null);
       }
       setLoading(false);
@@ -136,14 +147,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (error) {
-        // Treat "no rows" as a valid state (no profile yet)
+        // Treat "no rows" as a valid state (no profile yet — send to onboarding)
         if (
           (error as any).code === 'PGRST116' ||
           error.message?.toLowerCase().includes('no rows')
         ) {
+          lastFetchedUserIdRef.current = userId;
           setProfile(null);
           return;
         }
+        // For any other error (network, RLS, etc.) leave the existing profile state
+        // untouched — a transient failure shouldn't wipe the sidebar.
         console.error('Error fetching profile:', {
           code: (error as any).code,
           message: error.message,
@@ -153,8 +167,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      lastFetchedUserIdRef.current = userId;
       setProfile(data);
     } catch (error) {
+      // Exception during fetch — leave existing profile state untouched.
       const normalizedError =
         error instanceof Error ? { message: error.message, stack: error.stack } : error;
       console.error('Error fetching profile:', normalizedError);

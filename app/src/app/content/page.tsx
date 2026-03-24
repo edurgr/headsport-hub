@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react'; // Import useCallback
+import { useEffect, useState, useCallback } from 'react';
 
 import Image from 'next/image';
+import Link from 'next/link';
 
 import { Upload as UploadIcon } from 'lucide-react';
 
@@ -56,6 +57,9 @@ export default function ContentPage() {
   }>({ type: 'all' });
   const [showDeleteSelectedModal, setShowDeleteSelectedModal] = useState(false);
   const [toasts, setToasts] = useState<{ id: number; message: string; type?: 'success' | 'error' | 'info' }[]>([]);
+  // Increment this to trigger a gallery re-fetch without a full page reload
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refreshItems = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   const openViewer = (list: GalleryItem[], startId: string) => {
     const idx = list.findIndex((it) => it.id === startId);
@@ -295,7 +299,8 @@ export default function ContentPage() {
     };
 
     fetchItems();
-  }, []); // Initial fetch runs only once
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]); // Re-run when refreshKey changes (avoids full page reload)
 
   const openEdit = (item: GalleryItem) => {
     setEditing(item);
@@ -534,14 +539,14 @@ export default function ContentPage() {
       <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 overflow-x-hidden">
         {/* Mobile primary CTA */}
         <div className="sm:hidden mb-4">
-          <a
+          <Link
             href="/content/upload"
             className="w-full inline-flex items-center justify-center gap-2 px-4 py-4 bg-black text-white rounded-xl hover:opacity-90 active:opacity-80 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-800"
             aria-label="Upload content"
           >
             <UploadIcon className="h-5 w-5" />
             <span className="text-base">Upload content</span>
-          </a>
+          </Link>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
           <div className="flex items-center gap-3">
@@ -568,10 +573,10 @@ export default function ContentPage() {
           </div>
           <div className="flex items-center gap-2">
             <div className="hidden sm:block">
-              <a href="/content/upload" className="btn inline-flex items-center gap-2">
+              <Link href="/content/upload" className="btn inline-flex items-center gap-2">
                 <UploadIcon className="h-4 w-4" />
                 Upload Content
-              </a>
+              </Link>
             </div>
 
             {/* Download Selected button - only show when items are selected */}
@@ -987,7 +992,7 @@ export default function ContentPage() {
                                 alert(j.error || 'Failed to delete');
                                 return;
                               }
-                              window.location.reload();
+                              refreshItems();
                             }}
                             className="px-2 py-1 rounded hover:opacity-80 text-red-600"
                             style={{ border: '1px solid hsl(var(--border))' }}
@@ -1216,7 +1221,7 @@ export default function ContentPage() {
                                       alert(j.error || 'Failed to delete');
                                       return;
                                     }
-                                    window.location.reload();
+                                    refreshItems();
                                   }}
                                   className="px-2 py-1 rounded hover:opacity-80 text-red-600"
                                   style={{ border: '1px solid hsl(var(--border))' }}
@@ -1237,9 +1242,9 @@ export default function ContentPage() {
             {items.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-[hsl(var(--muted))] text-lg">No uploads yet</p>
-                <a href="/content/upload" className="mt-4 inline-block btn">
+                <Link href="/content/upload" className="mt-4 inline-block btn">
                   Upload Content
-                </a>
+                </Link>
               </div>
             )}
           </>
@@ -1427,7 +1432,7 @@ export default function ContentPage() {
                         return;
                       }
                       addToast('Selected items deleted', 'success');
-                      window.location.reload();
+                      refreshItems();
                     } finally {
                       setDeleting(false);
                       setShowDeleteSelectedModal(false);
@@ -1531,7 +1536,7 @@ export default function ContentPage() {
                         alert(j.error || 'Failed to delete all content');
                         return;
                       }
-                      window.location.reload();
+                      refreshItems();
                     } finally {
                       setDeleting(false);
                     }

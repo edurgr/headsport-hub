@@ -11,6 +11,8 @@ import {
   Video as VideoIcon,
 } from 'lucide-react';
 
+import Link from 'next/link';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { supabaseClient } from '@/lib/supabase-client';
 
@@ -31,7 +33,6 @@ export default function UploadPage() {
   const [galleryItems, setGalleryItems] = useState<any[]>([]);
   const [showOptions, setShowOptions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [autoOpened, setAutoOpened] = useState(false);
   const totalBytesRef = useRef<number>(0);
   const uploadedBytesRef = useRef<number>(0);
   const currentFileSizeRef = useRef<number>(0);
@@ -122,14 +123,6 @@ export default function UploadPage() {
       setEtaText('');
     }
   }
-
-  useEffect(() => {
-    if (user && !autoOpened && !isUploading) {
-      // Abre la galería directamente al entrar en la página
-      inputRef.current?.click();
-      setAutoOpened(true);
-    }
-  }, [user, autoOpened, isUploading]);
 
   useEffect(() => {
     fetchGallery();
@@ -507,6 +500,11 @@ export default function UploadPage() {
 
   return (
     <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-full sm:max-w-2xl overflow-x-hidden">
+      <div className="mb-4">
+        <Link href="/content" className="text-sm text-gray-500 hover:text-gray-800 inline-flex items-center gap-1">
+          ← Back to Content
+        </Link>
+      </div>
       <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">Upload content</h1>
 
       <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md border border-gray-200 space-y-4 sm:space-y-6 w-full max-w-full overflow-hidden">
