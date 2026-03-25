@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+import { createClient } from '@supabase/supabase-js';
+
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { requireAuth } from '@/lib/admin-auth-secure';
 
@@ -10,7 +12,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
-    const supabaseAdminClient = getSupabaseAdmin();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const supabaseAdminClient = getSupabaseAdmin() ?? createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${authResult.token}` } },
+    });
 
     if (!supabaseAdminClient) {
       return NextResponse.json(

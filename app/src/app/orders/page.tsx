@@ -15,6 +15,7 @@ export default function OrdersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
   const [filter, setFilter] = useState<'pending' | 'approved' | 'mine' | 'all'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'athlete' | 'manager' | 'admin'>('all');
   const [selectedShippingAddress, setSelectedShippingAddress] = useState<Address | null>(null);
   const { user, profile } = useAuth();
   const download = useDownload();
@@ -28,6 +29,7 @@ export default function OrdersPage() {
         else if (filter === 'mine' && user?.email)
           url += `?scope=mine&athleteEmail=${encodeURIComponent(user.email)}`;
         else if (filter === 'all') url += '?scope=all';
+        if (roleFilter !== 'all') url += `${url.includes('?') ? '&' : '?'}roleFilter=${roleFilter}`;
       } else if (user?.email) {
         // Athlete: fetch complete history with a high limit to show all career orders
         url += `?scope=mine&athleteEmail=${encodeURIComponent(user.email)}&limit=1000`;
@@ -66,7 +68,7 @@ export default function OrdersPage() {
       console.error("Error fetching orders:", e);
       setOrders([]);
     }
-  }, [user?.email, profile?.role, filter]); // CORREGIDO: Dependencias de useCallback
+  }, [user?.email, profile?.role, filter, roleFilter]); // CORREGIDO: Dependencias de useCallback
 
   useEffect(() => {
     // Only fetch if we have the necessary info
@@ -303,7 +305,7 @@ export default function OrdersPage() {
                 <span className="font-medium" style={{ color: 'hsl(var(--foreground))' }}>
                   Manager view:
                 </span>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <select
                     value={filter}
                     onChange={(e) => setFilter(e.target.value as any)}
@@ -313,11 +315,27 @@ export default function OrdersPage() {
                       border: '1px solid hsl(var(--border))',
                     }}
                   >
-                    <option value="all">All Orders</option>
+                    <option value="all">All Statuses</option>
                     <option value="pending">Pending Approval</option>
                     <option value="approved">Approved</option>
-                    <option value="mine">My Orders</option> {/* Assuming managers can also make orders */}
+                    <option value="mine">My Orders</option>
                   </select>
+                  {(profile?.role === 'admin' || profile?.role === 'superadmin') && (
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value as any)}
+                    className="px-3 py-2 rounded text-sm"
+                    style={{
+                      backgroundColor: 'hsl(var(--secondary))',
+                      border: '1px solid hsl(var(--border))',
+                    }}
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="athlete">Athletes</option>
+                    <option value="manager">Managers</option>
+                    <option value="admin">Admins</option>
+                  </select>
+                  )}
                   <button onClick={fetchOrders} className="btn px-3 py-2 text-sm">
                     Refresh
                   </button>

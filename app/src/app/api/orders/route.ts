@@ -15,6 +15,7 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const scope = (url.searchParams.get('scope') || 'mine').toLowerCase();
     const athleteEmail = url.searchParams.get('athleteEmail') || undefined;
+    const roleFilter = url.searchParams.get('roleFilter') || undefined;
 
     let query: any = sb
       .from('orders')
@@ -29,11 +30,23 @@ export async function GET(req: Request) {
     }
     if (scope === 'all') {
       // For 'all' scope, don't filter by status - show all orders
-      // This is typically used by managers/admins to see all orders
     }
 
     if (scope === 'mine' && athleteEmail) {
       query = query.eq('athlete_email', athleteEmail);
+    }
+
+    // If a roleFilter is specified, restrict to emails of users with that role
+    if (roleFilter && ['athlete', 'manager', 'admin', 'superadmin'].includes(roleFilter)) {
+      const { data: roleProfiles } = await sb
+        .from('profiles')
+        .select('email')
+        .eq('role', roleFilter);
+      const roleEmails = (roleProfiles || []).map((p: any) => p.email).filter(Boolean);
+      if (roleEmails.length === 0) {
+        return NextResponse.json({ success: true, orders: [], total: 0 });
+      }
+      query = query.in('athlete_email', roleEmails);
     }
 
     const { data: orders, error } = await query;

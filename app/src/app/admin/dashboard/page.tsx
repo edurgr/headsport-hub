@@ -80,7 +80,7 @@ export default function AdminDashboard() {
       const data = await response.json();
 
       if (response.ok) {
-        setDashboardData(data.data);
+        setDashboardData(data);
         setError(null);
       } else {
         setError(data.error || 'Failed to fetch dashboard data.');
@@ -195,7 +195,7 @@ export default function AdminDashboard() {
   if (!dashboardData) return null;
 
   return (
-    <ProtectedRoute requiredRole={['admin']}>
+    <ProtectedRoute requiredRole={['admin', 'superadmin']}>
       <div className="p-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -248,7 +248,9 @@ export default function AdminDashboard() {
               <div className="flex items-center space-x-2">
                 <Clock className="w-5 h-5" style={{ color: 'hsl(var(--info))' }} />
                 <span className="text-sm text-[hsl(var(--muted))]">
-                  Uptime: {dashboardData.system_health.uptime_hours.toFixed(1)}h
+                  Uptime: {dashboardData.system_health.uptime_hours != null
+                    ? `${dashboardData.system_health.uptime_hours.toFixed(1)}h`
+                    : '—'}
                 </span>
               </div>
             </div>

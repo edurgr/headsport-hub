@@ -6,6 +6,7 @@ import { CheckCircle, Clock, FileImage, Package, ShoppingCart, Video, XCircle } 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { supabaseClient } from '@/lib/supabase-client';
 
 interface AthleteStats {
   athlete: {
@@ -48,10 +49,15 @@ export default function MyStatsPage() {
       const athleteId = user.id;
       const url = `/api/analytics/my-stats?athlete_id=${athleteId}`;
 
+      // Get access token for auth header
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      const token = sessionData.session?.access_token;
+
       const response = await fetch(url, {
         credentials: 'include',
         cache: 'no-store',
         redirect: 'follow',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       if (!response.ok) {
         console.error('API error status:', response.status);

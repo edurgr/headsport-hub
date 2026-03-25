@@ -57,7 +57,7 @@ export default function ContentModerationPage() {
   const [activeTab, setActiveTab] = useState<'queue' | 'stats' | 'rules' | 'history'>('queue');
   const [queueItems, setQueueItems] = useState<ModerationQueueItem[]>([]);
   const [stats, setStats] = useState<ModerationStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -67,15 +67,15 @@ export default function ContentModerationPage() {
   );
   const [moderationReason, setModerationReason] = useState('');
   const [moderationNotes, setModerationNotes] = useState('');
-  const [isRequestInProgress, setIsRequestInProgress] = useState(false);
+  const isRequestInProgressRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchData = useCallback(async () => {
     // Prevent multiple simultaneous requests
-    if (isRequestInProgress) return;
+    if (isRequestInProgressRef.current) return;
 
     try {
-      setIsRequestInProgress(true);
+      isRequestInProgressRef.current = true;
       setLoading(true);
 
       // Cancel previous request if it exists
@@ -124,9 +124,9 @@ export default function ContentModerationPage() {
       }
     } finally {
       setLoading(false);
-      setIsRequestInProgress(false);
+      isRequestInProgressRef.current = false;
     }
-  }, [activeTab, authenticatedFetch, isRequestInProgress]);
+  }, [activeTab, authenticatedFetch]);
 
   // Initial load when profile is available
   useEffect(() => {
@@ -158,10 +158,10 @@ export default function ContentModerationPage() {
     notes?: string,
   ) => {
     // Prevent multiple simultaneous moderation requests
-    if (isRequestInProgress) return;
+    if (isRequestInProgressRef.current) return;
 
     try {
-      setIsRequestInProgress(true);
+      isRequestInProgressRef.current = true;
 
       const response = await authenticatedFetch('/api/admin/content-moderation', {
         method: 'POST',
@@ -184,7 +184,7 @@ export default function ContentModerationPage() {
     } catch {
       setError(`Error ${action}ing content`);
     } finally {
-      setIsRequestInProgress(false);
+      isRequestInProgressRef.current = false;
     }
   };
 
@@ -195,10 +195,10 @@ export default function ContentModerationPage() {
     }
 
     // Prevent multiple simultaneous bulk moderation requests
-    if (isRequestInProgress) return;
+    if (isRequestInProgressRef.current) return;
 
     try {
-      setIsRequestInProgress(true);
+      isRequestInProgressRef.current = true;
 
       const response = await authenticatedFetch('/api/admin/content-moderation', {
         method: 'POST',
@@ -223,7 +223,7 @@ export default function ContentModerationPage() {
     } catch {
       setError(`Error bulk ${moderationAction}ing content`);
     } finally {
-      setIsRequestInProgress(false);
+      isRequestInProgressRef.current = false;
     }
   };
 

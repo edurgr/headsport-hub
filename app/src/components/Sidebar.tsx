@@ -73,13 +73,13 @@ export default function Sidebar() {
       name: 'Content',
       href: '/content',
       icon: 'box',
-      roles: ['athlete', 'manager', 'admin', 'superadmin'],
+      roles: ['athlete', 'admin', 'superadmin'],
     },
     {
       name: 'Orders',
       href: '/orders',
       icon: 'checkmark-box',
-      roles: ['athlete', 'manager', 'admin', 'superadmin'],
+      roles: ['athlete', 'admin', 'superadmin'],
     },
     {
       name: 'My Stats',
@@ -91,7 +91,7 @@ export default function Sidebar() {
       name: 'Analytics',
       href: '/analytics',
       icon: 'trending-up',
-      roles: ['admin', 'manager', 'superadmin'],
+      roles: ['admin', 'superadmin'],
     },
     // Pending Orders merged into Orders page for managers/admin
     // Removed explicit Profile link; avatar area links to /profile for a cleaner sidebar
@@ -107,7 +107,7 @@ export default function Sidebar() {
       name: 'Profile Management',
       href: '/profile-management',
       icon: 'users',
-      roles: ['admin', 'manager', 'superadmin'],
+      roles: ['admin', 'superadmin'],
     },
     {
       name: 'Product Management',

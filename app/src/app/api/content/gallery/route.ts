@@ -1,20 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { createClient } from '@supabase/supabase-js';
+
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { verifyManagerOrAdminAccess } from '@/lib/admin-auth-secure';
+import { requireAuth } from '@/lib/admin-auth-secure';
 
 
 // GET /api/content/gallery?limit=50
 export async function GET(req: NextRequest) {
-  const authResult = await verifyManagerOrAdminAccess(req);
+  const authResult = await requireAuth(req);
   if (!authResult.success) {
     return NextResponse.json({ error: authResult.error }, { status: authResult.status });
   }
-  const { user } = authResult;
-  if (!supabaseAdmin) {
-    return NextResponse.json({ error: 'Supabase admin client not configured' }, { status: 500 });
-  }
-  const supabase = supabaseAdmin; // Use the admin client for elevated privileges
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+  // Use service role admin client when available (bypasses RLS); fall back to user-scoped client
+  const supabase = supabaseAdmin ?? createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: `Bearer ${authResult.token}` } },
+  });
+
+  // Fetch the caller's profile to determine role
+  const { data: callerProfile } = await supabase
+    .from('profiles')
+    .select('id, role')
+    .eq('id', authResult.userId)
+    .single();
+
+  const user = callerProfile
+    ? { id: authResult.userId, role: callerProfile.role as string }
+    : { id: authResult.userId, role: 'athlete' as string };
 
   const { searchParams } = new URL(req.url);
   const limit = parseInt(searchParams.get('limit') || '50', 10);

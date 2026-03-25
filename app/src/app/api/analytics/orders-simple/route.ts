@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+import { createClient } from '@supabase/supabase-js';
+
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { requireAuth } from '@/lib/admin-auth-secure';
 
@@ -13,7 +15,12 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const groupBy = url.searchParams.get('group_by') || 'global';
 
-    const supabaseAdmin = getSupabaseAdmin();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+    const supabaseAdmin = getSupabaseAdmin() ?? createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${authResult.token}` } },
+    });
     if (!supabaseAdmin) {
       return NextResponse.json(
         { error: 'Database connection required for analytics' },

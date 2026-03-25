@@ -49,21 +49,29 @@ export async function supabaseServer() {
 
   // Try to attach the user's access token from cookies for RLS-aware server calls
   const cookieStore = await cookies();
-  let token = cookieStore.get('sb-access-token')?.value || cookieStore.get('sb:token')?.value || '';
 
-  // Also support Supabase auth cookie that stores [access, refresh]
-  if (!token) {
-    const supabaseAuth = cookieStore.get('supabase-auth-token')?.value;
-    if (supabaseAuth) {
-      try {
-        const decoded = decodeURIComponent(supabaseAuth);
-        const arr = JSON.parse(decoded);
-        if (Array.isArray(arr) && typeof arr[0] === 'string') {
-          token = arr[0];
-        }
-      } catch {
-        // ignore parse errors
-      }
+  const extractTokenFromCookie = (raw: string): string => {
+    try {
+      const arr = JSON.parse(decodeURIComponent(raw));
+      if (Array.isArray(arr) && typeof arr[0] === 'string') return arr[0];
+    } catch { /* not JSON array */ }
+    return raw;
+  };
+
+  // Check multiple possible Supabase cookie names (project-specific and generic)
+  const cookieNames = [
+    'sb-access-token',
+    'sb:token',
+    'sb-iiyavhodskjhqmycivus-auth-token',
+    'sb-localhost-auth-token',
+    'supabase-auth-token',
+  ];
+  let token = '';
+  for (const name of cookieNames) {
+    const raw = cookieStore.get(name)?.value;
+    if (raw) {
+      token = extractTokenFromCookie(raw);
+      if (token) break;
     }
   }
 

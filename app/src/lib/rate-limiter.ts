@@ -14,7 +14,7 @@ const defaultConfig: RateLimitConfig = {
 };
 
 const adminConfig: RateLimitConfig = {
-  maxRequests: 200, // 200 requests for admin
+  maxRequests: 60, // FIXED: reduced from 200 to 60 (0.067 req/sec - safe for auto-refresh)
   windowMs: 15 * 60 * 1000, // 15 minutes
 };
 

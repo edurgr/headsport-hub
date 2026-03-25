@@ -313,7 +313,7 @@ export async function isUserAdmin(userId: string): Promise<boolean> {
 // Lightweight auth check — only verifies the caller is authenticated, no role requirement.
 // Checks Authorization header first, then Supabase auth cookies.
 export async function requireAuth(req: Request): Promise<
-  | { success: true; userId: string }
+  | { success: true; userId: string; token: string }
   | { success: false; error: string; status: number }
 > {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -331,7 +331,7 @@ export async function requireAuth(req: Request): Promise<
         global: { headers: { Authorization: `Bearer ${token}` } },
       });
       const { data: { user } } = await sb.auth.getUser();
-      if (user) return { success: true, userId: user.id };
+      if (user) return { success: true, userId: user.id, token };
     } catch { /* ignore */ }
   }
 
@@ -363,7 +363,7 @@ export async function requireAuth(req: Request): Promise<
         global: { headers: { Authorization: `Bearer ${token}` } },
       });
       const { data: { user } } = await sb.auth.getUser();
-      if (user) return { success: true, userId: user.id };
+      if (user) return { success: true, userId: user.id, token };
     }
   } catch { /* ignore cookie errors in edge runtime */ }
 
