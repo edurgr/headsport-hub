@@ -93,6 +93,7 @@ export async function GET(req: Request) {
         state,
         postal_code,
         country,
+        manager_id,
         created_at,
         updated_at
       `,
@@ -100,8 +101,13 @@ export async function GET(req: Request) {
       .order('created_at', { ascending: false });
 
     // Filter by role if specified
-    if (role && ['athlete', 'manager', 'admin'].includes(role)) {
+    if (role && ['athlete', 'manager', 'admin', 'superadmin'].includes(role)) {
       query = query.eq('role', role);
+    }
+
+    // Managers only see their own athletes (scoped by manager_id)
+    if (requesterRole === 'manager' && requesterId) {
+      query = query.eq('manager_id', requesterId);
     }
 
     // Search by name or email if specified
@@ -115,8 +121,11 @@ export async function GET(req: Request) {
       (async () => {
         let countQuery = client.from('profiles').select('*', { count: 'exact', head: true });
 
-        if (role && ['athlete', 'manager', 'admin'].includes(role)) {
+        if (role && ['athlete', 'manager', 'admin', 'superadmin'].includes(role)) {
           countQuery = countQuery.eq('role', role);
+        }
+        if (requesterRole === 'manager' && requesterId) {
+          countQuery = countQuery.eq('manager_id', requesterId);
         }
         if (search) {
           countQuery = countQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
@@ -163,6 +172,7 @@ export async function GET(req: Request) {
         state: profile.state,
         postalCode: profile.postal_code,
         country: profile.country,
+        managerId: profile.manager_id,
         createdAt: profile.created_at,
         updatedAt: profile.updated_at,
       })) || [];

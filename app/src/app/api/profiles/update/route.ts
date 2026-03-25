@@ -56,6 +56,7 @@ export async function PATCH(req: NextRequest) {
       phone,
       organization,
       role,
+      manager_id,
     } = body;
 
     if (!id) {
@@ -64,7 +65,9 @@ export async function PATCH(req: NextRequest) {
 
     // Only allow editing own profile unless admin/superadmin
     const isElevated = callerRole === 'admin' || callerRole === 'superadmin';
-    if (!isElevated && callerId !== id) {
+    // Managers can also edit their own athletes' profiles
+    const isManager = callerRole === 'manager';
+    if (!isElevated && !isManager && callerId !== id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -73,16 +76,26 @@ export async function PATCH(req: NextRequest) {
       email,
       phone,
       organization,
-      // Note: performance metrics are not persisted (no column). Only core profile fields are updated.
       updated_at: new Date().toISOString(),
     };
 
-    // Only admins/superadmins can change role (callerRole already resolved above)
+    // Only admins/superadmins can change role
     if (typeof role === 'string' && ['admin', 'manager', 'athlete', 'superadmin'].includes(role)) {
       if (callerRole === 'superadmin') {
         updatePayload.role = role;
       } else if (callerRole === 'admin' && ['manager', 'athlete'].includes(role)) {
         updatePayload.role = role;
+      }
+    }
+
+    // Admins and superadmins can assign manager_id (assign athlete to a manager)
+    // Managers can also assign athletes to themselves
+    if (manager_id !== undefined) {
+      if (isElevated) {
+        updatePayload.manager_id = manager_id || null;
+      } else if (isManager) {
+        // Manager can only assign athletes to themselves or clear the assignment
+        updatePayload.manager_id = manager_id === callerId ? callerId : null;
       }
     }
 
