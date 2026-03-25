@@ -45,21 +45,23 @@ CREATE INDEX IF NOT EXISTS idx_profiles_manager_id ON public.profiles(manager_id
 
 -- ============================================================
 -- 4. Profiles: explicit superadmin policies
+--    IMPORTANT: use is_admin() (SECURITY DEFINER) — never inline
+--    subqueries on the same table, as they cause infinite recursion.
 -- ============================================================
 DROP POLICY IF EXISTS "Superadmin can view all profiles" ON public.profiles;
 CREATE POLICY "Superadmin can view all profiles"
   ON public.profiles FOR SELECT
-  USING ((SELECT role::text FROM public.profiles WHERE id = auth.uid()) = 'superadmin');
+  USING (is_admin(auth.uid()));
 
 DROP POLICY IF EXISTS "Superadmin can update all profiles" ON public.profiles;
 CREATE POLICY "Superadmin can update all profiles"
   ON public.profiles FOR UPDATE
-  USING ((SELECT role::text FROM public.profiles WHERE id = auth.uid()) = 'superadmin');
+  USING (is_admin(auth.uid()));
 
 DROP POLICY IF EXISTS "Superadmin can delete profiles" ON public.profiles;
 CREATE POLICY "Superadmin can delete profiles"
   ON public.profiles FOR DELETE
-  USING ((SELECT role::text FROM public.profiles WHERE id = auth.uid()) = 'superadmin');
+  USING (is_admin(auth.uid()));
 
 -- ============================================================
 -- 5. Orders: add INSERT/DELETE for managers/admins/superadmin
