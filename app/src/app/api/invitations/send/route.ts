@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const roleSanitized: 'admin' | 'manager' | 'athlete' =
-      (['admin', 'manager', 'athlete'].includes(role) ? role : 'athlete') as 'admin' | 'manager' | 'athlete';
+    const roleSanitized: 'admin' | 'manager' | 'athlete' | 'superadmin' =
+      (['admin', 'manager', 'athlete', 'superadmin'].includes(role) ? role : 'athlete') as 'admin' | 'manager' | 'athlete' | 'superadmin';
 
     // Verify inviter permissions: admins can invite any role; managers can only invite athletes
     if (supabaseAdmin && hasServiceKey) {

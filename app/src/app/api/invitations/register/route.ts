@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
 
     // Determine invited role upfront (works for new/existing users)
     const invitedRoleRaw = (invite.role_preset || invite.role || '').toLowerCase();
-    const invitedRole = ['admin', 'manager', 'athlete'].includes(invitedRoleRaw)
+    const invitedRole = ['admin', 'manager', 'athlete', 'superadmin'].includes(invitedRoleRaw)
       ? invitedRoleRaw
       : 'athlete';
 

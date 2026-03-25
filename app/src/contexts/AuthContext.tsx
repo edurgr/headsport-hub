@@ -262,7 +262,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Only allow registration if there are no administrators or if current user is admin
-      if (existingAdmins && existingAdmins.length > 0 && (!profile || profile.role !== 'admin')) {
+      if (existingAdmins && existingAdmins.length > 0 && (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin'))) {
         throw new Error(
           'Registration is restricted. Only administrators can create new accounts. Please contact your system administrator for an invitation.',
         );
@@ -390,7 +390,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     userId: string,
     email: string,
     name?: string,
-    role: 'admin' | 'manager' | 'athlete' = 'athlete',
+    role: 'admin' | 'manager' | 'athlete' | 'superadmin' = 'athlete',
   ) {
     try {
       const { error } = await supabaseClient.from('profiles').insert({
@@ -502,7 +502,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function getInvitations() {
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'manager')) {
+    if (!profile || (profile.role !== 'admin' && profile.role !== 'manager' && profile.role !== 'superadmin')) {
       throw new Error('Only administrators and managers can view invitations');
     }
 
@@ -526,7 +526,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function deleteInvitation(invitationId: string): Promise<void> {
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'manager')) {
+    if (!profile || (profile.role !== 'admin' && profile.role !== 'manager' && profile.role !== 'superadmin')) {
       throw new Error('Only administrators and managers can delete invitations');
     }
 

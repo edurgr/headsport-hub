@@ -5,7 +5,7 @@ function getFromAddress(): string {
   const email =
     process.env.RESEND_FROM_EMAIL ||
     process.env.FROM_EMAIL ||
-    'noreply@head-hub.local';
+    'noreply@headsport-hub.com';
   return `${name} <${email}>`;
 }
 
