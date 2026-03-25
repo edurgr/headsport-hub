@@ -338,6 +338,17 @@ export async function requireAuth(req: Request): Promise<
   // 2. Try Supabase auth cookies
   try {
     const cookieStore = await cookies();
+
+    // Helper: extract the actual access token from a raw cookie value.
+    // Some cookies store a JSON array [access_token, refresh_token].
+    const extractToken = (raw: string): string => {
+      try {
+        const arr = JSON.parse(decodeURIComponent(raw));
+        if (Array.isArray(arr) && typeof arr[0] === 'string') return arr[0];
+      } catch { /* not JSON, use raw value */ }
+      return raw;
+    };
+
     for (const name of [
       'sb-access-token',
       'sb:token',
@@ -345,14 +356,14 @@ export async function requireAuth(req: Request): Promise<
       'sb-localhost-auth-token',
       'supabase-auth-token',
     ]) {
-      const val = cookieStore.get(name)?.value;
-      if (val) {
-        const sb = createClient(supabaseUrl, supabaseAnonKey, {
-          global: { headers: { Authorization: `Bearer ${val}` } },
-        });
-        const { data: { user } } = await sb.auth.getUser();
-        if (user) return { success: true, userId: user.id };
-      }
+      const raw = cookieStore.get(name)?.value;
+      if (!raw) continue;
+      const token = extractToken(raw);
+      const sb = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data: { user } } = await sb.auth.getUser();
+      if (user) return { success: true, userId: user.id };
     }
   } catch { /* ignore cookie errors in edge runtime */ }
 

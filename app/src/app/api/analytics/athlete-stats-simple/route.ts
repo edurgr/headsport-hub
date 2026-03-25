@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { requireAuth } from '@/lib/admin-auth-secure';
 
 export async function GET(req: Request) {
+  const authResult = await requireAuth(req);
+  if (!authResult.success) {
+    return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+  }
+
   try {
     const url = new URL(req.url);
     const athleteId = url.searchParams.get('athlete_id');

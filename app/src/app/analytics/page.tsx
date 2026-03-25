@@ -94,7 +94,7 @@ const CHART_COLORS = [
 ];
 
 export default function AnalyticsPage() {
-  const { user, profile, loading, hydrated } = useAuth();
+  const { user, profile, loading, hydrated, session } = useAuth();
   const [activeTab, setActiveTab] = useState<'content' | 'orders' | 'products'>('content');
   const [globalContentStats, setGlobalContentStats] = useState<ContentStats | null>(null);
   const [globalOrderStats, setGlobalOrderStats] = useState<OrderStats | null>(null);
@@ -107,6 +107,14 @@ export default function AnalyticsPage() {
   const [visibleAthletes, setVisibleAthletes] = useState(12);
   const canViewAnalytics =
     !!profile && ['admin', 'manager', 'superadmin'].includes(profile.role);
+
+  const authFetch = useCallback(async (url: string) => {
+    const headers: Record<string, string> = { 'Cache-Control': 'no-store' };
+    if (session?.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
+    return fetch(url, { headers, cache: 'no-store' });
+  }, [session]);
 
   const fetchAllStats = useCallback(async () => {
     setLoadingStats(true);
@@ -124,7 +132,7 @@ export default function AnalyticsPage() {
     } finally {
       setLoadingStats(false);
     }
-  }, []);
+  }, [authFetch]);
 
   useEffect(() => {
     if (hydrated && user && canViewAnalytics) {
@@ -134,9 +142,7 @@ export default function AnalyticsPage() {
 
   const fetchGlobalContentStats = async () => {
     try {
-      const response = await fetch('/api/analytics/content-simple?group_by=global', {
-        cache: 'no-store',
-      });
+      const response = await authFetch('/api/analytics/content-simple?group_by=global');
       const data = await response.json();
       if (data.success) {
         setGlobalContentStats(data.data);
@@ -148,9 +154,7 @@ export default function AnalyticsPage() {
 
   const fetchGlobalOrderStats = async () => {
     try {
-      const response = await fetch('/api/analytics/orders-simple?group_by=global', {
-        cache: 'no-store',
-      });
+      const response = await authFetch('/api/analytics/orders-simple?group_by=global');
       const data = await response.json();
       if (data.success) {
         setGlobalOrderStats(data.data);
@@ -162,9 +166,7 @@ export default function AnalyticsPage() {
 
   const fetchAthleteContentStats = async () => {
     try {
-      const response = await fetch('/api/analytics/content-simple?group_by=athlete', {
-        cache: 'no-store',
-      });
+      const response = await authFetch('/api/analytics/content-simple?group_by=athlete');
       const data = await response.json();
       if (data.success) {
         setAthleteContentStats(data.data);
@@ -176,9 +178,7 @@ export default function AnalyticsPage() {
 
   const fetchAthleteOrderStats = async () => {
     try {
-      const response = await fetch('/api/analytics/orders-simple?group_by=athlete', {
-        cache: 'no-store',
-      });
+      const response = await authFetch('/api/analytics/orders-simple?group_by=athlete');
       const data = await response.json();
       if (data.success) {
         setAthleteOrderStats(data.data);
@@ -190,9 +190,7 @@ export default function AnalyticsPage() {
 
   const fetchProductStats = async () => {
     try {
-      const response = await fetch('/api/analytics/orders-simple?group_by=products', {
-        cache: 'no-store',
-      });
+      const response = await authFetch('/api/analytics/orders-simple?group_by=products');
       const data = await response.json();
       if (data.success) {
         setProductStats(data.data);
@@ -204,7 +202,7 @@ export default function AnalyticsPage() {
 
   const fetchAthleteProductStats = async () => {
     try {
-      const response = await fetch('/api/analytics/athlete-products', { cache: 'no-store' });
+      const response = await authFetch('/api/analytics/athlete-products');
       const data = await response.json();
       if (data.success) {
         setAthleteProductStats(data.data);
@@ -235,13 +233,6 @@ export default function AnalyticsPage() {
     { name: 'Approved', value: globalOrderStats?.approved_orders || 0, color: CHART_COLORS[1] },
     { name: 'Rejected', value: globalOrderStats?.rejected_orders || 0, color: CHART_COLORS[2] },
   ];
-
-  const _athleteContentChartData = athleteContentStats.map((athlete) => ({
-    name: athlete.athlete_name,
-    photos: athlete.photos,
-    videos: athlete.videos,
-    total: athlete.total_content,
-  }));
 
   const athleteOrderChartData = athleteOrderStats.map((athlete) => ({
     name: athlete.athlete_name,
@@ -732,7 +723,7 @@ export default function AnalyticsPage() {
                           fill={CHART_COLORS[4]}
                           dataKey="quantity"
                         >
-                          {topProductsData.map((entry, index) => (
+                          {topProductsData.map((_entry, index) => (
                             <Cell
                               key={`cell-${index}`}
                               fill={CHART_COLORS[index % CHART_COLORS.length]}

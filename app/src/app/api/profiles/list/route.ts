@@ -105,10 +105,9 @@ export async function GET(req: Request) {
       query = query.eq('role', role);
     }
 
-    // Managers only see their own athletes (scoped by manager_id)
-    if (requesterRole === 'manager' && requesterId) {
-      query = query.eq('manager_id', requesterId);
-    }
+    // Managers see all athletes — they need full visibility to manage their team.
+    // Team scoping (manager_id) is used in analytics, not for profile visibility.
+    // No additional filter needed for managers.
 
     // Search by name or email if specified
     if (search) {
@@ -124,9 +123,7 @@ export async function GET(req: Request) {
         if (role && ['athlete', 'manager', 'admin', 'superadmin'].includes(role)) {
           countQuery = countQuery.eq('role', role);
         }
-        if (requesterRole === 'manager' && requesterId) {
-          countQuery = countQuery.eq('manager_id', requesterId);
-        }
+        // No manager_id filter for managers — they see all athletes.
         if (search) {
           countQuery = countQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
         }

@@ -231,6 +231,22 @@ export async function POST(req: NextRequest) {
       // Don't fail if profile can't be created, user already exists
     }
 
+    // Auto-assign manager_id if the inviter is a manager
+    if (invite.invited_by) {
+      const { data: inviterProfile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', invite.invited_by)
+        .single();
+
+      if (inviterProfile?.role === 'manager') {
+        await supabase
+          .from('profiles')
+          .update({ manager_id: invite.invited_by })
+          .eq('id', userData.user.id);
+      }
+    }
+
     // 4. Mark the invitation as used
     let acceptError: any = null;
     if ('used' in invite) {

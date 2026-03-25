@@ -14,14 +14,6 @@ const protectedRoutes = [
   '/admin',
 ];
 
-// Routes that only administrators can access
-const adminOnlyRoutes = ['/admin', '/invite-manager', '/signup'];
-
-// Routes that only managers and administrators can access
-// const managerRoutes = [
-//   '/profile-management',
-//   '/athlete-management'
-// ]; // TODO: Implement manager-specific route protection
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -75,14 +67,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // For routes that require specific roles, verify permissions
-  // This is better done in the frontend with the ProtectedRoute component
-  // but here we can do a basic verification
-
-  if (adminOnlyRoutes.some((route) => pathname.startsWith(route))) {
-    // Verify if user is admin (this would require decoding the JWT)
-    // For now, we allow access and verification is done in the frontend
-  }
+  // Role enforcement for admin/restricted pages cannot be done here without a
+  // database round-trip (roles live in the profiles table, not in the JWT).
+  // All /api/* routes that serve admin data are protected via verifyAdminAccess()
+  // or verifyManagerOrAdminAccess(). Page-level role enforcement is handled by
+  // the ProtectedRoute component on the client.
 
   return NextResponse.next();
 }
