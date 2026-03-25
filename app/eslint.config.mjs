@@ -12,6 +12,7 @@ const eslintConfig = [
       'out/**/*',
       'node_modules/**/*',
       '.next/**/*',
+      '.open-next/**/*',
       'coverage/**/*',
       '*.config.js',
       '*.config.mjs',

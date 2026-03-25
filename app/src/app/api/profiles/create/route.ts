@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
+import { verifyAdminAccess } from '@/lib/admin-auth-secure';
 import {
   addSecurityHeaders,
   createSecureErrorResponse,
@@ -9,7 +10,11 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseServer } from '@/lib/supabase-server';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const auth = await verifyAdminAccess(req);
+  if (!auth.success) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
   try {
     const body = await req.json();
 

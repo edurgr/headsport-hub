@@ -8,6 +8,7 @@ import {
   schemas,
   validateRequest,
 } from '@/lib/security';
+import { requireAuth } from '@/lib/admin-auth-secure';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseServer } from '@/lib/supabase-server';
 
@@ -26,58 +27,48 @@ interface OrderItem {
 }
 
 export async function POST(req: Request) {
+  // Require authenticated session — unauthenticated users cannot place orders
+  const authResult = await requireAuth(req);
+  if (!authResult.success) {
+    return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+  }
+
   try {
     const body = await req.json();
-    console.log('📦 Send Order Request Body:', JSON.stringify(body, null, 2));
     const { rows, athleteEmail, shippingAddress } = body;
 
     // Basic validation
-    console.log('🔍 Validating rows:', Array.isArray(rows), rows?.length);
     if (!Array.isArray(rows) || rows.length === 0) {
-      console.log('❌ Empty order validation failed');
       return addSecurityHeaders(createSecureErrorResponse('Empty order', 400));
     }
 
-    console.log('🔍 Validating athlete email:', athleteEmail);
     if (!athleteEmail) {
-      console.log('❌ Athlete email validation failed');
       return addSecurityHeaders(createSecureErrorResponse('Athlete email is required', 400));
     }
 
-    console.log('🔍 Validating shipping address:', shippingAddress);
     if (!shippingAddress) {
-      console.log('❌ Shipping address validation failed');
       return addSecurityHeaders(createSecureErrorResponse('Shipping address is required', 400));
     }
 
     // Validate athlete email
-    console.log('🔍 Validating email format...');
     const emailValidation = validateRequest(schemas.email, athleteEmail);
     if (!emailValidation.success) {
-      console.log('❌ Email validation failed:', emailValidation.error);
       return addSecurityHeaders(createSecureErrorResponse('Invalid athlete email', 400));
     }
-    console.log('✅ Email validation passed');
 
     // Validate shipping address
-    console.log('🔍 Validating shipping address format...');
     const sanitizedAddress = sanitizeShippingAddress(shippingAddress);
     const addressValidation = validateRequest(schemas.shippingAddress, sanitizedAddress);
     if (!addressValidation.success) {
-      console.log('❌ Address validation failed:', addressValidation.error);
       return addSecurityHeaders(createSecureErrorResponse('Invalid shipping address', 400));
     }
-    console.log('✅ Address validation passed');
 
     // Sanitize and validate each order item
-    console.log('🔍 Validating order items...');
     const validationErrors: string[] = [];
     rows
       .map((row: any, index: number) => {
         try {
-          console.log(`🔍 Validating item ${index + 1}:`, JSON.stringify(row, null, 2));
           const sanitized = sanitizeOrderItem(row);
-          console.log(`✅ Item ${index + 1} sanitized:`, JSON.stringify(sanitized, null, 2));
 
           // Category-specific validation
           if (sanitized.product.category === 'skis') {
@@ -93,8 +84,7 @@ export async function POST(req: Request) {
           }
 
           return sanitized;
-        } catch (error) {
-          console.log(`❌ Item ${index + 1} validation failed:`, error);
+        } catch {
           validationErrors.push(`Item ${index + 1}: Invalid data format`);
           return null;
         }
@@ -102,12 +92,10 @@ export async function POST(req: Request) {
       .filter(Boolean);
 
     if (validationErrors.length > 0) {
-      console.log('❌ Order items validation failed:', validationErrors);
       return addSecurityHeaders(
         createSecureErrorResponse(`Validation failed: ${validationErrors.join(', ')}`, 400),
       );
     }
-    console.log('✅ All order items validation passed');
     // Use service role if available to bypass RLS on server-side order creation
     const sb = supabaseAdmin || (await supabaseServer());
 

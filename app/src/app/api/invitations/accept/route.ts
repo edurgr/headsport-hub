@@ -52,6 +52,15 @@ export async function POST(req: Request) {
       );
     }
 
+    // Check expiry
+    const expiresAt = invitation.expires_at ? new Date(invitation.expires_at) : null;
+    if (expiresAt && expiresAt < new Date()) {
+      return NextResponse.json(
+        { success: false, error: 'Invitation has expired' },
+        { status: 410 },
+      );
+    }
+
     // Mark the invitation as accepted
     const { error: updateError } = await supabase
       .from('invitations')

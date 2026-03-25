@@ -1,8 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 import { createClient } from '@supabase/supabase-js';
 
-export async function GET(req: Request) {
+import { verifyManagerOrAdminAccess } from '@/lib/admin-auth-secure';
+
+export async function GET(req: NextRequest) {
+  const auth = await verifyManagerOrAdminAccess(req);
+  if (!auth.success) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
   try {
     const url = new URL(req.url);
     const email = (url.searchParams.get('email') || '').trim().toLowerCase();

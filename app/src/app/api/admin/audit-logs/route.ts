@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { createClient } from '@supabase/supabase-js';
+
 import { verifyAdminAccess } from '@/lib/admin-auth-secure';
 import { validateRequest } from '@/lib/input-validator';
 import { checkRateLimit } from '@/lib/rate-limiter';
@@ -33,113 +35,54 @@ export async function GET(req: NextRequest) {
     // Get query parameters
     const url = new URL(req.url);
     const page = parseInt(url.searchParams.get('page') || '1');
-    const limit = parseInt(url.searchParams.get('limit') || '50');
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 200);
     const action = url.searchParams.get('action');
     const resourceType = url.searchParams.get('resourceType');
     const userId = url.searchParams.get('userId');
     const startDate = url.searchParams.get('startDate');
     const endDate = url.searchParams.get('endDate');
 
-    // Generate mock audit logs since audit_logs table doesn't exist
-    const mockLogs = [
-      {
-        id: '1',
-        user_id: '153e8352-8abd-44a7-a9d1-f947549a005a',
-        user_email: 'athlete7management@gmail.com',
-        action: 'dashboard_viewed',
-        resource_type: 'dashboard',
-        resource_id: null,
-        details: { period: '30', timestamp: new Date().toISOString() },
-        ip_address: '127.0.0.1',
-        user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-        created_at: new Date().toISOString(),
-      },
-      {
-        id: '2',
-        user_id: '153e8352-8abd-44a7-a9d1-f947549a005a',
-        user_email: 'athlete7management@gmail.com',
-        action: 'product_created',
-        resource_type: 'product',
-        resource_id: 'prod-123',
-        details: { name: 'Test Product', category: 'ski' },
-        ip_address: '127.0.0.1',
-        user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-        created_at: new Date(Date.now() - 3600000).toISOString(),
-      },
-      {
-        id: '3',
-        user_id: '8e76e106-0b01-4c56-b28b-19b508e5748e',
-        user_email: 'egorospe@uoc.edu',
-        action: 'user_login',
-        resource_type: 'user',
-        resource_id: '8e76e106-0b01-4c56-b28b-19b508e5748e',
-        details: { login_method: 'email', success: true },
-        ip_address: '192.168.1.100',
-        user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        created_at: new Date(Date.now() - 7200000).toISOString(),
-      },
-      {
-        id: '4',
-        user_id: '03f164e9-028f-43bc-a0eb-0f8c54553356',
-        user_email: 'edurgr@gmail.com',
-        action: 'file_uploaded',
-        resource_type: 'file',
-        resource_id: 'file-456',
-        details: { filename: 'test.jpg', file_size: 1024000, file_type: 'image' },
-        ip_address: '192.168.1.101',
-        user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0)',
-        created_at: new Date(Date.now() - 10800000).toISOString(),
-      },
-      {
-        id: '5',
-        user_id: '153e8352-8abd-44a7-a9d1-f947549a005a',
-        user_email: 'athlete7management@gmail.com',
-        action: 'content_moderated',
-        resource_type: 'content',
-        resource_id: 'content-789',
-        details: { action: 'approved', reason: 'passed_all_checks' },
-        ip_address: '127.0.0.1',
-        user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-        created_at: new Date(Date.now() - 14400000).toISOString(),
-      },
-    ];
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    // Apply filters to mock data
-    let filteredLogs = mockLogs;
-
-    if (action) {
-      filteredLogs = filteredLogs.filter((log) =>
-        log.action.toLowerCase().includes(action.toLowerCase()),
-      );
-    }
-    if (resourceType) {
-      filteredLogs = filteredLogs.filter((log) =>
-        log.resource_type.toLowerCase().includes(resourceType.toLowerCase()),
-      );
-    }
-    if (userId) {
-      filteredLogs = filteredLogs.filter(
-        (log) => log.user_id.includes(userId) || log.user_email.includes(userId),
-      );
-    }
-    if (startDate) {
-      filteredLogs = filteredLogs.filter((log) => new Date(log.created_at) >= new Date(startDate));
-    }
-    if (endDate) {
-      filteredLogs = filteredLogs.filter((log) => new Date(log.created_at) <= new Date(endDate));
+    if (!supabaseUrl || !serviceKey) {
+      return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
     }
 
-    // Apply pagination
-    const from = (page - 1) * limit;
-    const to = from + limit;
-    const paginatedLogs = filteredLogs.slice(from, to);
+    const admin = createClient(supabaseUrl, serviceKey);
+
+    let query = admin
+      .from('audit_logs')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range((page - 1) * limit, page * limit - 1);
+
+    if (action) query = query.ilike('action', `%${action}%`);
+    if (resourceType) query = query.ilike('resource_type', `%${resourceType}%`);
+    if (userId) query = query.or(`user_id.eq.${userId},user_email.ilike.%${userId}%`);
+    if (startDate) query = query.gte('created_at', startDate);
+    if (endDate) query = query.lte('created_at', endDate);
+
+    const { data: logs, count, error: dbError } = await query;
+
+    if (dbError) {
+      // Table may not exist yet — return empty result rather than an error
+      return NextResponse.json({
+        logs: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 0,
+        note: 'audit_logs table not yet created',
+      });
+    }
 
     return NextResponse.json({
-      logs: paginatedLogs,
-      total: filteredLogs.length,
+      logs: logs ?? [],
+      total: count ?? 0,
       page,
       limit,
-      totalPages: Math.ceil(filteredLogs.length / limit),
+      totalPages: Math.ceil((count ?? 0) / limit),
     });
   } catch (error) {
     console.error('Error in audit logs API:', error);

@@ -40,7 +40,9 @@ export async function POST(request: NextRequest) {
       if (targetRole && ['admin', 'superadmin'].includes(targetRole) && requesterRole !== 'superadmin') {
         return NextResponse.json({ error: 'Only superadmin can delete admins' }, { status: 403 });
       }
-    } catch { /* role check failed, proceed without restriction */ }
+    } catch {
+      return NextResponse.json({ error: 'Could not verify target role' }, { status: 500 });
+    }
 
     const result: any = {
       email: normalized,

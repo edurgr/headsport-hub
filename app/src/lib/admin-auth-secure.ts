@@ -48,16 +48,37 @@ export async function verifyAdminAccess(req: NextRequest): Promise<
     // 2. Si no hay token en header, buscar en cookies
     if (!token) {
       const cookieStore = await cookies();
-      const possibleTokens = [
-        cookieStore.get('sb-access-token')?.value,
-        cookieStore.get('sb:token')?.value,
-        cookieStore.get('supabase-auth-token')?.value,
-        cookieStore.get('sb-localhost-auth-token')?.value,
-        cookieStore.get('sb-iiyavhodskjhqmycivus-auth-token')?.value,
-      ].filter(Boolean);
 
-      if (possibleTokens.length > 0) {
-        token = possibleTokens[0] as string;
+      // Simple string-value cookies
+      for (const name of [
+        'sb-access-token',
+        'sb:token',
+        'sb-localhost-auth-token',
+        'sb-iiyavhodskjhqmycivus-auth-token',
+      ]) {
+        const val = cookieStore.get(name)?.value;
+        if (val) {
+          token = val;
+          break;
+        }
+      }
+
+      // supabase-auth-token stores a JSON array: [access_token, refresh_token]
+      if (!token) {
+        const raw = cookieStore.get('supabase-auth-token')?.value;
+        if (raw) {
+          try {
+            const arr = JSON.parse(decodeURIComponent(raw));
+            if (Array.isArray(arr) && typeof arr[0] === 'string') {
+              token = arr[0];
+            }
+          } catch {
+            // ignore parse errors
+          }
+        }
+      }
+
+      if (token) {
         console.log('✅ Token encontrado en cookies');
       }
     }
@@ -201,14 +222,24 @@ export async function verifyManagerOrAdminAccess(req: NextRequest): Promise<
     }
     if (!token) {
       const cookieStore = await cookies();
-      const possibleTokens = [
-        cookieStore.get('sb-access-token')?.value,
-        cookieStore.get('sb:token')?.value,
-        cookieStore.get('supabase-auth-token')?.value,
-        cookieStore.get('sb-localhost-auth-token')?.value,
-        cookieStore.get('sb-iiyavhodskjhqmycivus-auth-token')?.value,
-      ].filter(Boolean);
-      if (possibleTokens.length > 0) token = possibleTokens[0] as string;
+      for (const name of [
+        'sb-access-token',
+        'sb:token',
+        'sb-localhost-auth-token',
+        'sb-iiyavhodskjhqmycivus-auth-token',
+      ]) {
+        const val = cookieStore.get(name)?.value;
+        if (val) { token = val; break; }
+      }
+      if (!token) {
+        const raw = cookieStore.get('supabase-auth-token')?.value;
+        if (raw) {
+          try {
+            const arr = JSON.parse(decodeURIComponent(raw));
+            if (Array.isArray(arr) && typeof arr[0] === 'string') token = arr[0];
+          } catch { /* ignore */ }
+        }
+      }
     }
 
     if (!token) {
@@ -269,7 +300,7 @@ export async function isUserAdmin(userId: string): Promise<boolean> {
       .from('profiles')
       .select('role')
       .eq('id', userId)
-      .eq('role', 'admin')
+      .in('role', ['admin', 'superadmin'])
       .single();
 
     return !error && !!profile;

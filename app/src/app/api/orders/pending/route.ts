@@ -1,8 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
+import { verifyManagerOrAdminAccess } from '@/lib/admin-auth-secure';
 import { supabaseServer } from '@/lib/supabase-server';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const auth = await verifyManagerOrAdminAccess(req);
+  if (!auth.success) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
   try {
     const sb = await supabaseServer();
 

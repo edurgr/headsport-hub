@@ -1,8 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
+import { requireAuth } from '@/lib/admin-auth-secure';
 import { supabaseServer } from '@/lib/supabase-server';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.success) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   const sb = await supabaseServer();
   const { data, error } = await sb
     .from('upload_sessions')

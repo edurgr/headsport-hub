@@ -85,7 +85,7 @@ export default function Sidebar() {
       name: 'My Stats',
       href: '/my-stats',
       icon: 'trending-up',
-      roles: ['athlete'],
+      roles: ['athlete', 'superadmin'],
     },
     {
       name: 'Analytics',

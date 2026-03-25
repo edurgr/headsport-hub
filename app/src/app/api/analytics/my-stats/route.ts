@@ -71,17 +71,26 @@ export async function GET(req: Request) {
       );
     }
 
-    // If still no athlete ID, try to get from query params or use first athlete for demo
+    // Require authenticated user
+    if (!currentUserId) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    // Default to own stats
     if (!targetAthleteId) {
-      const { data: firstAthlete } = await supabaseAdminClient
+      targetAthleteId = currentUserId;
+    }
+
+    // If requesting another user's stats, verify manager/admin role
+    if (targetAthleteId !== currentUserId) {
+      const { data: requesterProfile } = await supabaseAdminClient
         .from('profiles')
-        .select('id')
-        .eq('role', 'athlete')
-        .limit(1)
+        .select('role')
+        .eq('id', currentUserId)
         .single();
 
-      if (firstAthlete) {
-        targetAthleteId = firstAthlete.id;
+      if (!requesterProfile || !['manager', 'admin', 'superadmin'].includes(requesterProfile.role)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
     }
 

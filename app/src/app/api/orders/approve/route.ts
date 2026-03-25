@@ -10,12 +10,10 @@ export async function POST(req: Request) {
       orderId,
       action,
       managerNotes,
-      approverEmail: fromClient,
     } = body as {
       orderId: string;
       action: 'approve' | 'reject';
       managerNotes?: string;
-      approverEmail?: string;
     };
 
     if (!orderId || !['approve', 'reject'].includes(action)) {
@@ -27,7 +25,7 @@ export async function POST(req: Request) {
     // Authorization: only manager/admin can approve/reject
     const sbUserCtx = await supabaseServer();
     const { data: authUser } = await sbUserCtx.auth.getUser();
-    const approverEmail = authUser?.user?.email || fromClient || null;
+    const approverEmail = authUser?.user?.email ?? null;
     if (!approverEmail) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -36,7 +34,7 @@ export async function POST(req: Request) {
       .select('email, role')
       .eq('email', approverEmail)
       .single();
-    if (!approverProfile || !['manager', 'admin'].includes(approverProfile.role)) {
+    if (!approverProfile || !['manager', 'admin', 'superadmin'].includes(approverProfile.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

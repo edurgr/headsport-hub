@@ -79,11 +79,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if it has expired
+    // Check if it has expired (null expires_at means no expiration)
     const now = new Date();
-    const expiresAt = new Date(invite.expires_at);
+    const expiresAt = invite.expires_at ? new Date(invite.expires_at) : null;
 
-    if (expiresAt < now) {
+    if (expiresAt && expiresAt < now) {
       console.error('❌ Invitation expired');
       return NextResponse.json(
         {

@@ -1,11 +1,52 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+
+import { createClient } from '@supabase/supabase-js';
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseServer } from '@/lib/supabase-server';
-import { createClient } from '@supabase/supabase-js';
 
-export async function PATCH(req: Request) {
+export async function PATCH(req: NextRequest) {
   try {
+    // Verify caller is authenticated
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+
+    const authHeader = req.headers.get('authorization') || '';
+    let callerId: string | null = null;
+    let callerRole: string | null = null;
+
+    if (authHeader.startsWith('Bearer ')) {
+      const authed = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: { user } } = await authed.auth.getUser();
+      if (user) {
+        callerId = user.id;
+        const { data: callerProfile } = await authed
+          .from('profiles').select('role').eq('id', callerId).single();
+        callerRole = callerProfile?.role ?? null;
+      }
+    }
+
+    if (!callerId) {
+      // Fallback: try session cookie
+      const sbCookie = await supabaseServer();
+      const { data: { user } } = await sbCookie.auth.getUser();
+      if (user) {
+        callerId = user.id;
+        const { data: callerProfile } = await sbCookie
+          .from('profiles').select('role').eq('id', callerId).single();
+        callerRole = callerProfile?.role ?? null;
+      }
+    }
+
+    if (!callerId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const sb = supabaseAdmin || (await supabaseServer());
     const body = await req.json();
     const {
@@ -21,6 +62,12 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: 'Profile ID is required' }, { status: 400 });
     }
 
+    // Only allow editing own profile unless admin/superadmin
+    const isElevated = callerRole === 'admin' || callerRole === 'superadmin';
+    if (!isElevated && callerId !== id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const updatePayload: any = {
       name,
       email,
@@ -30,38 +77,12 @@ export async function PATCH(req: Request) {
       updated_at: new Date().toISOString(),
     };
 
-    // Only admins can change role (verify via Authorization header token)
+    // Only admins/superadmins can change role (callerRole already resolved above)
     if (typeof role === 'string' && ['admin', 'manager', 'athlete', 'superadmin'].includes(role)) {
-      try {
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-        const authHeader = req.headers.get('authorization') || '';
-        if (supabaseUrl && supabaseAnonKey && authHeader.startsWith('Bearer ')) {
-          const authed = createClient(supabaseUrl, supabaseAnonKey, {
-            global: { headers: { Authorization: authHeader } },
-          });
-          const {
-            data: { user: requester },
-          } = await authed.auth.getUser();
-          if (requester) {
-            const { data: requesterProfile } = await authed
-              .from('profiles')
-              .select('role')
-              .eq('id', requester.id)
-              .single();
-            const requesterRole = requesterProfile?.role;
-            if (requesterRole === 'superadmin') {
-              updatePayload.role = role; // full power
-            } else if (requesterRole === 'admin') {
-              // Admins can only set non-admin roles
-              if (['manager', 'athlete'].includes(role)) {
-                updatePayload.role = role;
-              }
-            }
-          }
-        }
-      } catch {
-        // ignore: if we can't verify admin, do not allow role change
+      if (callerRole === 'superadmin') {
+        updatePayload.role = role;
+      } else if (callerRole === 'admin' && ['manager', 'athlete'].includes(role)) {
+        updatePayload.role = role;
       }
     }
 

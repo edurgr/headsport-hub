@@ -2,7 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { createClient } from '@supabase/supabase-js';
 
+import { verifyAdminAccess } from '@/lib/admin-auth-secure';
+
 export async function POST(request: NextRequest) {
+  const auth = await verifyAdminAccess(request);
+  if (!auth.success) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     const { email, password } = await request.json();
     if (!email || !password) {

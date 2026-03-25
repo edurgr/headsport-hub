@@ -26,7 +26,7 @@ export async function GET(req: Request) {
 
     // Resolve current user id and role
     let currentUserId: string | null = null;
-    let role: 'athlete' | 'manager' | 'admin' = 'athlete';
+    let role: 'athlete' | 'manager' | 'admin' | 'superadmin' = 'athlete';
 
     const { data: authData } = await sb.auth.getUser();
     if (authData?.user) {
@@ -69,7 +69,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!['admin', 'manager'].includes(role)) {
+    if (!['admin', 'manager', 'superadmin'].includes(role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

@@ -50,8 +50,8 @@ export async function verifyAdminAccessBypass(): Promise<
       };
     }
 
-    // Check if user is admin (bypass for backup operations)
-    if (profile.role !== 'admin') {
+    // Check if user is admin or superadmin
+    if (!['admin', 'superadmin'].includes(profile.role)) {
       return {
         success: false,
         error: 'Admin access required',

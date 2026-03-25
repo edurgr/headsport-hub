@@ -54,7 +54,7 @@ export async function GET(req: Request) {
       } catch { /* ignore auth errors */ }
     }
 
-    let requesterRole: 'athlete' | 'manager' | 'admin' | null = null;
+    let requesterRole: 'athlete' | 'manager' | 'admin' | 'superadmin' | null = null;
     if (requesterId) {
       try {
         const source = serviceClient ?? sb;
@@ -73,7 +73,7 @@ export async function GET(req: Request) {
 
     // Use service role client for managers/admins to avoid RLS misconfig issues
     const client =
-      serviceClient && (requesterRole === 'admin' || requesterRole === 'manager')
+      serviceClient && (requesterRole === 'admin' || requesterRole === 'manager' || requesterRole === 'superadmin')
         ? serviceClient
         : sb;
 
