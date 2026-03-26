@@ -17,10 +17,20 @@ export default function OrdersPage() {
   const [filter, setFilter] = useState<'pending' | 'approved' | 'mine' | 'all'>('all');
   const [roleFilter, setRoleFilter] = useState<'all' | 'athlete' | 'manager' | 'admin'>('all');
   const [selectedShippingAddress, setSelectedShippingAddress] = useState<Address | null>(null);
-  const { user, profile } = useAuth();
+  const [targetAthleteEmail, setTargetAthleteEmail] = useState<string>('');
+  const [availableAthletes, setAvailableAthletes] = useState<Array<{
+    id: string; name: string; email: string;
+    address?: string; city?: string; state?: string;
+    postal_code?: string; country?: string; phone?: string;
+  }>>([]);
+  const { user, profile, session } = useAuth();
   const download = useDownload();
 
-  const fetchOrders = useCallback(async () => { // CORREGIDO: useCallback añadido
+  const fetchOrders = useCallback(async () => {
+    const token = session?.access_token;
+    const authHeaders: Record<string, string> = token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
     try {
       let url = '/api/orders';
       if (profile?.role === 'manager' || profile?.role === 'admin' || profile?.role === 'superadmin') {
@@ -28,17 +38,19 @@ export default function OrdersPage() {
         else if (filter === 'approved') url += '?scope=approved';
         else if (filter === 'mine' && user?.email)
           url += `?scope=mine&athleteEmail=${encodeURIComponent(user.email)}`;
-        else if (filter === 'all') url += '?scope=all';
+        // 'all' — no scope param needed; API returns everything scoped by role
         if (roleFilter !== 'all') url += `${url.includes('?') ? '&' : '?'}roleFilter=${roleFilter}`;
       } else if (user?.email) {
-        // Athlete: fetch complete history with a high limit to show all career orders
         url += `?scope=mine&athleteEmail=${encodeURIComponent(user.email)}&limit=1000`;
       } else {
-        // If no user/role info, don't fetch
         setOrders([]);
         return;
       }
-      const res = await fetch(url, { cache: 'no-store', redirect: 'follow' });
+      const res = await fetch(url, {
+        cache: 'no-store',
+        redirect: 'follow',
+        headers: authHeaders,
+      });
       const json = await res.json();
       if (res.ok) {
         setOrders(
@@ -58,24 +70,70 @@ export default function OrdersPage() {
             shippingAddress: o.shipping_address || {},
             approvedBy: o.approved_by_email || '',
             approvedAt: o.approved_at || '',
+            createdBy: o.created_by_name
+              ? `${o.created_by_name} (${o.created_by_role || 'unknown'})`
+              : '',
           })),
         );
       } else {
-        console.error("Failed to fetch orders:", json.error);
+        console.error('Failed to fetch orders:', json.error);
         setOrders([]);
       }
     } catch (e) {
-      console.error("Error fetching orders:", e);
+      console.error('Error fetching orders:', e);
       setOrders([]);
     }
-  }, [user?.email, profile?.role, filter, roleFilter]); // CORREGIDO: Dependencias de useCallback
+  }, [user?.email, profile?.role, filter, roleFilter, session?.access_token]);
 
   useEffect(() => {
-    // Only fetch if we have the necessary info
     if (user?.email || profile?.role) {
       fetchOrders();
     }
-  }, [fetchOrders, user?.email, profile?.role]); // CORREGIDO: useEffect depende ahora de la función estable fetchOrders
+  }, [fetchOrders, user?.email, profile?.role]);
+
+  // Fetch athletes list for managers/admins to use in order creation
+  const fetchAvailableAthletes = useCallback(async () => {
+    if (!profile?.role || profile.role === 'athlete') return;
+    const token = session?.access_token;
+    try {
+      const res = await fetch('/api/profiles/list?role=athlete&limit=200', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        cache: 'no-store',
+      });
+      const json = await res.json();
+      if (res.ok && json.profiles) setAvailableAthletes(json.profiles);
+    } catch (e) {
+      console.error('Failed to fetch athletes for order creation:', e);
+    }
+  }, [profile?.role, session?.access_token]);
+
+  useEffect(() => {
+    if (profile?.role && profile.role !== 'athlete') {
+      fetchAvailableAthletes();
+    }
+  }, [fetchAvailableAthletes, profile?.role]);
+
+  // When an athlete is selected, auto-populate their saved address
+  const handleAthleteSelect = useCallback((email: string) => {
+    setTargetAthleteEmail(email);
+    const found = availableAthletes.find((a) => a.email === email);
+    if (found && (found.address || found.city)) {
+      setSelectedShippingAddress({
+        id: '',
+        name: found.name || email.split('@')[0],
+        addressLine1: found.address || '',
+        addressLine2: '',
+        city: found.city || '',
+        state: found.state || '',
+        postalCode: found.postal_code || '',
+        country: found.country || '',
+        phone: found.phone || '',
+        isPreferred: false,
+      });
+    } else {
+      setSelectedShippingAddress(null);
+    }
+  }, [availableAthletes]);
 
   function addRow() {
     setRows((r) => [
@@ -129,10 +187,21 @@ export default function OrdersPage() {
       return;
     }
 
+    const isElevated =
+      profile?.role === 'manager' ||
+      profile?.role === 'admin' ||
+      profile?.role === 'superadmin';
+
+    if (isElevated && !targetAthleteEmail) {
+      alert('Please select an athlete for this order');
+      return;
+    }
+
     try {
+      const token = session?.access_token;
       const requestData = {
         rows: rows,
-        athleteEmail: user?.email,
+        athleteEmail: isElevated ? targetAthleteEmail : user?.email,
         shippingAddress: selectedShippingAddress,
       };
 
@@ -140,7 +209,10 @@ export default function OrdersPage() {
 
       const res = await fetch('/api/send-order', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(requestData),
       });
 
@@ -152,6 +224,7 @@ export default function OrdersPage() {
         setRows([]);
         setShowCreateModal(false);
         setSelectedShippingAddress(null);
+        setTargetAthleteEmail('');
         // Refresh orders list
         fetchOrders();
       } else {
@@ -428,8 +501,13 @@ export default function OrdersPage() {
                       <p className="text-xs sm:text-sm text-[hsl(var(--muted))]">
                         Items: {order.items}
                       </p>
+                      {order.createdBy && (
+                        <p className="text-xs text-[hsl(var(--muted))] truncate">
+                          Created by: {order.createdBy}
+                        </p>
+                      )}
                       {order.approvedBy && (
-                        <p className="text-xs text-[hsl(var(--muted))] break-words line-clamp-2 truncate"> {/* Added truncate */}
+                        <p className="text-xs text-[hsl(var(--muted))] break-words line-clamp-2 truncate">
                           Approved by: {order.approvedBy}{' '}
                           {order.approvedAt
                             ? `on ${new Date(order.approvedAt).toLocaleDateString()}`
@@ -698,15 +776,39 @@ export default function OrdersPage() {
                       <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
                         Athlete
                       </label>
-                      <input
-                        type="text"
-                        value={profile?.name || user?.email || 'Unknown User'} // Show name if available
-                        disabled
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-[hsl(var(--muted))]"
-                      />
-                      <p className="mt-1 text-xs text-[hsl(var(--muted))]">
-                        This order is for the logged-in user
-                      </p>
+                      {(profile?.role === 'manager' || profile?.role === 'admin' || profile?.role === 'superadmin') ? (
+                        <>
+                          <select
+                            value={targetAthleteEmail}
+                            onChange={(e) => handleAthleteSelect(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="">— Select an athlete —</option>
+                            {availableAthletes.map((a) => (
+                              <option key={a.id} value={a.email}>
+                                {a.name ? `${a.name} (${a.email})` : a.email}
+                              </option>
+                            ))}
+                          </select>
+                          {targetAthleteEmail && !selectedShippingAddress && (
+                            <p className="mt-1 text-xs text-amber-600">
+                              No saved address found for this athlete — please enter one below.
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <input
+                            type="text"
+                            value={profile?.name || user?.email || 'Unknown User'}
+                            disabled
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-[hsl(var(--muted))]"
+                          />
+                          <p className="mt-1 text-xs text-[hsl(var(--muted))]">
+                            This order is for the logged-in user
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -931,7 +1033,7 @@ export default function OrdersPage() {
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row sm:justify-end gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200 sticky bottom-0 bg-white p-4 sm:p-6 z-10"> {/* Sticky footer */}
                   <button
-                    onClick={() => setShowCreateModal(false)}
+                    onClick={() => { setShowCreateModal(false); setTargetAthleteEmail(''); setSelectedShippingAddress(null); }}
                     className="px-5 py-2 border border-gray-300 text-[hsl(var(--muted))] rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     Cancel

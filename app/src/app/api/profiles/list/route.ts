@@ -94,14 +94,30 @@ export async function GET(req: Request) {
         postal_code,
         country,
         manager_id,
+        admin_id,
+        payment_amount,
+        contract_duration_months,
+        instagram_followers,
+        tiktok_followers,
+        youtube_followers,
+        accomplishments,
         created_at,
         updated_at
       `,
       )
       .order('created_at', { ascending: false });
 
+    // Superadmin profiles are never visible to non-superadmin requesters
+    if (requesterRole !== 'superadmin') {
+      query = query.neq('role', 'superadmin');
+    }
+
     // Filter by role if specified
     if (role && ['athlete', 'manager', 'admin', 'superadmin'].includes(role)) {
+      // Non-superadmin requesters cannot request superadmin profiles
+      if (role === 'superadmin' && requesterRole !== 'superadmin') {
+        return NextResponse.json({ success: true, profiles: [], pagination: { page, limit, total: 0, totalPages: 0 } });
+      }
       query = query.eq('role', role);
     } else if (requesterRole === 'manager') {
       // Managers can only see athletes — never admin or superadmin profiles
@@ -119,8 +135,13 @@ export async function GET(req: Request) {
       (async () => {
         let countQuery = client.from('profiles').select('*', { count: 'exact', head: true });
 
+        if (requesterRole !== 'superadmin') {
+          countQuery = countQuery.neq('role', 'superadmin');
+        }
         if (role && ['athlete', 'manager', 'admin', 'superadmin'].includes(role)) {
-          countQuery = countQuery.eq('role', role);
+          if (role !== 'superadmin' || requesterRole === 'superadmin') {
+            countQuery = countQuery.eq('role', role);
+          }
         } else if (requesterRole === 'manager') {
           countQuery = countQuery.in('role', ['athlete']);
         }
@@ -167,11 +188,18 @@ export async function GET(req: Request) {
         address: profile.address,
         city: profile.city,
         state: profile.state,
-        postalCode: profile.postal_code,
+        postal_code: profile.postal_code,
         country: profile.country,
-        managerId: profile.manager_id,
-        createdAt: profile.created_at,
-        updatedAt: profile.updated_at,
+        manager_id: profile.manager_id,
+        admin_id: profile.admin_id,
+        payment_amount: profile.payment_amount,
+        contract_duration_months: profile.contract_duration_months,
+        instagram_followers: profile.instagram_followers,
+        tiktok_followers: profile.tiktok_followers,
+        youtube_followers: profile.youtube_followers,
+        accomplishments: profile.accomplishments ?? [],
+        created_at: profile.created_at,
+        updated_at: profile.updated_at,
       })) || [];
 
     return NextResponse.json({

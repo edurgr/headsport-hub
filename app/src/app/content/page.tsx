@@ -39,6 +39,7 @@ export default function ContentPage() {
   const [editDescription, setEditDescription] = useState<string>('');
   const [thumbFile, setThumbFile] = useState<File | null>(null);
   const [role, setRole] = useState<'athlete' | 'manager' | 'admin' | 'superadmin'>('athlete');
+  const [galleryRoleFilter, setGalleryRoleFilter] = useState<'all' | 'athlete' | 'manager' | 'admin'>('all');
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [deleting, setDeleting] = useState(false);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
@@ -203,8 +204,9 @@ export default function ContentPage() {
         const token = sessionData.session?.access_token;
         console.log('Session token:', token ? 'present' : 'missing');
 
-        // Fetch user role
+        // Fetch user role and name
         let userRole: 'athlete' | 'manager' | 'admin' | 'superadmin' = 'athlete';
+        let userName = '';
         if (user) {
           const { data: prof } = await supabaseClient
             .from('profiles')
@@ -212,6 +214,7 @@ export default function ContentPage() {
             .eq('id', user.id)
             .single();
           if (prof?.role) userRole = prof.role;
+          if (prof?.name) userName = prof.name;
         }
         setRole(userRole);
 
@@ -239,7 +242,7 @@ export default function ContentPage() {
           const itemsLocal: GalleryItem[] = await Promise.all(
             (files || []).map(async (f) => {
               const session = sessionMap.get(f.session_id);
-              const authorName = session ? '' : ''; // Logic for author name seems incomplete
+              const authorName = session ? (userName || user?.email || '') : (userName || user?.email || '');
               let url: string | null = null;
               let thumbnail_url: string | null = null;
 
@@ -279,7 +282,9 @@ export default function ContentPage() {
           console.log('Items set (client athlete):', itemsLocal.length);
         } else {
           // Manager/Admin/Superadmin: use API (server signs URLs with admin client)
-          const res = await fetch('/api/content/gallery', {
+          const galleryUrl = new URL('/api/content/gallery', window.location.origin);
+          if (galleryRoleFilter !== 'all') galleryUrl.searchParams.set('role_filter', galleryRoleFilter);
+          const res = await fetch(galleryUrl.toString(), {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
             cache: 'no-store',
             redirect: 'follow',
@@ -300,7 +305,7 @@ export default function ContentPage() {
 
     fetchItems();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshKey]); // Re-run when refreshKey changes (avoids full page reload)
+  }, [refreshKey, galleryRoleFilter]); // Re-run when refreshKey or role filter changes
 
   const openEdit = (item: GalleryItem) => {
     setEditing(item);
@@ -635,6 +640,25 @@ export default function ContentPage() {
                   </button>
                 )}
               </div>
+            )}
+
+            {/* Role filter for admin/superadmin (not shown when inside an author view) */}
+            {(role === 'admin' || role === 'superadmin') && !activeAuthorId && (
+              <select
+                value={galleryRoleFilter}
+                onChange={(e) => {
+                  setGalleryRoleFilter(e.target.value as any);
+                  setActiveAuthorId(null);
+                  setRefreshKey((k) => k + 1);
+                }}
+                className="px-3 py-2 rounded text-sm"
+                style={{ backgroundColor: 'hsl(var(--secondary))', border: '1px solid hsl(var(--border))' }}
+              >
+                <option value="all">All Users</option>
+                <option value="athlete">Athletes</option>
+                <option value="manager">Managers</option>
+                <option value="admin">Admins</option>
+              </select>
             )}
 
             {/* Delete controls for admin and manager (bulk delete selected) */}

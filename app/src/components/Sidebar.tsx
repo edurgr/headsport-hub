@@ -56,7 +56,6 @@ export default function Sidebar() {
   }, [profile?.id, profileAvatarPath]);
 
   const navigationItems = [
-    // Put Admin Dashboard first and hide generic dashboard for admins
     {
       name: 'Admin Dashboard',
       href: '/admin/dashboard',
@@ -69,45 +68,38 @@ export default function Sidebar() {
       icon: 'grid',
       roles: ['athlete', 'manager'],
     },
+    // Insights: merges My Stats + Analytics into one unified view
+    {
+      name: 'Insights',
+      href: '/insights',
+      icon: 'trending-up',
+      roles: ['athlete', 'manager', 'admin', 'superadmin'],
+    },
+    // User Directory: merges Athlete Management + Profile Management for admin/superadmin
+    {
+      name: 'User Directory',
+      href: '/user-directory',
+      icon: 'users',
+      roles: ['admin', 'superadmin'],
+    },
+    // Managers still use the dedicated athlete management view
+    {
+      name: 'Athlete Management',
+      href: '/athlete-management',
+      icon: 'users',
+      roles: ['manager'],
+    },
     {
       name: 'Content',
       href: '/content',
       icon: 'box',
-      roles: ['athlete', 'admin', 'superadmin'],
+      roles: ['athlete', 'manager', 'admin', 'superadmin'],
     },
     {
       name: 'Orders',
       href: '/orders',
       icon: 'checkmark-box',
-      roles: ['athlete', 'admin', 'superadmin'],
-    },
-    {
-      name: 'My Stats',
-      href: '/my-stats',
-      icon: 'trending-up',
-      roles: ['athlete', 'superadmin'],
-    },
-    {
-      name: 'Analytics',
-      href: '/analytics',
-      icon: 'trending-up',
-      roles: ['admin', 'superadmin'],
-    },
-    // Pending Orders merged into Orders page for managers/admin
-    // Removed explicit Profile link; avatar area links to /profile for a cleaner sidebar
-
-    // Only for managers and administrators
-    {
-      name: 'Athlete Management',
-      href: '/athlete-management',
-      icon: 'users',
-      roles: ['admin', 'manager', 'superadmin'],
-    },
-    {
-      name: 'Profile Management',
-      href: '/profile-management',
-      icon: 'users',
-      roles: ['admin', 'superadmin'],
+      roles: ['athlete', 'manager', 'admin', 'superadmin'],
     },
     {
       name: 'Product Management',
@@ -115,13 +107,7 @@ export default function Sidebar() {
       icon: 'box',
       roles: ['admin', 'superadmin'],
     },
-    {
-      name: 'Content Moderation',
-      href: '/admin/content-moderation',
-      icon: 'shield-check',
-      roles: ['admin', 'superadmin'],
-    },
-    // Consolidated: invitations and admin creation live inside Profile Management
+    // Content Moderation removed from nav (redirects to admin dashboard)
   ].filter((item) => !profile || item.roles.includes(profile.role));
 
   const getIcon = (iconName: string) => {

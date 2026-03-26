@@ -57,6 +57,13 @@ export async function PATCH(req: NextRequest) {
       organization,
       role,
       manager_id,
+      admin_id,
+      payment_amount,
+      contract_duration_months,
+      instagram_followers,
+      tiktok_followers,
+      youtube_followers,
+      accomplishments,
     } = body;
 
     if (!id) {
@@ -94,8 +101,38 @@ export async function PATCH(req: NextRequest) {
       if (isElevated) {
         updatePayload.manager_id = manager_id || null;
       } else if (isManager) {
-        // Manager can only assign athletes to themselves or clear the assignment
         updatePayload.manager_id = manager_id === callerId ? callerId : null;
+      }
+    }
+
+    // Only superadmin can assign admin_id (manager → admin hierarchy)
+    if (admin_id !== undefined && callerRole === 'superadmin') {
+      updatePayload.admin_id = admin_id || null;
+    }
+
+    // Financial/legal fields — admin, superadmin, and manager
+    if (isElevated || isManager) {
+      if (payment_amount !== undefined) updatePayload.payment_amount = payment_amount ?? null;
+      if (contract_duration_months !== undefined) updatePayload.contract_duration_months = contract_duration_months ?? null;
+    }
+
+    // Social/performance fields — admin, superadmin, manager, or self
+    if (isElevated || isManager || callerId === id) {
+      if (instagram_followers !== undefined) updatePayload.instagram_followers = instagram_followers ?? null;
+      if (tiktok_followers !== undefined) updatePayload.tiktok_followers = tiktok_followers ?? null;
+      if (youtube_followers !== undefined) updatePayload.youtube_followers = youtube_followers ?? null;
+    }
+
+    // Accomplishments — admin, superadmin, and manager, validate shape
+    if ((isElevated || isManager) && accomplishments !== undefined) {
+      if (Array.isArray(accomplishments)) {
+        const isValid = accomplishments.every(
+          (a: any) => typeof a.title === 'string' && typeof a.date === 'string' && typeof a.description === 'string',
+        );
+        if (!isValid) {
+          return NextResponse.json({ error: 'Invalid accomplishments format' }, { status: 400 });
+        }
+        updatePayload.accomplishments = accomplishments;
       }
     }
 

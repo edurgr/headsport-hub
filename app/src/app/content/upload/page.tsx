@@ -17,10 +17,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabaseClient } from '@/lib/supabase-client';
 
 export default function UploadPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, session } = useAuth();
   const [files, setFiles] = useState<FileList | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [assignToAthleteId, setAssignToAthleteId] = useState<string>('');
+  const [availableAthletes, setAvailableAthletes] = useState<Array<{ id: string; name: string; email: string }>>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState('');
@@ -128,6 +130,23 @@ export default function UploadPage() {
     fetchGallery();
   }, []);
 
+  // Fetch assignable athletes for managers/admins
+  useEffect(() => {
+    const isElevated =
+      profile?.role === 'manager' ||
+      profile?.role === 'admin' ||
+      profile?.role === 'superadmin';
+    if (!isElevated) return;
+    const token = session?.access_token;
+    fetch('/api/profiles/list?role=athlete&limit=200', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      cache: 'no-store',
+    })
+      .then((r) => r.json())
+      .then((json) => { if (json.profiles) setAvailableAthletes(json.profiles); })
+      .catch(() => {});
+  }, [profile?.role, session?.access_token]);
+
   async function fetchGallery() {
     try {
       const res = await fetch('/api/content/gallery?limit=12');
@@ -173,6 +192,7 @@ export default function UploadPage() {
           description: description,
           user_id: user.id,
           status: 'uploading',
+          ...(assignToAthleteId ? { assigned_to_id: assignToAthleteId } : {}),
         })
         .select()
         .single();
@@ -720,6 +740,29 @@ export default function UploadPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+              {(profile?.role === 'manager' || profile?.role === 'admin' || profile?.role === 'superadmin') && (
+                <div>
+                  <label htmlFor="assignTo" className="block text-sm font-medium text-gray-700 mb-2">
+                    Assign to athlete (optional)
+                  </label>
+                  <select
+                    id="assignTo"
+                    value={assignToAthleteId}
+                    onChange={(e) => setAssignToAthleteId(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Keep in my own account</option>
+                    {availableAthletes.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name ? `${a.name} (${a.email})` : a.email}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    If left blank, this content stays under your account.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>

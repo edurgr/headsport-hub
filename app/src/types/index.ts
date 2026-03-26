@@ -15,6 +15,12 @@ export type OrderStatus = 'pending_approval' | 'approved' | 'rejected' | 'cancel
 export type UploadStatus = 'uploading' | 'processing' | 'completed' | 'failed';
 export type FileType = 'image' | 'video' | 'document' | 'other';
 
+export interface Accomplishment {
+  title: string;
+  date: string;
+  description: string;
+}
+
 export interface Profile {
   id: string;
   email: string;
@@ -29,6 +35,18 @@ export interface Profile {
   country?: string;
   created_at?: string;
   updated_at?: string;
+  // Hierarchy
+  manager_id?: string | null;
+  admin_id?: string | null;
+  // Financials / Legal
+  payment_amount?: number | null;
+  contract_duration_months?: number | null;
+  // Social media
+  instagram_followers?: number | null;
+  tiktok_followers?: number | null;
+  youtube_followers?: number | null;
+  // Performance
+  accomplishments?: Accomplishment[] | null;
 }
 
 export interface Invitation {

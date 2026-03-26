@@ -17,6 +17,14 @@ export async function GET(req: Request) {
     const athleteEmail = url.searchParams.get('athleteEmail') || undefined;
     const roleFilter = url.searchParams.get('roleFilter') || undefined;
 
+    // Determine caller's role to enforce hierarchy access control
+    const { data: callerProfile } = await sb
+      .from('profiles')
+      .select('role')
+      .eq('id', authResult.userId)
+      .single();
+    const callerRole = callerProfile?.role as string | undefined;
+
     let query: any = sb
       .from('orders')
       .select('*, order_items(*)')
@@ -28,16 +36,44 @@ export async function GET(req: Request) {
     if (scope === 'approved') {
       query = query.eq('status', 'approved');
     }
-    if (scope === 'all') {
-      // For 'all' scope, don't filter by status - show all orders
-    }
 
     if (scope === 'mine' && athleteEmail) {
       query = query.eq('athlete_email', athleteEmail);
     }
 
-    // If a roleFilter is specified, restrict to emails of users with that role
-    if (roleFilter && ['athlete', 'manager', 'admin', 'superadmin'].includes(roleFilter)) {
+    // ── Hierarchy-based email restrictions ────────────────────────────────────
+    if (callerRole === 'manager') {
+      // Manager: only their assigned athletes' orders
+      const { data: managedAthletes } = await sb
+        .from('profiles')
+        .select('email')
+        .eq('role', 'athlete')
+        .eq('manager_id', authResult.userId);
+      const allowedEmails = (managedAthletes || []).map((p: any) => p.email).filter(Boolean);
+      if (allowedEmails.length === 0) {
+        return NextResponse.json({ success: true, orders: [], total: 0 });
+      }
+      query = query.in('athlete_email', allowedEmails);
+    } else if (callerRole === 'admin') {
+      // Admin: athletes belonging to managers under this admin
+      const { data: adminManagers } = await sb
+        .from('profiles')
+        .select('id')
+        .eq('role', 'manager')
+        .eq('admin_id', authResult.userId);
+      const managerIds = (adminManagers || []).map((m: any) => m.id);
+      const { data: adminAthletes } = await sb
+        .from('profiles')
+        .select('email')
+        .eq('role', 'athlete')
+        .in('manager_id', managerIds.length > 0 ? managerIds : ['__none__']);
+      const allowedEmails = (adminAthletes || []).map((p: any) => p.email).filter(Boolean);
+      if (allowedEmails.length === 0) {
+        return NextResponse.json({ success: true, orders: [], total: 0 });
+      }
+      query = query.in('athlete_email', allowedEmails);
+    } else if (callerRole === 'superadmin' && roleFilter && ['athlete', 'manager', 'admin'].includes(roleFilter)) {
+      // Superadmin: optional role filter
       const { data: roleProfiles } = await sb
         .from('profiles')
         .select('email')
@@ -47,6 +83,16 @@ export async function GET(req: Request) {
         return NextResponse.json({ success: true, orders: [], total: 0 });
       }
       query = query.in('athlete_email', roleEmails);
+    } else if (callerRole === 'athlete') {
+      // Athlete: enforce own orders only (ignore any scope params)
+      const { data: selfProfile } = await sb
+        .from('profiles')
+        .select('email')
+        .eq('id', authResult.userId)
+        .single();
+      if (selfProfile?.email) {
+        query = query.eq('athlete_email', selfProfile.email);
+      }
     }
 
     const { data: orders, error } = await query;

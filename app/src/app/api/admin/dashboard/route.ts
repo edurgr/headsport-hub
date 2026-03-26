@@ -156,10 +156,11 @@ async function getUserStats(supabase: any, period: number) {
   startDate.setDate(startDate.getDate() - period);
 
   try {
-    // Total users
+    // Total users — exclude superadmin profiles from stats
     const { data: allUsers, error: totalError } = await supabase
       .from('profiles')
-      .select('id, role, created_at, updated_at');
+      .select('id, role, created_at, updated_at')
+      .neq('role', 'superadmin');
 
     if (totalError) {
       console.error('Error fetching users:', totalError);
@@ -382,14 +383,14 @@ async function getRecentActivity(supabase: any) {
         .order('created_at', { ascending: false })
         .limit(5),
 
-      // Query 4: Recent content files (without nested foreign keys)
+      // Query 4: Recent content files (session_id links to upload_sessions)
       supabase
         .from('upload_files')
-        .select('id, filename, file_type, file_size, created_at, user_id')
+        .select('id, filename, file_type, file_size, created_at, session_id')
         .order('created_at', { ascending: false })
         .limit(5),
 
-      // Query 5: Upload sessions (separate from files)
+      // Query 5: Upload sessions (maps session_id → user_id)
       supabase
         .from('upload_sessions')
         .select('id, user_id'),
@@ -427,7 +428,7 @@ async function getRecentActivity(supabase: any) {
     const sessionMap = new Map(uploadSessions.map((s: any) => [s.id, s as any]));
 
     const contentWithUsers = recentContentFiles.map((file: any) => {
-      const session = sessionMap.get(file.user_id) as any;
+      const session = sessionMap.get(file.session_id) as any;
       const profile =
         session && allProfiles.find((p: any) => p.id === session.user_id);
 

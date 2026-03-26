@@ -46,22 +46,14 @@ export async function POST(req: Request) {
       return addSecurityHeaders(createSecureErrorResponse('Athlete email is required', 400));
     }
 
-    if (!shippingAddress) {
-      return addSecurityHeaders(createSecureErrorResponse('Shipping address is required', 400));
-    }
-
     // Validate athlete email
     const emailValidation = validateRequest(schemas.email, athleteEmail);
     if (!emailValidation.success) {
       return addSecurityHeaders(createSecureErrorResponse('Invalid athlete email', 400));
     }
 
-    // Validate shipping address
-    const sanitizedAddress = sanitizeShippingAddress(shippingAddress);
-    const addressValidation = validateRequest(schemas.shippingAddress, sanitizedAddress);
-    if (!addressValidation.success) {
-      return addSecurityHeaders(createSecureErrorResponse('Invalid shipping address', 400));
-    }
+    // Sanitize address if provided; will auto-fetch from athlete profile later if missing
+    const sanitizedAddress = shippingAddress ? sanitizeShippingAddress(shippingAddress) : null;
 
     // Sanitize and validate each order item
     const validationErrors: string[] = [];
@@ -99,6 +91,42 @@ export async function POST(req: Request) {
     // Use service role if available to bypass RLS on server-side order creation
     const sb = supabaseAdmin || (await supabaseServer());
 
+    // Resolve caller identity (for created_by fields)
+    const { data: callerProfile } = await sb
+      .from('profiles')
+      .select('name, role')
+      .eq('id', authResult.userId)
+      .single();
+
+    // Auto-fetch athlete's saved address when none is provided in the request
+    let resolvedAddress = sanitizedAddress;
+    if (!resolvedAddress || Object.keys(resolvedAddress).length === 0) {
+      const { data: athleteProfile } = await sb
+        .from('profiles')
+        .select('name, address, city, state, postal_code, country, phone')
+        .eq('email', athleteEmail)
+        .single();
+      if (athleteProfile) {
+        resolvedAddress = {
+          name: athleteProfile.name || athleteEmail.split('@')[0],
+          addressLine1: athleteProfile.address || '',
+          addressLine2: null,
+          city: athleteProfile.city || '',
+          state: athleteProfile.state || '',
+          postalCode: athleteProfile.postal_code || '',
+          country: athleteProfile.country || '',
+          phone: athleteProfile.phone || null,
+          isPreferred: false,
+        };
+      }
+    }
+
+    if (!resolvedAddress || !resolvedAddress.addressLine1) {
+      return addSecurityHeaders(
+        createSecureErrorResponse('Shipping address is required and athlete has no saved address', 400),
+      );
+    }
+
     // Try to get athlete profile by email; if not found, proceed with fallback
     const { data: athlete } = await sb
       .from('profiles')
@@ -117,9 +145,12 @@ export async function POST(req: Request) {
         athlete_id: isAthlete ? athlete!.id : null,
         athlete_email: athleteEmail,
         athlete_name: (athlete && athlete.name) || athleteEmail.split('@')[0],
-        status: 'pending_approval', // Changed from 'pending' to 'pending_approval'
-        shipping_address: sanitizedAddress,
-        notes: `Order with ${rows.length} items - Pending manager approval`,
+        status: 'pending_approval',
+        shipping_address: resolvedAddress,
+        notes: `Order with ${rows.length} items - Created by ${callerProfile?.name || 'Unknown'} (${callerProfile?.role || 'unknown'})`,
+        created_by_id: authResult.userId,
+        created_by_name: callerProfile?.name || null,
+        created_by_role: callerProfile?.role || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -182,7 +213,9 @@ export async function POST(req: Request) {
         status: order.status,
         athlete_email: athleteEmail,
         items: enrichedRows,
-        shipping_address: shippingAddress,
+        shipping_address: resolvedAddress,
+        created_by_name: callerProfile?.name || null,
+        created_by_role: callerProfile?.role || null,
         created_at: order.created_at,
       },
     });
