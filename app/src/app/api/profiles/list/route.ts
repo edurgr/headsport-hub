@@ -77,101 +77,77 @@ export async function GET(req: Request) {
         ? serviceClient
         : sb;
 
-    // Build data query
-    let query = client
-      .from('profiles')
-      .select(
-        `
-        id,
-        email,
-        name,
-        role,
-        organization,
-        phone,
-        address,
-        city,
-        state,
-        postal_code,
-        country,
-        manager_id,
-        admin_id,
-        payment_amount,
-        contract_duration_months,
-        instagram_followers,
-        tiktok_followers,
-        youtube_followers,
-        accomplishments,
-        created_at,
-        updated_at
-      `,
-      )
-      .order('created_at', { ascending: false });
-
-    // Superadmin profiles are never visible to non-superadmin requesters
-    if (requesterRole !== 'superadmin') {
-      query = query.neq('role', 'superadmin');
-    }
-
-    // Filter by role if specified
-    if (role && ['athlete', 'manager', 'admin', 'superadmin'].includes(role)) {
-      // Non-superadmin requesters cannot request superadmin profiles
-      if (role === 'superadmin' && requesterRole !== 'superadmin') {
-        return NextResponse.json({ success: true, profiles: [], pagination: { page, limit, total: 0, totalPages: 0 } });
+    // Helper to apply role/search filters to any query builder
+    function applyFilters(q: any) {
+      if (requesterRole !== 'superadmin') q = q.neq('role', 'superadmin');
+      if (role && ['athlete', 'manager', 'admin', 'superadmin'].includes(role)) {
+        if (role === 'superadmin' && requesterRole !== 'superadmin') return null; // blocked
+        q = q.eq('role', role);
+      } else if (requesterRole === 'manager') {
+        q = q.in('role', ['athlete']);
       }
-      query = query.eq('role', role);
-    } else if (requesterRole === 'manager') {
-      // Managers can only see athletes — never admin or superadmin profiles
-      query = query.in('role', ['athlete']);
+      if (search) q = q.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
+      return q;
     }
 
-    // Search by name or email if specified
-    if (search) {
-      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
+    // Block superadmin-only requests for non-superadmins early
+    if (role === 'superadmin' && requesterRole !== 'superadmin') {
+      return NextResponse.json({ success: true, profiles: [], pagination: { page, limit, total: 0, totalPages: 0 } });
     }
 
-    // Execute count and data queries in parallel for better performance
+    // Try full query (with extended columns from migration-003).
+    // If those columns don't exist yet, fall back to base columns so the
+    // directory still loads while migrations are pending.
+    const FULL_SELECT = `
+      id, email, name, role, organization, phone,
+      address, city, state, postal_code, country,
+      manager_id, admin_id,
+      payment_amount, contract_duration_months,
+      instagram_followers, tiktok_followers, youtube_followers,
+      accomplishments, created_at, updated_at
+    `;
+    const BASE_SELECT = `
+      id, email, name, role, organization, phone,
+      address, city, state, postal_code, country,
+      manager_id, created_at, updated_at
+    `;
+
+    let dataQuery = applyFilters(
+      client.from('profiles').select(FULL_SELECT).order('created_at', { ascending: false }),
+    );
+    let countQuery = applyFilters(
+      client.from('profiles').select('*', { count: 'exact', head: true }),
+    );
+
     const [countResult, profilesResult] = await Promise.all([
-      // Count query
-      (async () => {
-        let countQuery = client.from('profiles').select('*', { count: 'exact', head: true });
-
-        if (requesterRole !== 'superadmin') {
-          countQuery = countQuery.neq('role', 'superadmin');
-        }
-        if (role && ['athlete', 'manager', 'admin', 'superadmin'].includes(role)) {
-          if (role !== 'superadmin' || requesterRole === 'superadmin') {
-            countQuery = countQuery.eq('role', role);
-          }
-        } else if (requesterRole === 'manager') {
-          countQuery = countQuery.in('role', ['athlete']);
-        }
-        if (search) {
-          countQuery = countQuery.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
-        }
-
-        return await countQuery;
-      })(),
-      // Data query
-      query.range(offset, offset + limit - 1),
+      countQuery.then((r: any) => r),
+      dataQuery.range(offset, offset + limit - 1).then((r: any) => r),
     ]);
 
-    const { count, error: countError } = countResult;
-    const { data: profiles, error: profilesError } = profilesResult;
+    let { count, error: countError } = countResult;
+    let { data: profiles, error: profilesError } = profilesResult;
+
+    // If extended columns are missing (migration not yet applied) retry with base columns
+    if (profilesError && profilesError.message?.includes('column')) {
+      console.warn('profiles/list: extended columns missing, falling back to base select');
+      const fallbackQuery = applyFilters(
+        client.from('profiles').select(BASE_SELECT).order('created_at', { ascending: false }),
+      );
+      const fallback = await fallbackQuery.range(offset, offset + limit - 1);
+      profiles = fallback.data;
+      profilesError = fallback.error;
+    }
 
     if (countError) {
       return NextResponse.json(
-        {
-          error: 'Failed to get profile count: ' + countError.message,
-        },
+        { error: 'Failed to get profile count: ' + countError.message },
         { status: 500 },
       );
     }
 
     if (profilesError) {
       return NextResponse.json(
-        {
-          error: 'Failed to fetch profiles: ' + profilesError.message,
-        },
+        { error: 'Failed to fetch profiles: ' + profilesError.message },
         { status: 500 },
       );
     }
@@ -191,12 +167,12 @@ export async function GET(req: Request) {
         postal_code: profile.postal_code,
         country: profile.country,
         manager_id: profile.manager_id,
-        admin_id: profile.admin_id,
-        payment_amount: profile.payment_amount,
-        contract_duration_months: profile.contract_duration_months,
-        instagram_followers: profile.instagram_followers,
-        tiktok_followers: profile.tiktok_followers,
-        youtube_followers: profile.youtube_followers,
+        admin_id: profile.admin_id ?? null,
+        payment_amount: profile.payment_amount ?? null,
+        contract_duration_months: profile.contract_duration_months ?? null,
+        instagram_followers: profile.instagram_followers ?? null,
+        tiktok_followers: profile.tiktok_followers ?? null,
+        youtube_followers: profile.youtube_followers ?? null,
         accomplishments: profile.accomplishments ?? [],
         created_at: profile.created_at,
         updated_at: profile.updated_at,
