@@ -442,6 +442,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     role: string,
     personalMessage?: string,
   ) {
+    if (!user) throw new Error('User not authenticated');
     try {
       // Call API route to send email — DB record creation happens there (service role key)
       const response = await fetch('/api/invitations/send', {
@@ -452,7 +453,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({
           email,
           role,
-          invitedBy: user!.id,
+          invitedBy: user.id,
           personalMessage,
         }),
       });

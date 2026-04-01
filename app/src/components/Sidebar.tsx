@@ -34,25 +34,28 @@ export default function Sidebar() {
 
   const profileAvatarPath = (profile as any)?.avatar_path as string | undefined;
   useEffect(() => {
+    let isMounted = true;
     const loadAvatar = async () => {
       try {
         const bucket = (process.env.NEXT_PUBLIC_UPLOADS_BUCKET as string) || 'content';
         const avatarPath = profileAvatarPath || null;
         if (!avatarPath) {
-          setAvatarUrl(null);
+          if (isMounted) setAvatarUrl(null);
           return;
         }
         const { data, error } = await supabaseClient.storage
           .from(bucket)
           .createSignedUrl(avatarPath, 60 * 60);
-        if (!error && data?.signedUrl) return setAvatarUrl(data.signedUrl);
+        if (!isMounted) return;
+        if (!error && data?.signedUrl) { setAvatarUrl(data.signedUrl); return; }
         const pub = supabaseClient.storage.from(bucket).getPublicUrl(avatarPath);
         if (pub?.data?.publicUrl) setAvatarUrl(pub.data.publicUrl);
       } catch {
-        setAvatarUrl(null);
+        if (isMounted) setAvatarUrl(null);
       }
     };
     loadAvatar();
+    return () => { isMounted = false; };
   }, [profile?.id, profileAvatarPath]);
 
   const navigationItems = [

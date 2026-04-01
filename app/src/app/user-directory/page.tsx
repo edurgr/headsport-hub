@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
@@ -1089,9 +1089,8 @@ function DirectoryTab({ myProfile, session }: DirectoryTabProps) {
               </thead>
               <tbody>
                 {profiles.map((p) => (
-                  <>
+                  <Fragment key={p.id}>
                     <tr
-                      key={p.id}
                       style={{
                         borderBottom:
                           expandedId === p.id
@@ -1156,7 +1155,7 @@ function DirectoryTab({ myProfile, session }: DirectoryTabProps) {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>

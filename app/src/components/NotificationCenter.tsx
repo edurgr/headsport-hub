@@ -36,8 +36,9 @@ export default function NotificationCenter() {
         setUnreadCount(
           data.notifications?.filter((n: Notification) => n.status === 'unread').length || 0, // Uses setUnreadCount
         );
-      } else {
-         console.error("Failed to fetch notifications:", data.error);
+      } else if (response.status !== 401) {
+        // 401 is expected during the brief window before auth cookies are synced — suppress it
+        console.error("Failed to fetch notifications:", data.error);
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);

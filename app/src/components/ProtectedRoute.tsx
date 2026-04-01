@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -19,7 +19,6 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({ children, requiredRole, fallback }: ProtectedRouteProps) {
   const { user, profile, loading, hydrated } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
     if (loading) return;
@@ -35,7 +34,7 @@ export default function ProtectedRoute({ children, requiredRole, fallback }: Pro
     if (!profile) {
       router.push('/onboarding');
     }
-  }, [user, profile, loading, hydrated, router, pathname]);
+  }, [user, profile, loading, hydrated, router]);
 
   if (fallback && (loading || !hydrated || !user || !profile)) return <>{fallback}</>;
 

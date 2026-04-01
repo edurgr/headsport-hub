@@ -59,10 +59,11 @@ export async function supabaseServer() {
   };
 
   // Check multiple possible Supabase cookie names (project-specific and generic)
+  const projectRef = supabaseUrl.match(/https?:\/\/([^.]+)\.supabase\.co/)?.[1] ?? '';
   const cookieNames = [
     'sb-access-token',
     'sb:token',
-    'sb-iiyavhodskjhqmycivus-auth-token',
+    ...(projectRef ? [`sb-${projectRef}-auth-token`, `sb-${projectRef}-auth-token.0`] : []),
     'sb-localhost-auth-token',
     'supabase-auth-token',
   ];

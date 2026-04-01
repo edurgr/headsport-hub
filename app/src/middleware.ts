@@ -49,9 +49,18 @@ export function middleware(request: NextRequest) {
   }
 
   // For protected routes, verify authentication strictly (no demo)
+  // Also check the Supabase SSR native cookie (sb-{projectRef}-auth-token, 400d TTL)
+  // set by createBrowserClient via document.cookie, which outlives the custom 1h cookies.
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseProjectRef = supabaseUrl.match(/https?:\/\/([^.]+)\.supabase\.co/)?.[1] ?? '';
+
   const token =
     request.cookies.get('sb-access-token')?.value ||
     request.cookies.get('sb:token')?.value ||
+    (supabaseProjectRef
+      ? request.cookies.get(`sb-${supabaseProjectRef}-auth-token`)?.value ||
+        request.cookies.get(`sb-${supabaseProjectRef}-auth-token.0`)?.value
+      : '') ||
     (() => {
       const raw = request.cookies.get('supabase-auth-token')?.value;
       try {

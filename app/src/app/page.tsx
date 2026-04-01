@@ -482,18 +482,21 @@ function TeamSnapshot() {
   }>({ approvals: [], pending: [] });
 
   useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
     // Athletes total
-    fetch('/api/profiles/list?role=athlete&limit=1', { cache: 'no-store' })
+    fetch('/api/profiles/list?role=athlete&limit=1', { cache: 'no-store', signal })
       .then((r) => (r.ok ? r.json() : Promise.reject(r)))
       .then((j) => setTotals((t) => ({ ...t, athletes: j.pagination?.total || 0 })))
       .catch(() => {});
     // Pending orders
-    fetch('/api/orders?scope=pending', { cache: 'no-store' })
+    fetch('/api/orders?scope=pending', { cache: 'no-store', signal })
       .then((r) => (r.ok ? r.json() : Promise.reject(r)))
       .then((j) => setTotals((t) => ({ ...t, pending: (j.orders || []).length })))
       .catch(() => {});
     // Latest uploads (count last 24h approx by filtering client-side)
-    fetch('/api/content/gallery?limit=20', { cache: 'no-store' })
+    fetch('/api/content/gallery?limit=20', { cache: 'no-store', signal })
       .then((r) => (r.ok ? r.json() : Promise.reject(r)))
       .then((j) => {
         const now = Date.now();
@@ -504,7 +507,7 @@ function TeamSnapshot() {
       })
       .catch(() => {});
     // Recent approvals and pending queue
-    fetch('/api/orders?scope=approved', { cache: 'no-store' })
+    fetch('/api/orders?scope=approved', { cache: 'no-store', signal })
       .then((r) => (r.ok ? r.json() : Promise.reject(r)))
       .then((j) =>
         setRecent((s) => ({
@@ -517,7 +520,7 @@ function TeamSnapshot() {
         })),
       )
       .catch(() => {});
-    fetch('/api/orders?scope=pending', { cache: 'no-store' })
+    fetch('/api/orders?scope=pending', { cache: 'no-store', signal })
       .then((r) => (r.ok ? r.json() : Promise.reject(r)))
       .then((j) =>
         setRecent((s) => ({
@@ -530,6 +533,8 @@ function TeamSnapshot() {
         })),
       )
       .catch(() => {});
+
+    return () => controller.abort();
   }, []);
 
   return (
