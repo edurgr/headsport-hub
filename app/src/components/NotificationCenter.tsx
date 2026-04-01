@@ -23,40 +23,34 @@ export default function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false); // Used for mark all as read
 
-  const fetchNotifications = useCallback(async () => { // CORREGIDO: useCallback añadido
-    if (!user) return; // Guard clause depends on user
-
+  // Stable callback — no user in deps so token refreshes don't recreate it and
+  // trigger an immediate re-fetch. The effect below guards against user=null.
+  const fetchNotifications = useCallback(async () => {
     try {
-      // Consider adding setLoading(true) here if you want a loading state for fetching
-      const response = await fetch('/api/notifications?limit=20'); // Use fetch which is stable
+      const response = await fetch('/api/notifications?limit=20');
       const data = await response.json();
 
       if (response.ok) {
-        setNotifications(data.notifications || []); // Uses setNotifications
+        setNotifications(data.notifications || []);
         setUnreadCount(
-          data.notifications?.filter((n: Notification) => n.status === 'unread').length || 0, // Uses setUnreadCount
+          data.notifications?.filter((n: Notification) => n.status === 'unread').length || 0,
         );
       } else if (response.status !== 401) {
         // 401 is expected during the brief window before auth cookies are synced — suppress it
-        console.error("Failed to fetch notifications:", data.error);
+        console.error('Failed to fetch notifications:', data.error);
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
-    } finally {
-       // setLoading(false); // if you add loading state
     }
-  }, [user]); // CORREGIDO: Depends on user
+  }, []); // stable — intentionally no deps
 
   useEffect(() => {
-    if (user) {
-      fetchNotifications();
-      // Poll for new notifications every 30 seconds
-      const interval = setInterval(fetchNotifications, 30000);
-      return () => clearInterval(interval); // Cleanup interval
-    }
-     // No cleanup needed if user is null initially
-     return undefined;
-  }, [user, fetchNotifications]); // CORREGIDO: fetchNotifications añadido
+    if (!user?.id) return;
+    fetchNotifications();
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [user?.id, fetchNotifications]); // only re-run when the user ID actually changes
 
   const markAsRead = async (notificationId: string) => {
     try {
