@@ -34,7 +34,7 @@ const LayoutWrapper: FC<LayoutWrapperProps> = ({ children }) => {
   // Important: `/` renders a login form when unauthenticated (see `app/page.tsx`).
   // So treat `/` as public ONLY when the user is not authenticated; otherwise render the app shell.
   const isRoot = effectivePath === '/';
-  const isAuthed = !!user || !!profile;
+  const isAuthed = !!(user && profile);
 
   // `usePathname()` can be null briefly during hydration; treat it as public to avoid flashing the app shell.
   const isPublicPage =

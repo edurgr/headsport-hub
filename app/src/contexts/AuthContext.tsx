@@ -51,6 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Track the last user ID for which we successfully fetched (or confirmed missing) a profile.
   // This prevents re-fetching (and potentially nulling) the profile on every token refresh.
   const lastFetchedUserIdRef = useRef<string | null>(null);
+  // Tracks the currently active user ID so stale fetchProfile callbacks (from cross-tab
+  // sign-in races) don't overwrite state after a sign-out has already cleared it.
+  const currentUserIdRef = useRef<string | null>(null);
 
   function syncAuthCookies(currentSession: Session | null): void {
     // Best-effort, fire-and-forget — must never block auth initialization.
@@ -92,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then(async ({ data: { session } }) => {
         clearTimeout(safetyTimeout);
         setSession(session);
+        currentUserIdRef.current = session?.user?.id ?? null;
         setUser(session?.user ?? null);
         if (session?.user) {
           await fetchProfile(session.user.id);
@@ -113,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabaseClient.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
+      currentUserIdRef.current = session?.user?.id ?? null;
       setUser(session?.user ?? null);
       if (session?.user) {
         // Skip re-fetching the profile when it's just a token refresh for the same user.
@@ -120,6 +125,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // redundant fetchProfile that can race with the initial getSession() call and
         // temporarily null-out the profile, causing the sidebar to vanish.
         if (lastFetchedUserIdRef.current !== session.user.id) {
+          // Show loading while we fetch the profile for the new user.
+          // This prevents the broken intermediate state (user set, profile null, loading=false)
+          // that renders the app shell without a sidebar.
+          setLoading(true);
           await fetchProfile(session.user.id);
         }
       } else {
@@ -167,6 +176,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // Guard: if a sign-out (or sign-in as a different user) happened while this fetch
+      // was in-flight, discard the result to prevent stale profile from overwriting cleared state.
+      if (currentUserIdRef.current !== userId) return;
       lastFetchedUserIdRef.current = userId;
       setProfile(data);
     } catch (error) {
@@ -235,6 +247,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data.user ? data.user.id : 'null',
       );
       setSession(data.session ?? null);
+      currentUserIdRef.current = data.user?.id ?? null;
       setUser(data.user ?? null);
       if (data.user) {
         console.log('AuthContext: User found, fetching profile for ID:', data.user.id);
@@ -549,24 +562,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
+    // Always clear local state and hard-navigate to /login, even if the Supabase
+    // signOut call fails (expired session, network error, etc.). This prevents the
+    // button from appearing frozen and avoids stale-session limbo across tabs.
     try {
-      // Sign out from Supabase if real user
-      if (session) {
-        const { error } = await supabaseClient.auth.signOut();
-        if (error) {
-          console.error('Error signing out:', error);
-          throw error;
-        }
-      }
-
-      // Clear state
+      await supabaseClient.auth.signOut();
+    } catch (err) {
+      console.error('Error signing out from Supabase (continuing):', err);
+    } finally {
+      currentUserIdRef.current = null;
       setUser(null);
       setProfile(null);
       setSession(null);
-      await syncAuthCookies(null);
-    } catch (error) {
-      console.error('Sign out error:', error);
-      throw error;
+      syncAuthCookies(null);
+      if (typeof window !== 'undefined') {
+        window.location.replace('/login');
+      }
     }
   }
 
